@@ -21,12 +21,20 @@ import { ConsumptionHeatmap } from "@/components/charts/ConsumptionHeatmap";
 import { CostTrendChart } from "@/components/charts/CostTrendChart";
 import { EfficiencyMetrics } from "@/components/charts/EfficiencyMetrics";
 import { SeasonalAnalysis } from "@/components/charts/SeasonalAnalysis";
-import { mockData, aggregateBySchool, getMonthlyTotals } from "@/utils/mockData";
+import { SchoolData, aggregateBySchool, getMonthlyTotals, getSchoolTypeDistribution, getAlerts } from "@/utils/mockData";
 
-export default function Dashboard() {
-  const currentMonthData = aggregateBySchool(mockData, 'dezembro');
-  const yearlyData = aggregateBySchool(mockData);
-  const monthlyTotals = getMonthlyTotals(mockData);
+interface DashboardProps {
+  data: SchoolData[];
+}
+
+export default function Dashboard({ data }: DashboardProps) {
+  // Calculate metrics with provided data
+  const currentMonth = 'dezembro';
+  const monthlyTotals = getMonthlyTotals(data);
+  const currentMonthData = aggregateBySchool(data, currentMonth);
+  const yearlyData = aggregateBySchool(data);
+  const alerts = getAlerts(data);
+  const schoolTypeDistribution = getSchoolTypeDistribution(data, currentMonth);
 
   // Calculate metrics
   const currentMonthTotal = currentMonthData.reduce((sum, school) => sum + school.totalValue, 0);
@@ -132,23 +140,23 @@ export default function Dashboard() {
         {/* Alerts */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <AlertCard data={mockData} />
+            <AlertCard data={data} />
           </div>
           <div className="lg:col-span-1">
-            <UpcomingDues data={mockData} />
+            <UpcomingDues data={data} />
           </div>
         </div>
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <TopSchoolsChart data={mockData} />
-          <SchoolTypeDistribution data={mockData} month="dezembro" />
+          <TopSchoolsChart data={data} />
+          <SchoolTypeDistribution data={data} month="dezembro" />
         </div>
 
         {/* Additional Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <EvolutionChart data={mockData} />
-          <ComparisonChart data={mockData} />
+          <EvolutionChart data={data} />
+          <ComparisonChart data={data} />
         </div>
 
         {/* New Analysis Charts */}
@@ -157,16 +165,16 @@ export default function Dashboard() {
             Análises Avançadas
           </h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <WaterQualityChart data={mockData} />
-            <ConsumptionHeatmap data={mockData} />
-            <CostTrendChart data={mockData} />
-            <EfficiencyMetrics data={mockData} />
-            <SeasonalAnalysis data={mockData} />
+            <WaterQualityChart data={data} />
+            <ConsumptionHeatmap data={data} />
+            <CostTrendChart data={data} />
+            <EfficiencyMetrics data={data} />
+            <SeasonalAnalysis data={data} />
           </div>
         </div>
 
         {/* Monthly Mini Cards */}
-        <MonthlyMiniCards data={mockData} />
+        <MonthlyMiniCards data={data} />
       </div>
     </div>
   );

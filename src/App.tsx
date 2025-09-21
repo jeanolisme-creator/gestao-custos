@@ -8,27 +8,39 @@ import Dashboard from "./pages/Dashboard";
 import Charts from "./pages/Charts";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
+import { DataManagement } from "./components/data/DataManagement";
+import { useState } from "react";
+import { mockData, SchoolData } from "./utils/mockData";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="charts" element={<Charts />} />
-            <Route path="reports" element={<Reports />} />
-          </Route>
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [schoolData, setSchoolData] = useState<SchoolData[]>(mockData);
+
+  const handleDataUpdate = (newData: SchoolData[]) => {
+    setSchoolData(newData);
+  };
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              <Route index element={<Dashboard data={schoolData} />} />
+              <Route path="charts" element={<Charts data={schoolData} />} />
+              <Route path="reports" element={<Reports data={schoolData} />} />
+              <Route path="data-management" element={<DataManagement onDataUpdate={handleDataUpdate} currentDataCount={schoolData.length} />} />
+            </Route>
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

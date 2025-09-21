@@ -4,7 +4,7 @@ import {
   BarChart3,
   PieChart,
   FileText,
-  Settings,
+  Database,
   ChevronLeft,
   ChevronRight,
   Droplets,
@@ -30,9 +30,9 @@ const navigation = [
     icon: FileText,
   },
   {
-    name: "Configurações",
-    href: "/settings",
-    icon: Settings,
+    name: "Dados",
+    href: "/data-management",
+    icon: Database,
   },
 ];
 

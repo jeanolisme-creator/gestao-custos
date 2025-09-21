@@ -19,7 +19,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { mockData, schoolNames, aggregateBySchool } from "@/utils/mockData";
+import { SchoolData, schoolNames, aggregateBySchool } from "@/utils/mockData";
+
+interface ReportsProps {
+  data: SchoolData[];
+}
 
 const reportTypes = [
   { value: 'by-school', label: 'Por Nome da Escola' },
@@ -36,7 +40,7 @@ const months = [
 
 const years = ['2025', '2026', '2027'];
 
-export default function Reports() {
+export default function Reports({ data }: ReportsProps) {
   const [selectedYear, setSelectedYear] = useState<string>("2025");
   const [selectedMonth, setSelectedMonth] = useState<string>("todos");
   const [selectedSchool, setSelectedSchool] = useState<string>("all");
@@ -52,7 +56,7 @@ export default function Reports() {
   };
 
   const getReportData = () => {
-    let filteredData = mockData.filter(record => record.ano.toString() === selectedYear);
+    let filteredData = data.filter(record => record.ano.toString() === selectedYear);
     
     if (selectedMonth !== 'todos') {
       filteredData = filteredData.filter(record => record.mes === selectedMonth);

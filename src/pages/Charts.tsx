@@ -12,26 +12,34 @@ import { EvolutionChart } from "@/components/charts/EvolutionChart";
 import { SchoolTypeDistribution } from "@/components/charts/SchoolTypeDistribution";
 import { TopSchoolsChart } from "@/components/charts/TopSchoolsChart";
 import { ComparisonChart } from "@/components/charts/ComparisonChart";
-import { mockData, schoolNames } from "@/utils/mockData";
+import { SchoolData, schoolNames } from "@/utils/mockData";
+
+interface ChartsProps {
+  data: SchoolData[];
+}
 
 const chartTypes = [
   { value: 'line', label: 'Linha' },
   { value: 'area', label: 'Área' },
   { value: 'bar', label: 'Barras' },
   { value: 'pie', label: 'Pizza' },
-  { value: 'doughnut', label: 'Rosca' },
+  { value: 'donut', label: 'Rosca' },
 ];
 
 const years = ['2025', '2026', '2027'];
 
-export default function Charts() {
+export default function Charts({ data }: ChartsProps) {
   const [selectedSchool, setSelectedSchool] = useState<string>("all");
   const [selectedYear, setSelectedYear] = useState<string>("2025");
-  const [chartType, setChartType] = useState<string>("area");
+  const [selectedChartType, setSelectedChartType] = useState<string>("line");
 
-  const applyFilters = () => {
-    // This would normally filter the data based on selections
-    console.log('Filters applied:', { selectedSchool, selectedYear, chartType });
+  const handleApplyFilters = () => {
+    // Filter logic will be implemented here
+    console.log('Filters applied:', {
+      school: selectedSchool,
+      year: selectedYear,
+      chartType: selectedChartType
+    });
   };
 
   return (
@@ -43,18 +51,20 @@ export default function Charts() {
             Módulo de Gráficos
           </h1>
           <p className="text-muted-foreground">
-            Análise visual interativa dos dados de consumo e gastos
+            Análise detalhada com filtros personalizáveis
           </p>
         </div>
 
         {/* Filters */}
-        <Card className="p-6 bg-gradient-card border-border shadow-card">
-          <div className="flex flex-wrap items-center gap-4">
+        <Card className="p-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Escola</label>
+              <label className="text-sm font-medium text-foreground">
+                Selecionar Escola
+              </label>
               <Select value={selectedSchool} onValueChange={setSelectedSchool}>
-                <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Selecionar escola" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas as escolas" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas as escolas</SelectItem>
@@ -68,9 +78,11 @@ export default function Charts() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Ano</label>
+              <label className="text-sm font-medium text-foreground">
+                Selecionar Ano
+              </label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="w-24">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -84,9 +96,11 @@ export default function Charts() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Tipo de Gráfico</label>
-              <Select value={chartType} onValueChange={setChartType}>
-                <SelectTrigger className="w-32">
+              <label className="text-sm font-medium text-foreground">
+                Tipo de Gráfico
+              </label>
+              <Select value={selectedChartType} onValueChange={setSelectedChartType}>
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -100,7 +114,7 @@ export default function Charts() {
             </div>
 
             <div className="flex items-end">
-              <Button onClick={applyFilters} className="bg-primary hover:bg-primary-hover">
+              <Button onClick={handleApplyFilters} className="w-full">
                 Aplicar Filtros
               </Button>
             </div>
@@ -110,87 +124,103 @@ export default function Charts() {
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Evolution Chart */}
-          <EvolutionChart 
-            data={mockData} 
-            title="Evolução Mensal de Custos - 2025"
-            type={chartType as 'line' | 'area'}
-          />
+          <Card className="p-6">
+            <div className="space-y-2 mb-4">
+              <h2 className="text-xl font-semibold text-foreground">
+                Evolução Mensal de Custos - {selectedYear}
+              </h2>
+              <p className="text-muted-foreground">
+                Comparação com escola selecionada: {selectedSchool === 'all' ? 'Todas' : selectedSchool}
+              </p>
+            </div>
+            <EvolutionChart data={data} />
+          </Card>
 
           {/* Distribution Chart */}
-          <SchoolTypeDistribution 
-            data={mockData} 
-            month={undefined} // Show yearly data
-          />
+          <Card className="p-6">
+            <div className="space-y-2 mb-4">
+              <h2 className="text-xl font-semibold text-foreground">
+                Distribuição por Categoria
+              </h2>
+              <p className="text-muted-foreground">
+                Água, Manutenção, Limpeza, Outros
+              </p>
+            </div>
+            <SchoolTypeDistribution data={data} />
+          </Card>
 
           {/* Comparison Chart */}
-          <ComparisonChart 
-            data={mockData}
-            title="Comparativo: Consumo vs Valor"
-          />
+          <Card className="p-6">
+            <div className="space-y-2 mb-4">
+              <h2 className="text-xl font-semibold text-foreground">
+                Comparativo: Consumo vs Valor
+              </h2>
+              <p className="text-muted-foreground">
+                Análise combinada de consumo e gastos
+              </p>
+            </div>
+            <ComparisonChart data={data} />
+          </Card>
 
-          {/* Top Schools */}
-          <TopSchoolsChart 
-            data={mockData}
-            month="dezembro"
-          />
+          {/* Top Schools Chart */}
+          <Card className="p-6">
+            <div className="space-y-2 mb-4">
+              <h2 className="text-xl font-semibold text-foreground">
+                Top 5 Escolas com Maiores Custos
+              </h2>
+              <p className="text-muted-foreground">
+                Ranking das escolas por gastos totais
+              </p>
+            </div>
+            <TopSchoolsChart data={data} />
+          </Card>
         </div>
 
-        {/* Additional Analysis Charts */}
+        {/* Additional Analysis */}
         <div className="space-y-6">
           <h2 className="text-xl font-semibold text-foreground">
-            Análises Adicionais
+            Análises Complementares
           </h2>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Seasonal Analysis */}
-            <Card className="p-6 bg-gradient-card border-border shadow-card">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Análise Sazonal
-              </h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                Consumo por período do ano
-              </p>
-              <div className="h-64 flex items-center justify-center text-muted-foreground">
-                Gráfico de sazonalidade em desenvolvimento
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="p-6">
+              <div className="space-y-2 mb-4">
+                <h3 className="text-lg font-semibold text-foreground">
+                  Tendência Sazonal
+                </h3>
+                <p className="text-muted-foreground">
+                  Padrões de consumo ao longo do ano
+                </p>
+              </div>
+              <div className="h-64 bg-muted/20 rounded-lg flex items-center justify-center">
+                <p className="text-muted-foreground">Gráfico de Sazonalidade</p>
               </div>
             </Card>
 
-            {/* Efficiency Analysis */}
-            <Card className="p-6 bg-gradient-card border-border shadow-card">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Análise de Eficiência
-              </h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                Consumo por m² de área construída
-              </p>
-              <div className="h-64 flex items-center justify-center text-muted-foreground">
-                Gráfico de eficiência em desenvolvimento
+            <Card className="p-6">
+              <div className="space-y-2 mb-4">
+                <h3 className="text-lg font-semibold text-foreground">
+                  Eficiência por Escola
+                </h3>
+                <p className="text-muted-foreground">
+                  Relação custo/benefício
+                </p>
+              </div>
+              <div className="h-64 bg-muted/20 rounded-lg flex items-center justify-center">
+                <p className="text-muted-foreground">Métricas de Eficiência</p>
               </div>
             </Card>
 
-            {/* Cost Prediction */}
-            <Card className="p-6 bg-gradient-card border-border shadow-card">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Projeção de Custos
-              </h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                Estimativa para os próximos meses
-              </p>
-              <div className="h-64 flex items-center justify-center text-muted-foreground">
-                Gráfico de projeção em desenvolvimento
+            <Card className="p-6">
+              <div className="space-y-2 mb-4">
+                <h3 className="text-lg font-semibold text-foreground">
+                  Previsão de Gastos
+                </h3>
+                <p className="text-muted-foreground">
+                  Projeção para próximos meses
+                </p>
               </div>
-            </Card>
-
-            {/* Regional Analysis */}
-            <Card className="p-6 bg-gradient-card border-border shadow-card">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Análise Regional
-              </h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                Distribuição geográfica dos gastos
-              </p>
-              <div className="h-64 flex items-center justify-center text-muted-foreground">
-                Mapa de calor em desenvolvimento
+              <div className="h-64 bg-muted/20 rounded-lg flex items-center justify-center">
+                <p className="text-muted-foreground">Projeções Futuras</p>
               </div>
             </Card>
           </div>
