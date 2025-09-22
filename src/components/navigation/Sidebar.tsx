@@ -8,10 +8,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Droplets,
+  Plus,
+  LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 const navigation = [
   {
@@ -30,6 +33,11 @@ const navigation = [
     icon: FileText,
   },
   {
+    name: "Registros",
+    href: "/records",
+    icon: Plus,
+  },
+  {
     name: "Dados",
     href: "/data-management",
     icon: Database,
@@ -38,6 +46,11 @@ const navigation = [
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const { signOut, user } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
   return (
     <div
@@ -104,15 +117,30 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="p-4">
-        <div className={cn("flex items-center", collapsed ? "justify-center" : "justify-between")}>
+      <div className="p-4 border-t border-sidebar-border">
+        {!collapsed && user && (
+          <div className="text-xs text-sidebar-foreground/70 mb-3 truncate">
+            {user.email}
+          </div>
+        )}
+        <div className={cn("flex items-center gap-2", collapsed ? "flex-col" : "justify-between")}>
           <ThemeToggle />
-          {!collapsed && (
-            <div className="text-xs text-sidebar-foreground/70">
-              v1.0.0
-            </div>
-          )}
+          <Button 
+            variant="ghost" 
+            size={collapsed ? "icon" : "sm"}
+            onClick={handleSignOut}
+            className="text-sidebar-foreground hover:bg-sidebar-accent"
+            title={collapsed ? "Sair" : undefined}
+          >
+            <LogOut className="h-4 w-4" />
+            {!collapsed && <span className="ml-2">Sair</span>}
+          </Button>
         </div>
+        {!collapsed && (
+          <div className="text-xs text-sidebar-foreground/70 mt-2 text-center">
+            v1.0.0
+          </div>
+        )}
       </div>
     </div>
   );

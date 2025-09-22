@@ -14,7 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      school_records: {
+        Row: {
+          cadastro: string
+          consumo_m3: number | null
+          created_at: string
+          data_vencimento: string | null
+          descricao_servicos: string | null
+          endereco_completo: string | null
+          hidrometro: string | null
+          id: string
+          mes_ano_referencia: string
+          nome_escola: string
+          numero_dias: number | null
+          ocorrencias_pendencias: string | null
+          responsavel: string | null
+          updated_at: string
+          user_id: string
+          valor_gasto: number | null
+          valor_servicos: number | null
+        }
+        Insert: {
+          cadastro: string
+          consumo_m3?: number | null
+          created_at?: string
+          data_vencimento?: string | null
+          descricao_servicos?: string | null
+          endereco_completo?: string | null
+          hidrometro?: string | null
+          id?: string
+          mes_ano_referencia: string
+          nome_escola: string
+          numero_dias?: number | null
+          ocorrencias_pendencias?: string | null
+          responsavel?: string | null
+          updated_at?: string
+          user_id: string
+          valor_gasto?: number | null
+          valor_servicos?: number | null
+        }
+        Update: {
+          cadastro?: string
+          consumo_m3?: number | null
+          created_at?: string
+          data_vencimento?: string | null
+          descricao_servicos?: string | null
+          endereco_completo?: string | null
+          hidrometro?: string | null
+          id?: string
+          mes_ano_referencia?: string
+          nome_escola?: string
+          numero_dias?: number | null
+          ocorrencias_pendencias?: string | null
+          responsavel?: string | null
+          updated_at?: string
+          user_id?: string
+          valor_gasto?: number | null
+          valor_servicos?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
