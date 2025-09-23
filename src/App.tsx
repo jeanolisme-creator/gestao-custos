@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/layout/Layout";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 import { AuthProvider } from "./hooks/useAuth";
+import { SystemProvider } from "./contexts/SystemContext";
+import ConsolidatedReport from "./pages/ConsolidatedReport";
 import Dashboard from "./pages/Dashboard";
 import Charts from "./pages/Charts";
 import Reports from "./pages/Reports";
@@ -15,11 +17,20 @@ import NotFound from "./pages/NotFound";
 import { DataManagement } from "./components/data/DataManagement";
 import { useState } from "react";
 import { mockData, SchoolData } from "./utils/mockData";
+import { generateMockSystemData, UnifiedRecord } from "./utils/systemData";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   const [schoolData, setSchoolData] = useState<SchoolData[]>(mockData);
+  const [systemData, setSystemData] = useState<UnifiedRecord[]>(() => {
+    // Generate mock data for all systems
+    const waterData = generateMockSystemData('water', 50);
+    const energyData = generateMockSystemData('energy', 50);
+    const fixedLineData = generateMockSystemData('fixed-line', 50);
+    const mobileData = generateMockSystemData('mobile', 50);
+    return [...waterData, ...energyData, ...fixedLineData, ...mobileData];
+  });
 
   const handleDataUpdate = (newData: SchoolData[]) => {
     setSchoolData(newData);
@@ -28,28 +39,31 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <Layout />
-                </ProtectedRoute>
-              }>
-                <Route index element={<Dashboard data={schoolData} />} />
-                <Route path="charts" element={<Charts data={schoolData} />} />
-                <Route path="reports" element={<Reports data={schoolData} />} />
-                <Route path="records" element={<Records />} />
-                <Route path="data-management" element={<DataManagement onDataUpdate={handleDataUpdate} currentDataCount={schoolData.length} />} />
-              </Route>
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <SystemProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/" element={
+                  <ProtectedRoute>
+                    <Layout />
+                  </ProtectedRoute>
+                }>
+                  <Route index element={<Dashboard data={schoolData} />} />
+                  <Route path="charts" element={<Charts data={schoolData} />} />
+                  <Route path="reports" element={<Reports data={schoolData} />} />
+                  <Route path="consolidated-report" element={<ConsolidatedReport />} />
+                  <Route path="records" element={<Records />} />
+                  <Route path="data-management" element={<DataManagement onDataUpdate={handleDataUpdate} currentDataCount={schoolData.length} />} />
+                </Route>
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </SystemProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

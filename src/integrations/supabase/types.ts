@@ -14,6 +14,237 @@ export type Database = {
   }
   public: {
     Tables: {
+      energy_records: {
+        Row: {
+          bairro: string | null
+          cadastro_cliente: string
+          consumo_kwh: number | null
+          created_at: string
+          data_vencimento: string | null
+          demanda_kwh: number | null
+          descricao_servicos: string | null
+          endereco: string | null
+          id: string
+          macroregiao: string | null
+          mes_ano_referencia: string
+          nome_escola: string
+          numero: string | null
+          numero_dias: number | null
+          ocorrencias_pendencias: string | null
+          proprietario: string | null
+          relogio: string | null
+          responsavel: string | null
+          tipo_escola: string | null
+          tipo_instalacao: string | null
+          unidade: string | null
+          updated_at: string
+          user_id: string
+          valor_gasto: number | null
+          valor_servicos: number | null
+        }
+        Insert: {
+          bairro?: string | null
+          cadastro_cliente: string
+          consumo_kwh?: number | null
+          created_at?: string
+          data_vencimento?: string | null
+          demanda_kwh?: number | null
+          descricao_servicos?: string | null
+          endereco?: string | null
+          id?: string
+          macroregiao?: string | null
+          mes_ano_referencia: string
+          nome_escola: string
+          numero?: string | null
+          numero_dias?: number | null
+          ocorrencias_pendencias?: string | null
+          proprietario?: string | null
+          relogio?: string | null
+          responsavel?: string | null
+          tipo_escola?: string | null
+          tipo_instalacao?: string | null
+          unidade?: string | null
+          updated_at?: string
+          user_id: string
+          valor_gasto?: number | null
+          valor_servicos?: number | null
+        }
+        Update: {
+          bairro?: string | null
+          cadastro_cliente?: string
+          consumo_kwh?: number | null
+          created_at?: string
+          data_vencimento?: string | null
+          demanda_kwh?: number | null
+          descricao_servicos?: string | null
+          endereco?: string | null
+          id?: string
+          macroregiao?: string | null
+          mes_ano_referencia?: string
+          nome_escola?: string
+          numero?: string | null
+          numero_dias?: number | null
+          ocorrencias_pendencias?: string | null
+          proprietario?: string | null
+          relogio?: string | null
+          responsavel?: string | null
+          tipo_escola?: string | null
+          tipo_instalacao?: string | null
+          unidade?: string | null
+          updated_at?: string
+          user_id?: string
+          valor_gasto?: number | null
+          valor_servicos?: number | null
+        }
+        Relationships: []
+      }
+      fixed_line_records: {
+        Row: {
+          bairro: string | null
+          cadastro_cliente: string
+          created_at: string
+          data_vencimento: string | null
+          descricao_servicos: string | null
+          endereco: string | null
+          id: string
+          macroregiao: string | null
+          mes_ano_referencia: string
+          nome_escola: string
+          numero: string | null
+          numero_dias: number | null
+          numero_linha: string | null
+          ocorrencias_pendencias: string | null
+          proprietario: string | null
+          responsavel: string | null
+          tipo_escola: string | null
+          updated_at: string
+          user_id: string
+          valor_gasto: number | null
+          valor_servicos: number | null
+        }
+        Insert: {
+          bairro?: string | null
+          cadastro_cliente: string
+          created_at?: string
+          data_vencimento?: string | null
+          descricao_servicos?: string | null
+          endereco?: string | null
+          id?: string
+          macroregiao?: string | null
+          mes_ano_referencia: string
+          nome_escola: string
+          numero?: string | null
+          numero_dias?: number | null
+          numero_linha?: string | null
+          ocorrencias_pendencias?: string | null
+          proprietario?: string | null
+          responsavel?: string | null
+          tipo_escola?: string | null
+          updated_at?: string
+          user_id: string
+          valor_gasto?: number | null
+          valor_servicos?: number | null
+        }
+        Update: {
+          bairro?: string | null
+          cadastro_cliente?: string
+          created_at?: string
+          data_vencimento?: string | null
+          descricao_servicos?: string | null
+          endereco?: string | null
+          id?: string
+          macroregiao?: string | null
+          mes_ano_referencia?: string
+          nome_escola?: string
+          numero?: string | null
+          numero_dias?: number | null
+          numero_linha?: string | null
+          ocorrencias_pendencias?: string | null
+          proprietario?: string | null
+          responsavel?: string | null
+          tipo_escola?: string | null
+          updated_at?: string
+          user_id?: string
+          valor_gasto?: number | null
+          valor_servicos?: number | null
+        }
+        Relationships: []
+      }
+      mobile_records: {
+        Row: {
+          bairro: string | null
+          cadastro_cliente: string
+          consumo_mb: number | null
+          created_at: string
+          data_vencimento: string | null
+          descricao_servicos: string | null
+          endereco: string | null
+          id: string
+          macroregiao: string | null
+          mes_ano_referencia: string
+          nome_escola: string
+          numero: string | null
+          numero_dias: number | null
+          numero_linha: string | null
+          ocorrencias_pendencias: string | null
+          proprietario: string | null
+          responsavel: string | null
+          tipo_escola: string | null
+          updated_at: string
+          user_id: string
+          valor_gasto: number | null
+          valor_servicos: number | null
+        }
+        Insert: {
+          bairro?: string | null
+          cadastro_cliente: string
+          consumo_mb?: number | null
+          created_at?: string
+          data_vencimento?: string | null
+          descricao_servicos?: string | null
+          endereco?: string | null
+          id?: string
+          macroregiao?: string | null
+          mes_ano_referencia: string
+          nome_escola: string
+          numero?: string | null
+          numero_dias?: number | null
+          numero_linha?: string | null
+          ocorrencias_pendencias?: string | null
+          proprietario?: string | null
+          responsavel?: string | null
+          tipo_escola?: string | null
+          updated_at?: string
+          user_id: string
+          valor_gasto?: number | null
+          valor_servicos?: number | null
+        }
+        Update: {
+          bairro?: string | null
+          cadastro_cliente?: string
+          consumo_mb?: number | null
+          created_at?: string
+          data_vencimento?: string | null
+          descricao_servicos?: string | null
+          endereco?: string | null
+          id?: string
+          macroregiao?: string | null
+          mes_ano_referencia?: string
+          nome_escola?: string
+          numero?: string | null
+          numero_dias?: number | null
+          numero_linha?: string | null
+          ocorrencias_pendencias?: string | null
+          proprietario?: string | null
+          responsavel?: string | null
+          tipo_escola?: string | null
+          updated_at?: string
+          user_id?: string
+          valor_gasto?: number | null
+          valor_servicos?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

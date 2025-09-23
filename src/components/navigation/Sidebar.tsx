@@ -1,3 +1,4 @@
+import { SystemSelector } from "@/components/navigation/SystemSelector";
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
@@ -30,6 +31,11 @@ const navigation = [
   {
     name: "Relatórios",
     href: "/reports",
+    icon: FileText,
+  },
+  {
+    name: "Relatório Consolidado",
+    href: "/consolidated-report",
     icon: FileText,
   },
   {

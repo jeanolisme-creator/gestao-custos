@@ -91,6 +91,23 @@
     --sidebar-accent-foreground: 210 15% 85%;
     --sidebar-border: 215 20% 25%;
     --sidebar-ring: 200 95% 45%;
+
+    /* System-specific colors */
+    --water-primary: 200 95% 45%;
+    --water-secondary: 200 30% 95%;
+    --water-accent: 200 50% 88%;
+    
+    --energy-primary: 45 93% 47%;
+    --energy-secondary: 45 30% 95%;
+    --energy-accent: 45 50% 88%;
+    
+    --fixed-line-primary: 142 71% 45%;
+    --fixed-line-secondary: 142 30% 95%;
+    --fixed-line-accent: 142 50% 88%;
+    
+    --mobile-primary: 262 52% 47%;
+    --mobile-secondary: 262 30% 95%;
+    --mobile-accent: 262 50% 88%;
   }
 
   .dark {
@@ -161,6 +178,23 @@
     --sidebar-accent-foreground: 210 15% 85%;
     --sidebar-border: 215 20% 15%;
     --sidebar-ring: 195 85% 55%;
+
+    /* System-specific colors for dark mode */
+    --water-primary: 200 95% 55%;
+    --water-secondary: 200 30% 15%;
+    --water-accent: 200 50% 25%;
+    
+    --energy-primary: 45 93% 60%;
+    --energy-secondary: 45 30% 15%;
+    --energy-accent: 45 50% 25%;
+    
+    --fixed-line-primary: 142 71% 55%;
+    --fixed-line-secondary: 142 30% 15%;
+    --fixed-line-accent: 142 50% 25%;
+    
+    --mobile-primary: 262 52% 60%;
+    --mobile-secondary: 262 30% 15%;
+    --mobile-accent: 262 50% 25%;
   }
 }
 
@@ -172,4 +206,46 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* System Theme Classes */
+  .theme-water {
+    --primary: var(--water-primary);
+    --secondary: var(--water-secondary);
+    --accent: var(--water-accent);
+  }
+
+  .theme-energy {
+    --primary: var(--energy-primary);
+    --secondary: var(--energy-secondary);
+    --accent: var(--energy-accent);
+  }
+
+  .theme-fixed-line {
+    --primary: var(--fixed-line-primary);
+    --secondary: var(--fixed-line-secondary);
+    --accent: var(--fixed-line-accent);
+  }
+
+  .theme-mobile {
+    --primary: var(--mobile-primary);
+    --secondary: var(--mobile-secondary);
+    --accent: var(--mobile-accent);
+  }
+
+  /* Utility classes for system colors */
+  .text-water { color: hsl(var(--water-primary)); }
+  .bg-water { background-color: hsl(var(--water-primary)); }
+  .border-water { border-color: hsl(var(--water-primary)); }
+
+  .text-energy { color: hsl(var(--energy-primary)); }
+  .bg-energy { background-color: hsl(var(--energy-primary)); }
+  .border-energy { border-color: hsl(var(--energy-primary)); }
+
+  .text-fixed-line { color: hsl(var(--fixed-line-primary)); }
+  .bg-fixed-line { background-color: hsl(var(--fixed-line-primary)); }
+  .border-fixed-line { border-color: hsl(var(--fixed-line-primary)); }
+
+  .text-mobile { color: hsl(var(--mobile-primary)); }
+  .bg-mobile { background-color: hsl(var(--mobile-primary)); }
+  .border-mobile { border-color: hsl(var(--mobile-primary)); }
 }
