@@ -58,7 +58,7 @@ export default function ConsolidatedReport() {
                   'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 
   const macroregioes = ['Norte', 'Sul', 'Leste', 'Oeste', 'Centro'];
-  const tiposEscola = ['EMEI', 'EMEF', 'EM', 'ESCOLA'];
+  const tiposEscola = ['EMEF', 'EMEI', 'EMEIF', 'PAR', 'COMP'];
   
   // Get unique school names for filter
   const availableSchools = [...new Set(allData.map(record => record.nome_escola))].sort();

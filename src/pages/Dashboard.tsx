@@ -11,6 +11,7 @@ import {
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { AlertCard } from "@/components/dashboard/AlertCard";
 import { MonthlyMiniCards } from "@/components/dashboard/MonthlyMiniCards";
+import { SystemToggleButtons } from "@/components/dashboard/SystemToggleButtons";
 import { TopSchoolsChart } from "@/components/charts/TopSchoolsChart";
 import { SchoolTypeDistribution } from "@/components/charts/SchoolTypeDistribution";
 import { UpcomingDues } from "@/components/charts/UpcomingDues";
@@ -69,13 +70,18 @@ export default function Dashboard({ data }: DashboardProps) {
     <div className="min-h-screen bg-background">
       <div className="p-6 space-y-8">
         {/* Header */}
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Dashboard de Gestão de {systemConfig.name}
-          </h1>
-          <p className="text-muted-foreground">
-            Acompanhamento completo dos gastos com {systemConfig.consumptionLabel.toLowerCase()} das escolas municipais
-          </p>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
+              Dashboard de Gestão de {systemConfig.name}
+            </h1>
+            <p className="text-muted-foreground">
+              Acompanhamento completo dos gastos com {systemConfig.consumptionLabel.toLowerCase()} das escolas municipais
+            </p>
+          </div>
+          
+          {/* System Toggle Buttons */}
+          <SystemToggleButtons />
         </div>
 
         {/* Monthly Mini Cards - Moved to top */}

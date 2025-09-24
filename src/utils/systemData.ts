@@ -55,7 +55,7 @@ export const generateMockSystemData = (systemType: SystemType, count: number = 5
     'Escola Municipal Central', 'EMEF Paulo Freire', 'EM Monteiro Lobato'
   ];
 
-  const tiposEscola = ['EMEI', 'EMEF', 'EM', 'ESCOLA'];
+  const tiposEscola = ['EMEF', 'EMEI', 'EMEIF', 'PAR', 'COMP'];
   const macroregioes = ['Norte', 'Sul', 'Leste', 'Oeste', 'Centro'];
   const bairros = ['Centro', 'Vila Nova', 'Jardim das Flores', 'Bela Vista', 'São João'];
 
