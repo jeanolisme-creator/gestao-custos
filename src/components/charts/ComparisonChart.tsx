@@ -10,6 +10,7 @@ import {
 } from "recharts";
 import { Card } from "@/components/ui/card";
 import { aggregateBySchool } from "@/utils/mockData";
+import { aggregateSystemData, UnifiedRecord } from "@/utils/systemData";
 
 interface ComparisonChartProps {
   data: any[];
@@ -22,21 +23,38 @@ export function ComparisonChart({
   title = "Comparativo entre Escolas",
   selectedSchools = []
 }: ComparisonChartProps) {
-  // Get top 5 schools if no schools are selected
-  const schools = selectedSchools.length > 0
-    ? aggregateBySchool(data).filter(school => 
-        selectedSchools.includes(school.schoolName)
-      )
-    : aggregateBySchool(data)
-        .sort((a, b) => b.totalValue - a.totalValue)
-        .slice(0, 5);
+  // Check if data is unified system data or old school data
+  const isSystemData = data.length > 0 && 'system_type' in data[0];
+  
+  let schools: any[] = [];
+  
+  if (isSystemData) {
+    // Use system data aggregation
+    const aggregatedData = aggregateSystemData(data as UnifiedRecord[]);
+    schools = selectedSchools.length > 0
+      ? aggregatedData.filter(school => 
+          selectedSchools.includes(school.schoolName)
+        )
+      : aggregatedData
+          .sort((a, b) => b.totalValue - a.totalValue)
+          .slice(0, 5);
+  } else {
+    // Use legacy data aggregation
+    schools = selectedSchools.length > 0
+      ? aggregateBySchool(data).filter(school => 
+          selectedSchools.includes(school.schoolName)
+        )
+      : aggregateBySchool(data)
+          .sort((a, b) => b.totalValue - a.totalValue)
+          .slice(0, 5);
+  }
 
   const chartData = schools.map(school => ({
     name: school.schoolName.replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '').slice(0, 15),
     fullName: school.schoolName,
-    consumo: Math.round(school.totalConsumption * 10) / 10,
-    agua: Math.round((school.totalValue - school.totalService) * 100) / 100,
-    servicos: Math.round(school.totalService * 100) / 100,
+    consumo: Math.round((school.totalConsumption || 0) * 10) / 10,
+    agua: Math.round((school.totalValue - (school.totalService || 0)) * 100) / 100,
+    servicos: Math.round((school.totalService || 0) * 100) / 100,
     total: Math.round(school.totalValue * 100) / 100,
   }));
 

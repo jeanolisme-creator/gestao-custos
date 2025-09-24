@@ -132,11 +132,17 @@ export const aggregateBySchool = (data: SchoolData[], month?: string) => {
     records: records.length,
     cadastros: [...new Set(records.map(r => r.cadastro))],
     upcomingDues: records.filter(r => {
-      const dueDate = new Date(r.vencto.split('/').reverse().join('-'));
-      const today = new Date();
-      const diffTime = dueDate.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays <= 7 && diffDays >= 0;
+      if (!r.vencto || typeof r.vencto !== 'string') return false;
+      try {
+        const dueDate = new Date(r.vencto.split('/').reverse().join('-'));
+        const today = new Date();
+        const diffTime = dueDate.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays <= 7 && diffDays >= 0;
+      } catch (error) {
+        console.warn('Error parsing date:', r.vencto, error);
+        return false;
+      }
     })
   }));
 };
