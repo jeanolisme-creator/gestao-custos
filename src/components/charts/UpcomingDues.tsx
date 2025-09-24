@@ -2,18 +2,25 @@ import { Calendar, AlertCircle, Clock } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { aggregateBySchool } from "@/utils/mockData";
+import { aggregateSystemData, UnifiedRecord } from "@/utils/systemData";
 
 interface UpcomingDuesProps {
   data: any[];
 }
 
 export function UpcomingDues({ data }: UpcomingDuesProps) {
-  const schools = aggregateBySchool(data);
+  // Check if data is unified system data or old school data
+  const isSystemData = data.length > 0 && 'system_type' in data[0];
+  
+  const schools = isSystemData 
+    ? aggregateSystemData(data as UnifiedRecord[])
+    : aggregateBySchool(data);
+    
   const upcomingDues = schools
-    .filter(school => school.upcomingDues.length > 0)
+    .filter(school => school.upcomingDues && school.upcomingDues.length > 0)
     .flatMap(school => 
       school.upcomingDues.map(due => ({
-        schoolName: school.schoolName,
+        schoolName: school.schoolName || 'Escola',
         ...due
       }))
     )
@@ -93,7 +100,7 @@ export function UpcomingDues({ data }: UpcomingDuesProps) {
                   </div>
                   <div>
                     <p className="font-medium text-sm text-foreground">
-                      {due.schoolName.replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '')}
+                      {(due.schoolName || 'Escola').replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '')}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Vencimento: {due.vencto}

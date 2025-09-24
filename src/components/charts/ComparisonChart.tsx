@@ -50,8 +50,8 @@ export function ComparisonChart({
   }
 
   const chartData = schools.map(school => ({
-    name: school.schoolName.replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '').slice(0, 15),
-    fullName: school.schoolName,
+    name: (school.schoolName || 'Escola').replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '').slice(0, 15),
+    fullName: school.schoolName || 'Escola',
     consumo: Math.round((school.totalConsumption || 0) * 10) / 10,
     agua: Math.round((school.totalValue - (school.totalService || 0)) * 100) / 100,
     servicos: Math.round((school.totalService || 0) * 100) / 100,

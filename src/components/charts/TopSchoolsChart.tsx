@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import { Card } from "@/components/ui/card";
 import { aggregateBySchool } from "@/utils/mockData";
+import { aggregateSystemData, UnifiedRecord } from "@/utils/systemData";
 
 interface TopSchoolsChartProps {
   data: any[];
@@ -20,15 +21,28 @@ interface TopSchoolsChartProps {
 }
 
 export function TopSchoolsChart({ data, month = 'dezembro' }: TopSchoolsChartProps) {
-  const schools = aggregateBySchool(data, month)
-    .sort((a, b) => b.totalValue - a.totalValue)
-    .slice(0, 15)
-    .map(school => ({
-      name: school.schoolName.replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '').slice(0, 20),
-      fullName: school.schoolName,
-      consumo: Math.round(school.totalConsumption * 10) / 10,
-      valor: Math.round(school.totalValue),
-    }));
+  // Check if data is unified system data or old school data
+  const isSystemData = data.length > 0 && 'system_type' in data[0];
+  
+  const schools = isSystemData 
+    ? aggregateSystemData(data as UnifiedRecord[])
+        .sort((a, b) => b.totalValue - a.totalValue)
+        .slice(0, 15)
+        .map(school => ({
+          name: (school.schoolName || 'Escola').replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '').slice(0, 20),
+          fullName: school.schoolName || 'Escola',
+          consumo: Math.round((school.totalConsumption || 0) * 10) / 10,
+          valor: Math.round(school.totalValue || 0),
+        }))
+    : aggregateBySchool(data, month)
+        .sort((a, b) => b.totalValue - a.totalValue)
+        .slice(0, 15)
+        .map(school => ({
+          name: school.schoolName.replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '').slice(0, 20),
+          fullName: school.schoolName,
+          consumo: Math.round(school.totalConsumption * 10) / 10,
+          valor: Math.round(school.totalValue),
+        }));
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {

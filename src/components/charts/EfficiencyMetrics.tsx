@@ -12,13 +12,19 @@ import {
   Leaf
 } from "lucide-react";
 import { aggregateBySchool } from "@/utils/mockData";
+import { aggregateSystemData, UnifiedRecord } from "@/utils/systemData";
 
 interface EfficiencyMetricsProps {
   data: any[];
 }
 
 export function EfficiencyMetrics({ data }: EfficiencyMetricsProps) {
-  const schools = aggregateBySchool(data);
+  // Check if data is unified system data or old school data
+  const isSystemData = data.length > 0 && 'system_type' in data[0];
+  
+  const schools = isSystemData 
+    ? aggregateSystemData(data as UnifiedRecord[])
+    : aggregateBySchool(data);
   
   // Calculate efficiency metrics
   const totalConsumption = schools.reduce((sum, s) => sum + s.totalConsumption, 0);
@@ -132,15 +138,15 @@ export function EfficiencyMetrics({ data }: EfficiencyMetricsProps) {
               <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-success/5 border border-success/20">
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    #{index + 1} {school.schoolName.replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '').slice(0, 20)}
+                    #{index + 1} {(school.schoolName || 'Escola').replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '').slice(0, 20)}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {school.totalConsumption.toFixed(1)}m³ • {formatCurrency(school.totalValue)}
+                    {(school.totalConsumption || 0).toFixed(1)}m³ • {formatCurrency(school.totalValue || 0)}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-success">
-                    R$ {school.costPerM3.toFixed(2)}/m³
+                    R$ {(school.costPerM3 || 0).toFixed(2)}/m³
                   </p>
                 </div>
               </div>
@@ -159,18 +165,20 @@ export function EfficiencyMetrics({ data }: EfficiencyMetricsProps) {
               <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-warning/5 border border-warning/20">
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    {school.schoolName.replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '').slice(0, 20)}
+                    {(school.schoolName || 'Escola').replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '').slice(0, 20)}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {school.totalConsumption.toFixed(1)}m³ • {formatCurrency(school.totalValue)}
+                    {(school.totalConsumption || 0).toFixed(1)}m³ • {formatCurrency(school.totalValue || 0)}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-warning">
-                    R$ {school.costPerM3.toFixed(2)}/m³
+                    R$ {(school.costPerM3 || 0).toFixed(2)}/m³
                   </p>
                   <Badge variant="outline" className="text-xs">
-                    +{((school.costPerM3 / topEfficient[0].costPerM3 - 1) * 100).toFixed(0)}%
+                    +{topEfficient[0] && topEfficient[0].costPerM3 > 0 
+                      ? (((school.costPerM3 || 0) / topEfficient[0].costPerM3 - 1) * 100).toFixed(0)
+                      : '0'}%
                   </Badge>
                 </div>
               </div>
