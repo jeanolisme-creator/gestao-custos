@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -32,6 +33,15 @@ export default function Charts({ data }: ChartsProps) {
   const [selectedSchool, setSelectedSchool] = useState<string>("all");
   const [selectedYear, setSelectedYear] = useState<string>("2025");
   const [selectedChartType, setSelectedChartType] = useState<string>("line");
+  const [selectedSchoolsForComparison, setSelectedSchoolsForComparison] = useState<string[]>([]);
+
+  const handleSchoolSelection = (schoolName: string, checked: boolean) => {
+    if (checked && selectedSchoolsForComparison.length < 5) {
+      setSelectedSchoolsForComparison([...selectedSchoolsForComparison, schoolName]);
+    } else if (!checked) {
+      setSelectedSchoolsForComparison(selectedSchoolsForComparison.filter(s => s !== schoolName));
+    }
+  };
 
   const handleApplyFilters = () => {
     // Filter logic will be implemented here
@@ -151,15 +161,42 @@ export default function Charts({ data }: ChartsProps) {
 
           {/* Comparison Chart */}
           <Card className="p-6">
-            <div className="space-y-2 mb-4">
-              <h2 className="text-xl font-semibold text-foreground">
-                Comparativo: Consumo vs Valor
-              </h2>
-              <p className="text-muted-foreground">
-                Análise combinada de consumo e gastos
-              </p>
+            <div className="space-y-4 mb-4">
+              <div className="space-y-2">
+                <h2 className="text-xl font-semibold text-foreground">
+                  Comparativo entre Escolas
+                </h2>
+                <p className="text-muted-foreground">
+                  Selecione até 5 escolas para comparar dados ({selectedSchoolsForComparison.length}/5 selecionadas)
+                </p>
+              </div>
+              
+              <div className="border rounded-lg p-4 max-h-40 overflow-y-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {schoolNames.slice(0, 15).map((school) => (
+                    <div key={school} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={school}
+                        checked={selectedSchoolsForComparison.includes(school)}
+                        onCheckedChange={(checked) => handleSchoolSelection(school, checked as boolean)}
+                        disabled={!selectedSchoolsForComparison.includes(school) && selectedSchoolsForComparison.length >= 5}
+                      />
+                      <label 
+                        htmlFor={school} 
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 truncate"
+                      >
+                        {school.replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '').slice(0, 25)}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
-            <ComparisonChart data={data} />
+            <ComparisonChart 
+              data={data} 
+              selectedSchools={selectedSchoolsForComparison}
+              title={`Comparativo: ${selectedSchoolsForComparison.length > 0 ? `${selectedSchoolsForComparison.length} escolas selecionadas` : 'Top 5 escolas'}`}
+            />
           </Card>
 
           {/* Top Schools Chart */}

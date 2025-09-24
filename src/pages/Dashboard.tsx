@@ -22,18 +22,22 @@ import { CostTrendChart } from "@/components/charts/CostTrendChart";
 import { EfficiencyMetrics } from "@/components/charts/EfficiencyMetrics";
 import { SeasonalAnalysis } from "@/components/charts/SeasonalAnalysis";
 import { SchoolData, aggregateBySchool, getMonthlyTotals, getSchoolTypeDistribution, getAlerts } from "@/utils/mockData";
+import { useSystem } from "@/contexts/SystemContext";
+import { generateMockSystemData, aggregateSystemData, getSystemMonthlyTotals, getSystemAlerts } from "@/utils/systemData";
 
 interface DashboardProps {
   data: SchoolData[];
 }
 
 export default function Dashboard({ data }: DashboardProps) {
-  // Calculate metrics with provided data
+  const { currentSystem, systemConfig } = useSystem();
+  // Generate system-specific data
+  const systemData = generateMockSystemData(currentSystem, 50);
   const currentMonth = 'dezembro';
-  const monthlyTotals = getMonthlyTotals(data);
-  const currentMonthData = aggregateBySchool(data, currentMonth);
-  const yearlyData = aggregateBySchool(data);
-  const alerts = getAlerts(data);
+  const monthlyTotals = getSystemMonthlyTotals(systemData);
+  const currentMonthData = aggregateSystemData(systemData, currentMonth);
+  const yearlyData = aggregateSystemData(systemData);
+  const alerts = getSystemAlerts(systemData);
   const schoolTypeDistribution = getSchoolTypeDistribution(data, currentMonth);
 
   // Calculate metrics
@@ -67,12 +71,15 @@ export default function Dashboard({ data }: DashboardProps) {
         {/* Header */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Dashboard de Gestão de Águas
+            Dashboard de Gestão de {systemConfig.name}
           </h1>
           <p className="text-muted-foreground">
-            Acompanhamento completo dos gastos com água das escolas municipais
+            Acompanhamento completo dos gastos com {systemConfig.consumptionLabel.toLowerCase()} das escolas municipais
           </p>
         </div>
+
+        {/* Monthly Mini Cards - Moved to top */}
+        <MonthlyMiniCards data={systemData} />
 
         {/* Main Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -110,15 +117,15 @@ export default function Dashboard({ data }: DashboardProps) {
         {/* Consumption Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <MetricCard
-            title="Consumo Total Mensal"
-            value={`${currentMonthConsumption.toFixed(0)}m³`}
+            title={`${systemConfig.consumptionLabel} Total Mensal`}
+            value={`${currentMonthConsumption.toFixed(0)}${systemConfig.unit}`}
             icon={Droplets}
             description="Dezembro 2025"
             variant="primary"
           />
           <MetricCard
-            title="Consumo Total Anual"
-            value={`${yearlyConsumption.toFixed(0)}m³`}
+            title={`${systemConfig.consumptionLabel} Total Anual`}
+            value={`${yearlyConsumption.toFixed(0)}${systemConfig.unit}`}
             icon={Droplets}
             description="Janeiro - Dezembro 2025"
             variant="success"
@@ -149,14 +156,14 @@ export default function Dashboard({ data }: DashboardProps) {
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <TopSchoolsChart data={data} />
+          <TopSchoolsChart data={systemData} />
           <SchoolTypeDistribution data={data} month="dezembro" />
         </div>
 
         {/* Additional Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <EvolutionChart data={data} />
-          <ComparisonChart data={data} />
+          <EvolutionChart data={systemData} />
+          <ComparisonChart data={systemData} />
         </div>
 
         {/* New Analysis Charts */}
@@ -165,16 +172,13 @@ export default function Dashboard({ data }: DashboardProps) {
             Análises Avançadas
           </h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <WaterQualityChart data={data} />
-            <ConsumptionHeatmap data={data} />
-            <CostTrendChart data={data} />
-            <EfficiencyMetrics data={data} />
-            <SeasonalAnalysis data={data} />
+            <WaterQualityChart data={systemData} />
+            <ConsumptionHeatmap data={systemData} />
+            <CostTrendChart data={systemData} />
+            <EfficiencyMetrics data={systemData} />
+            <SeasonalAnalysis data={systemData} />
           </div>
         </div>
-
-        {/* Monthly Mini Cards */}
-        <MonthlyMiniCards data={data} />
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
-import { getMonthlyTotals } from "@/utils/mockData";
+import { getSystemMonthlyTotals } from "@/utils/systemData";
+import { useSystem } from "@/contexts/SystemContext";
 import { cn } from "@/lib/utils";
 
 interface MonthlyMiniCardsProps {
@@ -7,7 +8,8 @@ interface MonthlyMiniCardsProps {
 }
 
 export function MonthlyMiniCards({ data }: MonthlyMiniCardsProps) {
-  const monthlyTotals = getMonthlyTotals(data);
+  const { systemConfig } = useSystem();
+  const monthlyTotals = getSystemMonthlyTotals(data);
   const currentMonth = 11; // December (0-indexed)
 
   const formatCurrency = (value: number) => {
@@ -52,7 +54,7 @@ export function MonthlyMiniCards({ data }: MonthlyMiniCardsProps) {
                 "text-xs space-y-1",
                 index === currentMonth ? "text-current opacity-75" : "text-muted-foreground"
               )}>
-                <p>{month.totalConsumption.toFixed(0)}m³</p>
+                <p>{month.totalConsumption.toFixed(0)}{systemConfig.unit}</p>
                 <p>{month.schoolCount} escolas</p>
               </div>
             </div>

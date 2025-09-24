@@ -44,6 +44,7 @@ export default function ConsolidatedReport() {
   const [selectedMonth, setSelectedMonth] = useState('all');
   const [selectedMacroregiao, setSelectedMacroregiao] = useState('all');
   const [selectedTipoEscola, setSelectedTipoEscola] = useState('all');
+  const [selectedSchool, setSelectedSchool] = useState('all');
 
   // Generate mock data for all systems
   const allData: UnifiedRecord[] = [
@@ -58,6 +59,9 @@ export default function ConsolidatedReport() {
 
   const macroregioes = ['Norte', 'Sul', 'Leste', 'Oeste', 'Centro'];
   const tiposEscola = ['EMEI', 'EMEF', 'EM', 'ESCOLA'];
+  
+  // Get unique school names for filter
+  const availableSchools = [...new Set(allData.map(record => record.nome_escola))].sort();
 
   // Filter and consolidate data
   const consolidatedData: ConsolidatedData[] = (() => {
@@ -75,6 +79,10 @@ export default function ConsolidatedReport() {
 
     if (selectedTipoEscola && selectedTipoEscola !== 'all') {
       filteredData = filteredData.filter(record => record.tipo_escola === selectedTipoEscola);
+    }
+
+    if (selectedSchool && selectedSchool !== 'all') {
+      filteredData = filteredData.filter(record => record.nome_escola === selectedSchool);
     }
 
     // Group by school
@@ -159,7 +167,7 @@ export default function ConsolidatedReport() {
           <CardTitle>Filtros</CardTitle>
           <CardDescription>Configure os filtros para análise detalhada</CardDescription>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <CardContent className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
             <SelectTrigger>
               <SelectValue placeholder="Todos os meses" />
@@ -192,6 +200,20 @@ export default function ConsolidatedReport() {
               <SelectItem value="all">Todos os tipos</SelectItem>
               {tiposEscola.map(tipo => (
                 <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedSchool} onValueChange={setSelectedSchool}>
+            <SelectTrigger>
+              <SelectValue placeholder="Todas as escolas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as escolas</SelectItem>
+              {availableSchools.map(school => (
+                <SelectItem key={school} value={school}>
+                  {school.replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '').slice(0, 30)}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
