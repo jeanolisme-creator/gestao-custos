@@ -41,9 +41,9 @@ interface ConsolidatedData {
 export default function ConsolidatedReport() {
   const { allSystems } = useSystem();
   const [selectedYear] = useState('2025');
-  const [selectedMonth, setSelectedMonth] = useState('');
-  const [selectedMacroregiao, setSelectedMacroregiao] = useState('');
-  const [selectedTipoEscola, setSelectedTipoEscola] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('all');
+  const [selectedMacroregiao, setSelectedMacroregiao] = useState('all');
+  const [selectedTipoEscola, setSelectedTipoEscola] = useState('all');
 
   // Generate mock data for all systems
   const allData: UnifiedRecord[] = [
@@ -63,17 +63,17 @@ export default function ConsolidatedReport() {
   const consolidatedData: ConsolidatedData[] = (() => {
     let filteredData = allData;
 
-    if (selectedMonth) {
+    if (selectedMonth && selectedMonth !== 'all') {
       filteredData = filteredData.filter(record => 
         record.mes_ano_referencia.toLowerCase().includes(selectedMonth.toLowerCase())
       );
     }
 
-    if (selectedMacroregiao) {
+    if (selectedMacroregiao && selectedMacroregiao !== 'all') {
       filteredData = filteredData.filter(record => record.macroregiao === selectedMacroregiao);
     }
 
-    if (selectedTipoEscola) {
+    if (selectedTipoEscola && selectedTipoEscola !== 'all') {
       filteredData = filteredData.filter(record => record.tipo_escola === selectedTipoEscola);
     }
 
@@ -165,7 +165,7 @@ export default function ConsolidatedReport() {
               <SelectValue placeholder="Todos os meses" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os meses</SelectItem>
+              <SelectItem value="all">Todos os meses</SelectItem>
               {months.map(month => (
                 <SelectItem key={month} value={month}>{month}</SelectItem>
               ))}
@@ -177,7 +177,7 @@ export default function ConsolidatedReport() {
               <SelectValue placeholder="Todas as macrorregiões" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas as macrorregiões</SelectItem>
+              <SelectItem value="all">Todas as macrorregiões</SelectItem>
               {macroregioes.map(regiao => (
                 <SelectItem key={regiao} value={regiao}>{regiao}</SelectItem>
               ))}
@@ -189,7 +189,7 @@ export default function ConsolidatedReport() {
               <SelectValue placeholder="Todos os tipos" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os tipos</SelectItem>
+              <SelectItem value="all">Todos os tipos</SelectItem>
               {tiposEscola.map(tipo => (
                 <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
               ))}
