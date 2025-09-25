@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Droplets, Zap, Phone, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -10,57 +10,120 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 
-interface SchoolRecord {
-  id: string;
-  cadastro: string;
-  nome_escola: string;
-  responsavel: string;
-  hidrometro: string;
-  endereco_completo: string;
-  mes_ano_referencia: string;
-  data_vencimento: string;
-  consumo_m3: number;
-  valor_gasto: number;
-  valor_servicos: number;
-  numero_dias: number;
-  descricao_servicos: string;
-  ocorrencias_pendencias: string;
-  created_at: string;
+type SystemType = 'water' | 'energy' | 'fixed-line' | 'mobile';
+
+interface SystemConfig {
+  name: string;
+  icon: any;
+  color: string;
+  table: string;
+  fields: string[];
 }
 
+const systemConfigs: Record<SystemType, SystemConfig> = {
+  water: {
+    name: 'Gestão de Água',
+    icon: Droplets,
+    color: 'text-water',
+    table: 'school_records',
+    fields: ['cadastro', 'proprietario', 'nome_escola', 'data_leitura_anterior', 'data_leitura_atual', 'valor_gasto', 'data_vencimento', 'endereco_completo', 'numero', 'bairro', 'consumo_m3', 'numero_dias', 'hidrometro', 'descricao_servicos', 'valor_servicos', 'macroregiao', 'ocorrencias_pendencias']
+  },
+  energy: {
+    name: 'Gestão de Energia',
+    icon: Zap,
+    color: 'text-energy',
+    table: 'energy_records',
+    fields: ['cadastro_cliente', 'proprietario', 'nome_escola', 'data_leitura_anterior', 'data_leitura_atual', 'valor_gasto', 'data_vencimento', 'endereco', 'numero', 'bairro', 'consumo_kwh', 'numero_dias', 'tipo_instalacao', 'relogio', 'demanda_kwh', 'utilizado', 'mes_ano_referencia', 'macroregiao', 'ocorrencias_pendencias']
+  },
+  'fixed-line': {
+    name: 'Gestão de Linha Fixa',
+    icon: Phone,
+    color: 'text-fixed-line',
+    table: 'fixed_line_records',
+    fields: ['cadastro_cliente', 'proprietario', 'nome_escola', 'numero_linha', 'valor_gasto', 'data_vencimento', 'endereco', 'numero', 'bairro', 'macroregiao', 'ocorrencias_pendencias']
+  },
+  mobile: {
+    name: 'Gestão de Celular',
+    icon: Smartphone,
+    color: 'text-mobile',
+    table: 'mobile_records',
+    fields: ['cadastro_cliente', 'proprietario', 'nome_escola', 'numero_linha', 'valor_gasto', 'data_vencimento', 'endereco', 'numero', 'bairro', 'macroregiao', 'ocorrencias_pendencias']
+  }
+};
+
+const fieldLabels: Record<string, string> = {
+  cadastro: 'Cadastro',
+  cadastro_cliente: 'Cadastro Cliente',
+  proprietario: 'Proprietário',
+  nome_escola: 'Nome da Escola',
+  data_leitura_anterior: 'Data Leitura Anterior',
+  data_leitura_atual: 'Data Leitura Atual',
+  valor_gasto: 'Valor (R$)',
+  data_vencimento: 'Vencimento',
+  endereco: 'Endereço',
+  endereco_completo: 'Endereço Completo',
+  numero: 'Número',
+  bairro: 'Bairro',
+  consumo_m3: 'Consumo (m³)',
+  consumo_kwh: 'Consumo (kWh)',
+  numero_dias: 'Nº de Dias',
+  hidrometro: 'Hidrômetro',
+  tipo_instalacao: 'Instalação',
+  relogio: 'Medidor',
+  demanda_kwh: 'Demanda (kWh)',
+  utilizado: 'Utilizado',
+  mes_ano_referencia: 'Referência',
+  numero_linha: 'Número da Linha',
+  descricao_servicos: 'Serviços',
+  valor_servicos: 'Valor dos Serviços',
+  macroregiao: 'Macroregião',
+  ocorrencias_pendencias: 'Verificar Ocorrência'
+};
+
 export default function Records() {
-  const [records, setRecords] = useState<SchoolRecord[]>([]);
+  const location = useLocation();
+  const urlParams = new URLSearchParams(location.search);
+  const systemParam = urlParams.get('system') as SystemType || 'water';
+  
+  const [currentSystem, setCurrentSystem] = useState<SystemType>(systemParam);
+  const [records, setRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    cadastro: '',
-    nome_escola: '',
-    responsavel: '',
-    hidrometro: '',
-    endereco_completo: '',
-    mes_ano_referencia: '',
-    data_vencimento: '',
-    consumo_m3: '',
-    valor_gasto: '',
-    valor_servicos: '',
-    numero_dias: '',
-    descricao_servicos: '',
-    ocorrencias_pendencias: ''
-  });
+  const [formData, setFormData] = useState<Record<string, string>>({});
+  
   const { user } = useAuth();
   const { toast } = useToast();
+
+  const config = systemConfigs[currentSystem];
+  const Icon = config.icon;
+
+  useEffect(() => {
+    const newSystem = urlParams.get('system') as SystemType || 'water';
+    setCurrentSystem(newSystem);
+    resetForm();
+  }, [location.search]);
 
   useEffect(() => {
     if (user) {
       fetchRecords();
     }
-  }, [user]);
+  }, [user, currentSystem]);
+
+  const resetForm = () => {
+    const initialFormData: Record<string, string> = {};
+    config.fields.forEach(field => {
+      initialFormData[field] = '';
+    });
+    setFormData(initialFormData);
+  };
 
   const fetchRecords = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from('school_records')
+      .from(config.table as any)
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -81,26 +144,32 @@ export default function Records() {
     
     if (!user) return;
 
-    const { error } = await supabase
-      .from('school_records')
-      .insert([
-        {
-          user_id: user.id,
-          cadastro: formData.cadastro,
-          nome_escola: formData.nome_escola,
-          responsavel: formData.responsavel,
-          hidrometro: formData.hidrometro,
-          endereco_completo: formData.endereco_completo,
-          mes_ano_referencia: formData.mes_ano_referencia,
-          data_vencimento: formData.data_vencimento || null,
-          consumo_m3: formData.consumo_m3 ? parseFloat(formData.consumo_m3) : null,
-          valor_gasto: formData.valor_gasto ? parseFloat(formData.valor_gasto) : null,
-          valor_servicos: formData.valor_servicos ? parseFloat(formData.valor_servicos) : null,
-          numero_dias: formData.numero_dias ? parseInt(formData.numero_dias) : null,
-          descricao_servicos: formData.descricao_servicos,
-          ocorrencias_pendencias: formData.ocorrencias_pendencias
+    const submitData: any = { user_id: user.id };
+    
+    // Convert form data to appropriate types
+    config.fields.forEach(field => {
+      const value = formData[field];
+      if (value) {
+        if (field.includes('valor') || field.includes('consumo') || field.includes('demanda')) {
+          submitData[field] = parseFloat(value);
+        } else if (field === 'numero_dias') {
+          submitData[field] = parseInt(value);
+        } else if (field.includes('data_')) {
+          submitData[field] = value || null;
+        } else {
+          submitData[field] = value;
         }
-      ]);
+      }
+    });
+
+    // Add required fields that might be missing
+    if (!submitData.mes_ano_referencia && currentSystem !== 'water') {
+      submitData.mes_ano_referencia = new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    }
+
+    const { error } = await supabase
+      .from(config.table as any)
+      .insert([submitData]);
 
     if (error) {
       toast({
@@ -111,24 +180,10 @@ export default function Records() {
     } else {
       toast({
         title: "Registro criado com sucesso!",
-        description: "O novo registro da escola foi adicionado."
+        description: `O novo registro de ${config.name.toLowerCase()} foi adicionado.`
       });
       setDialogOpen(false);
-      setFormData({
-        cadastro: '',
-        nome_escola: '',
-        responsavel: '',
-        hidrometro: '',
-        endereco_completo: '',
-        mes_ano_referencia: '',
-        data_vencimento: '',
-        consumo_m3: '',
-        valor_gasto: '',
-        valor_servicos: '',
-        numero_dias: '',
-        descricao_servicos: '',
-        ocorrencias_pendencias: ''
-      });
+      resetForm();
       fetchRecords();
     }
   };
@@ -146,10 +201,44 @@ export default function Records() {
 
   return (
     <div className="space-y-6">
+      {/* System Selector */}
+      <Card className="p-4 bg-gradient-card border-border shadow-card">
+        <div className="flex flex-wrap gap-2 mb-4">
+          {Object.entries(systemConfigs).map(([systemId, sysConfig]) => {
+            const SysIcon = sysConfig.icon;
+            const isActive = currentSystem === systemId;
+            
+            return (
+              <Button
+                key={systemId}
+                onClick={() => {
+                  setCurrentSystem(systemId as SystemType);
+                  window.history.pushState({}, '', `/records?system=${systemId}`);
+                  resetForm();
+                }}
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                className={cn(
+                  "transition-all duration-300",
+                  isActive && sysConfig.color,
+                  !isActive && `border-opacity-30 ${sysConfig.color} hover:bg-opacity-10`
+                )}
+              >
+                <SysIcon className="h-4 w-4 mr-2" />
+                {sysConfig.name}
+              </Button>
+            );
+          })}
+        </div>
+      </Card>
+
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Registros das Escolas</h1>
-          <p className="text-muted-foreground">Gerencie os registros de consumo das escolas</p>
+          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+            <Icon className={cn("h-8 w-8", config.color)} />
+            {config.name}
+          </h1>
+          <p className="text-muted-foreground">Gerencie os registros de {config.name.toLowerCase()}</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -158,131 +247,48 @@ export default function Records() {
               Novo Registro
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Novo Registro de Escola</DialogTitle>
+              <DialogTitle>Novo Registro - {config.name}</DialogTitle>
               <DialogDescription>
-                Preencha os dados do registro da escola.
+                Preencha os dados do registro de {config.name.toLowerCase()}.
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cadastro">Cadastro *</Label>
-                  <Input
-                    id="cadastro"
-                    value={formData.cadastro}
-                    onChange={(e) => handleInputChange('cadastro', e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nome_escola">Nome da Escola *</Label>
-                  <Input
-                    id="nome_escola"
-                    value={formData.nome_escola}
-                    onChange={(e) => handleInputChange('nome_escola', e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="responsavel">Responsável</Label>
-                  <Input
-                    id="responsavel"
-                    value={formData.responsavel}
-                    onChange={(e) => handleInputChange('responsavel', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hidrometro">Hidrômetro</Label>
-                  <Input
-                    id="hidrometro"
-                    value={formData.hidrometro}
-                    onChange={(e) => handleInputChange('hidrometro', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor="endereco_completo">Endereço Completo</Label>
-                  <Input
-                    id="endereco_completo"
-                    value={formData.endereco_completo}
-                    onChange={(e) => handleInputChange('endereco_completo', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="mes_ano_referencia">Mês/Ano de Referência *</Label>
-                  <Input
-                    id="mes_ano_referencia"
-                    placeholder="Ex: Janeiro/2024"
-                    value={formData.mes_ano_referencia}
-                    onChange={(e) => handleInputChange('mes_ano_referencia', e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="data_vencimento">Data de Vencimento</Label>
-                  <Input
-                    id="data_vencimento"
-                    type="date"
-                    value={formData.data_vencimento}
-                    onChange={(e) => handleInputChange('data_vencimento', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="consumo_m3">Consumo (m³)</Label>
-                  <Input
-                    id="consumo_m3"
-                    type="number"
-                    step="0.01"
-                    value={formData.consumo_m3}
-                    onChange={(e) => handleInputChange('consumo_m3', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="valor_gasto">Valor Gasto (R$)</Label>
-                  <Input
-                    id="valor_gasto"
-                    type="number"
-                    step="0.01"
-                    value={formData.valor_gasto}
-                    onChange={(e) => handleInputChange('valor_gasto', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="valor_servicos">Valor de Serviços (R$)</Label>
-                  <Input
-                    id="valor_servicos"
-                    type="number"
-                    step="0.01"
-                    value={formData.valor_servicos}
-                    onChange={(e) => handleInputChange('valor_servicos', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="numero_dias">Número de Dias</Label>
-                  <Input
-                    id="numero_dias"
-                    type="number"
-                    value={formData.numero_dias}
-                    onChange={(e) => handleInputChange('numero_dias', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor="descricao_servicos">Descrição de Serviços</Label>
-                  <Textarea
-                    id="descricao_servicos"
-                    value={formData.descricao_servicos}
-                    onChange={(e) => handleInputChange('descricao_servicos', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2 col-span-2">
-                  <Label htmlFor="ocorrencias_pendencias">Ocorrências/Pendências</Label>
-                  <Textarea
-                    id="ocorrencias_pendencias"
-                    value={formData.ocorrencias_pendencias}
-                    onChange={(e) => handleInputChange('ocorrencias_pendencias', e.target.value)}
-                  />
-                </div>
+                {config.fields.map(field => {
+                  const isTextarea = field.includes('servicos') || field.includes('ocorrencias');
+                  const isDate = field.includes('data_') || field === 'data_vencimento';
+                  const isNumber = field.includes('valor') || field.includes('consumo') || field.includes('demanda') || field === 'numero_dias';
+                  const isRequired = ['cadastro', 'cadastro_cliente', 'nome_escola'].includes(field);
+                  const colSpan = isTextarea ? 'col-span-2' : '';
+
+                  return (
+                    <div key={field} className={cn("space-y-2", colSpan)}>
+                      <Label htmlFor={field}>
+                        {fieldLabels[field] || field} {isRequired && '*'}
+                      </Label>
+                      {isTextarea ? (
+                        <Textarea
+                          id={field}
+                          value={formData[field] || ''}
+                          onChange={(e) => handleInputChange(field, e.target.value)}
+                          required={isRequired}
+                        />
+                      ) : (
+                        <Input
+                          id={field}
+                          type={isDate ? 'date' : isNumber ? 'number' : 'text'}
+                          step={isNumber && field.includes('valor') ? '0.01' : undefined}
+                          value={formData[field] || ''}
+                          onChange={(e) => handleInputChange(field, e.target.value)}
+                          required={isRequired}
+                          placeholder={field === 'mes_ano_referencia' ? 'Ex: Janeiro/2024' : undefined}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               <div className="flex justify-end space-x-2 pt-4">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
@@ -299,7 +305,7 @@ export default function Records() {
         <CardHeader>
           <CardTitle>Lista de Registros</CardTitle>
           <CardDescription>
-            Todos os registros de consumo das escolas cadastradas
+            Todos os registros de {config.name.toLowerCase()} cadastrados
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -314,9 +320,6 @@ export default function Records() {
                   <TableRow>
                     <TableHead>Cadastro</TableHead>
                     <TableHead>Nome da Escola</TableHead>
-                    <TableHead>Responsável</TableHead>
-                    <TableHead>Mês/Ano</TableHead>
-                    <TableHead>Consumo (m³)</TableHead>
                     <TableHead>Valor Gasto</TableHead>
                     <TableHead>Data de Criação</TableHead>
                   </TableRow>
@@ -324,13 +327,16 @@ export default function Records() {
                 <TableBody>
                   {records.map((record) => (
                     <TableRow key={record.id}>
-                      <TableCell className="font-medium">{record.cadastro}</TableCell>
+                      <TableCell className="font-medium">
+                        {record.cadastro || record.cadastro_cliente || '-'}
+                      </TableCell>
                       <TableCell>{record.nome_escola}</TableCell>
-                      <TableCell>{record.responsavel || '-'}</TableCell>
-                      <TableCell>{record.mes_ano_referencia}</TableCell>
-                      <TableCell>{record.consumo_m3 ? `${record.consumo_m3} m³` : '-'}</TableCell>
-                      <TableCell>{record.valor_gasto ? `R$ ${record.valor_gasto.toFixed(2)}` : '-'}</TableCell>
-                      <TableCell>{new Date(record.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                      <TableCell>
+                        {record.valor_gasto ? `R$ ${record.valor_gasto.toFixed(2)}` : '-'}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(record.created_at).toLocaleDateString('pt-BR')}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

@@ -329,71 +329,85 @@ export default function ConsolidatedReport() {
                   <th className="text-left p-3 font-medium">Escola</th>
                   <th className="text-left p-3 font-medium">Tipo</th>
                   <th className="text-left p-3 font-medium">Macrorregião</th>
+                  <th className="text-left p-3 font-medium">Nº Alunos</th>
                   <th className="text-right p-3 font-medium text-water">Água</th>
                   <th className="text-right p-3 font-medium text-energy">Energia</th>
                   <th className="text-right p-3 font-medium text-fixed-line">Linha Fixa</th>
                   <th className="text-right p-3 font-medium text-mobile">Celular</th>
                   <th className="text-right p-3 font-medium">Total</th>
+                  <th className="text-right p-3 font-medium">Custo/Aluno</th>
                   <th className="text-center p-3 font-medium">Distribuição</th>
                 </tr>
               </thead>
               <tbody>
-                {consolidatedData.map((school, index) => (
-                  <tr key={index} className="border-b hover:bg-muted/50">
-                    <td className="p-3 font-medium">{school.schoolName}</td>
-                    <td className="p-3">
-                      <Badge variant="outline">{school.tipoEscola}</Badge>
-                    </td>
-                    <td className="p-3">
-                      <Badge variant="secondary">{school.macroregiao}</Badge>
-                    </td>
-                    <td className="p-3 text-right text-water font-medium">
-                      {formatCurrency(school.water.value)}
-                    </td>
-                    <td className="p-3 text-right text-energy font-medium">
-                      {formatCurrency(school.energy.value)}
-                    </td>
-                    <td className="p-3 text-right text-fixed-line font-medium">
-                      {formatCurrency(school.fixedLine.value)}
-                    </td>
-                    <td className="p-3 text-right text-mobile font-medium">
-                      {formatCurrency(school.mobile.value)}
-                    </td>
-                    <td className="p-3 text-right font-bold">
-                      {formatCurrency(school.total)}
-                    </td>
-                    <td className="p-3">
-                      <div className="flex items-center gap-2 min-w-[200px]">
-                        <div className="flex-1 space-y-1">
-                          <div className="flex gap-1">
-                            <div 
-                              className="h-2 bg-water rounded-sm" 
-                              style={{ width: `${(school.water.value / school.total) * 100}%` }}
-                            />
-                            <div 
-                              className="h-2 bg-energy rounded-sm" 
-                              style={{ width: `${(school.energy.value / school.total) * 100}%` }}
-                            />
-                            <div 
-                              className="h-2 bg-fixed-line rounded-sm" 
-                              style={{ width: `${(school.fixedLine.value / school.total) * 100}%` }}
-                            />
-                            <div 
-                              className="h-2 bg-mobile rounded-sm" 
-                              style={{ width: `${(school.mobile.value / school.total) * 100}%` }}
-                            />
-                          </div>
-                          <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>{((school.water.value / school.total) * 100).toFixed(0)}%</span>
-                            <span>{((school.energy.value / school.total) * 100).toFixed(0)}%</span>
-                            <span>{((school.fixedLine.value / school.total) * 100).toFixed(0)}%</span>
-                            <span>{((school.mobile.value / school.total) * 100).toFixed(0)}%</span>
+                {consolidatedData.map((school, index) => {
+                  // Mock student count - in real app, this would come from school data
+                  const studentCount = Math.floor(Math.random() * 800) + 200;
+                  const costPerStudent = school.total / studentCount;
+
+                  return (
+                    <tr key={index} className="border-b hover:bg-muted/50">
+                      <td className="p-3 font-medium">{school.schoolName}</td>
+                      <td className="p-3">
+                        <Badge variant="outline">{school.tipoEscola}</Badge>
+                      </td>
+                      <td className="p-3">
+                        <Badge variant="secondary">{school.macroregiao}</Badge>
+                      </td>
+                      <td className="p-3 font-medium">
+                        {studentCount} alunos
+                      </td>
+                      <td className="p-3 text-right text-water font-medium">
+                        {formatCurrency(school.water.value)}
+                      </td>
+                      <td className="p-3 text-right text-energy font-medium">
+                        {formatCurrency(school.energy.value)}
+                      </td>
+                      <td className="p-3 text-right text-fixed-line font-medium">
+                        {formatCurrency(school.fixedLine.value)}
+                      </td>
+                      <td className="p-3 text-right text-mobile font-medium">
+                        {formatCurrency(school.mobile.value)}
+                      </td>
+                      <td className="p-3 text-right font-bold">
+                        {formatCurrency(school.total)}
+                      </td>
+                      <td className="p-3 text-right font-medium text-primary">
+                        {formatCurrency(costPerStudent)}
+                      </td>
+                      <td className="p-3">
+                        <div className="flex items-center gap-2 min-w-[200px]">
+                          <div className="flex-1 space-y-1">
+                            <div className="flex gap-1">
+                              <div 
+                                className="h-2 bg-water rounded-sm" 
+                                style={{ width: `${(school.water.value / school.total) * 100}%` }}
+                              />
+                              <div 
+                                className="h-2 bg-energy rounded-sm" 
+                                style={{ width: `${(school.energy.value / school.total) * 100}%` }}
+                              />
+                              <div 
+                                className="h-2 bg-fixed-line rounded-sm" 
+                                style={{ width: `${(school.fixedLine.value / school.total) * 100}%` }}
+                              />
+                              <div 
+                                className="h-2 bg-mobile rounded-sm" 
+                                style={{ width: `${(school.mobile.value / school.total) * 100}%` }}
+                              />
+                            </div>
+                            <div className="flex justify-between text-xs text-muted-foreground">
+                              <span>{((school.water.value / school.total) * 100).toFixed(0)}%</span>
+                              <span>{((school.energy.value / school.total) * 100).toFixed(0)}%</span>
+                              <span>{((school.fixedLine.value / school.total) * 100).toFixed(0)}%</span>
+                              <span>{((school.mobile.value / school.total) * 100).toFixed(0)}%</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

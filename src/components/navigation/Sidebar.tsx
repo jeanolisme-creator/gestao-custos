@@ -11,6 +11,9 @@ import {
   Droplets,
   Plus,
   LogOut,
+  Zap,
+  Phone,
+  Smartphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
@@ -47,6 +50,33 @@ const navigation = [
     name: "Dados",
     href: "/data-management",
     icon: Database,
+  },
+];
+
+const systemManagement = [
+  {
+    name: "Gestão de Água",
+    href: "/records?system=water",
+    icon: Droplets,
+    color: "text-water",
+  },
+  {
+    name: "Gestão de Energia", 
+    href: "/records?system=energy",
+    icon: Zap,
+    color: "text-energy",
+  },
+  {
+    name: "Gestão de Linha Fixa",
+    href: "/records?system=fixed-line", 
+    icon: Phone,
+    color: "text-fixed-line",
+  },
+  {
+    name: "Gestão de Celular",
+    href: "/records?system=mobile",
+    icon: Smartphone,
+    color: "text-mobile",
   },
 ];
 
@@ -97,7 +127,7 @@ export function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-2">
+      <nav className="flex-1 px-2 space-y-6">
         <ul className="space-y-1">
           {navigation.map((item) => (
             <li key={item.name}>
@@ -120,6 +150,37 @@ export function Sidebar() {
             </li>
           ))}
         </ul>
+
+        {/* System Management Section */}
+        <div>
+          {!collapsed && (
+            <h3 className="px-3 mb-2 text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider">
+              Gestão de Sistemas
+            </h3>
+          )}
+          <ul className="space-y-1">
+            {systemManagement.map((item) => (
+              <li key={item.name}>
+                <NavLink
+                  to={item.href}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                      collapsed && "justify-center"
+                    )
+                  }
+                  title={collapsed ? item.name : undefined}
+                >
+                  <item.icon className={cn("h-5 w-5", item.color)} />
+                  {!collapsed && <span className="ml-3">{item.name}</span>}
+                </NavLink>
+              </li>
+            ))}
+          </ul>
+        </div>
       </nav>
 
       {/* Footer */}

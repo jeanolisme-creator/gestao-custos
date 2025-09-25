@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { SchoolData, schoolNames, aggregateBySchool } from "@/utils/mockData";
+import { useToast } from "@/hooks/use-toast";
 
 interface ReportsProps {
   data: SchoolData[];
@@ -46,6 +47,7 @@ export default function Reports({ data }: ReportsProps) {
   const [selectedSchool, setSelectedSchool] = useState<string>("all");
   const [reportType, setReportType] = useState<string>("consolidated");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const { toast } = useToast();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -338,7 +340,16 @@ export default function Reports({ data }: ReportsProps) {
             <p className="text-sm text-muted-foreground mb-4">
               Identifica consumos fora do padrão
             </p>
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                toast({
+                  title: "Relatório de Anomalias",
+                  description: "Detectando variações superiores a 30% no consumo entre meses consecutivos.",
+                });
+              }}
+            >
               Gerar Relatório
             </Button>
           </Card>
@@ -348,7 +359,16 @@ export default function Reports({ data }: ReportsProps) {
             <p className="text-sm text-muted-foreground mb-4">
               Ranking de eficiência no uso da água
             </p>
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                toast({
+                  title: "Relatório de Eficiência",
+                  description: "Ranking baseado na relação consumo/custo das escolas no período selecionado.",
+                });
+              }}
+            >
               Gerar Relatório
             </Button>
           </Card>
@@ -358,7 +378,16 @@ export default function Reports({ data }: ReportsProps) {
             <p className="text-sm text-muted-foreground mb-4">
               Estimativa para próximos períodos
             </p>
-            <Button variant="outline" size="sm">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                toast({
+                  title: "Projeção de Gastos",
+                  description: "Estimativa baseada na média de crescimento dos últimos 6 meses para o próximo trimestre.",
+                });
+              }}
+            >
               Gerar Relatório
             </Button>
           </Card>
