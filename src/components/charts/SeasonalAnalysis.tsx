@@ -12,13 +12,16 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Thermometer, CloudRain, Sun, Snowflake } from "lucide-react";
 import { getMonthlyTotals } from "@/utils/mockData";
+import { getSystemMonthlyTotals } from "@/utils/systemData";
 
 interface SeasonalAnalysisProps {
   data: any[];
 }
 
 export function SeasonalAnalysis({ data }: SeasonalAnalysisProps) {
-  const monthlyData = getMonthlyTotals(data);
+  // Check if data has unified system structure
+  const hasSystemType = data.length > 0 && data[0]?.system_type;
+  const monthlyData = hasSystemType ? getSystemMonthlyTotals(data) : getMonthlyTotals(data);
   
   // Define seasons and their characteristics
   const seasons = {

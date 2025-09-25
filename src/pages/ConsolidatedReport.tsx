@@ -235,6 +235,77 @@ export default function ConsolidatedReport() {
         </CardContent>
       </Card>
 
+      {/* Cost Calculation Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Custo por Aluno Mensal</p>
+                <p className="text-2xl font-bold text-primary">
+                  {formatCurrency(grandTotal / (consolidatedData.length * 500) * 12)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Média por aluno/mês
+                </p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-secondary/20 bg-secondary/5">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Custo por Aluno Anual</p>
+                <p className="text-2xl font-bold text-secondary-foreground">
+                  {formatCurrency(grandTotal / (consolidatedData.length * 500) * 12)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Média por aluno/ano
+                </p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-secondary-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-accent/20 bg-accent/5">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Custo Escola Mês</p>
+                <p className="text-2xl font-bold text-accent-foreground">
+                  {formatCurrency(grandTotal / consolidatedData.length / 12)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Média por escola/mês
+                </p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-accent-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-muted/20 bg-muted/5">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Custo Escola Anual</p>
+                <p className="text-2xl font-bold text-muted-foreground">
+                  {formatCurrency(grandTotal / consolidatedData.length)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Média por escola/ano
+                </p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="border-water/20 bg-water/5">
@@ -335,8 +406,11 @@ export default function ConsolidatedReport() {
                   <th className="text-right p-3 font-medium text-fixed-line">Linha Fixa</th>
                   <th className="text-right p-3 font-medium text-mobile">Celular</th>
                   <th className="text-right p-3 font-medium">Total</th>
-                  <th className="text-right p-3 font-medium">Custo/Aluno</th>
-                  <th className="text-center p-3 font-medium">Distribuição</th>
+                     <th className="text-right p-3 font-medium">Custo/Aluno</th>
+                   <th className="text-right p-3 font-medium">Custo/Dia</th>
+                   <th className="text-right p-3 font-medium">Custo/Mês</th>
+                   <th className="text-right p-3 font-medium">Custo/Ano</th>
+                   <th className="text-center p-3 font-medium">Distribuição</th>
                 </tr>
               </thead>
               <tbody>
@@ -372,10 +446,19 @@ export default function ConsolidatedReport() {
                       <td className="p-3 text-right font-bold">
                         {formatCurrency(school.total)}
                       </td>
-                      <td className="p-3 text-right font-medium text-primary">
-                        {formatCurrency(costPerStudent)}
-                      </td>
-                      <td className="p-3">
+                       <td className="p-3 text-right font-medium text-primary">
+                         {formatCurrency(costPerStudent)}
+                       </td>
+                       <td className="p-3 text-right font-medium text-secondary">
+                         {formatCurrency(school.total / 365)}
+                       </td>
+                       <td className="p-3 text-right font-medium text-accent">
+                         {formatCurrency(school.total / 12)}
+                       </td>
+                       <td className="p-3 text-right font-medium text-primary">
+                         {formatCurrency(school.total)}
+                       </td>
+                       <td className="p-3">
                         <div className="flex items-center gap-2 min-w-[200px]">
                           <div className="flex-1 space-y-1">
                             <div className="flex gap-1">

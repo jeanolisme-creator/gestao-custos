@@ -56,25 +56,25 @@ const navigation = [
 const systemManagement = [
   {
     name: "Gestão de Água",
-    href: "/records?system=water",
+    href: "/?system=water",
     icon: Droplets,
     color: "text-water",
   },
   {
     name: "Gestão de Energia", 
-    href: "/records?system=energy",
+    href: "/?system=energy",
     icon: Zap,
     color: "text-energy",
   },
   {
     name: "Gestão de Linha Fixa",
-    href: "/records?system=fixed-line", 
+    href: "/?system=fixed-line", 
     icon: Phone,
     color: "text-fixed-line",
   },
   {
     name: "Gestão de Celular",
-    href: "/records?system=mobile",
+    href: "/?system=mobile",
     icon: Smartphone,
     color: "text-mobile",
   },

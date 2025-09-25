@@ -25,6 +25,7 @@ import { SeasonalAnalysis } from "@/components/charts/SeasonalAnalysis";
 import { SchoolData, aggregateBySchool, getMonthlyTotals, getSchoolTypeDistribution, getAlerts } from "@/utils/mockData";
 import { useSystem } from "@/contexts/SystemContext";
 import { generateMockSystemData, aggregateSystemData, getSystemMonthlyTotals, getSystemAlerts } from "@/utils/systemData";
+import logoSecretaria from "@/assets/logo-secretaria.jpg";
 
 interface DashboardProps {
   data: SchoolData[];
@@ -71,13 +72,22 @@ export default function Dashboard({ data }: DashboardProps) {
       <div className="p-6 space-y-8">
         {/* Header */}
         <div className="space-y-4">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              Dashboard de Gestão de {systemConfig.name}
-            </h1>
-            <p className="text-muted-foreground">
-              Acompanhamento completo dos gastos com {systemConfig.consumptionLabel.toLowerCase()} das escolas municipais
-            </p>
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                Dashboard de Gestão de {systemConfig.name}
+              </h1>
+              <p className="text-muted-foreground">
+                Acompanhamento completo dos gastos com {systemConfig.consumptionLabel.toLowerCase()} das escolas municipais
+              </p>
+            </div>
+            <div className="flex-shrink-0">
+              <img 
+                src={logoSecretaria} 
+                alt="Logo Secretaria de Educação" 
+                className="h-20 w-auto object-contain"
+              />
+            </div>
           </div>
           
           {/* System Toggle Buttons */}
@@ -110,6 +120,7 @@ export default function Dashboard({ data }: DashboardProps) {
             value={formatCurrency(avgMonthlySpend)}
             icon={Activity}
             description="Média mensal"
+            variant="primary"
           />
           <MetricCard
             title="Vencimentos Próximos"
@@ -141,12 +152,14 @@ export default function Dashboard({ data }: DashboardProps) {
             value={formatCurrency(currentMonthServices)}
             icon={Wrench}
             description="Dezembro 2025"
+            variant="warning"
           />
           <MetricCard
             title="Valor Serviços Anual"
             value={formatCurrency(yearlyServices)}
             icon={Building2}
             description="Janeiro - Dezembro 2025"
+            variant="success"
           />
         </div>
 
