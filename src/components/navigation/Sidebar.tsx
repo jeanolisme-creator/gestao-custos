@@ -14,7 +14,11 @@ import {
   Zap,
   Phone,
   Smartphone,
+  Users,
+  Package,
 } from "lucide-react";
+import { useSystem } from "@/contexts/SystemContext";
+import logoSecretaria from "@/assets/logo-secretaria.jpg";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { cn } from "@/lib/utils";
@@ -56,33 +60,52 @@ const navigation = [
 const systemManagement = [
   {
     name: "Gestão de Água",
-    href: "/?system=water",
+    href: "/",
+    system: "water",
     icon: Droplets,
     color: "text-water",
   },
   {
     name: "Gestão de Energia", 
-    href: "/?system=energy",
+    href: "/",
+    system: "energy",
     icon: Zap,
     color: "text-energy",
   },
   {
     name: "Gestão de Linha Fixa",
-    href: "/?system=fixed-line", 
+    href: "/",
+    system: "fixed-line", 
     icon: Phone,
     color: "text-fixed-line",
   },
   {
     name: "Gestão de Celular",
-    href: "/?system=mobile",
+    href: "/",
+    system: "mobile",
     icon: Smartphone,
     color: "text-mobile",
+  },
+  {
+    name: "Gestão de RH",
+    href: "/",
+    system: "hr",
+    icon: Users,
+    color: "text-orange-500",
+  },
+  {
+    name: "Gestão de Suprimentos",
+    href: "/",
+    system: "supplies",
+    icon: Package,
+    color: "text-teal-500",
   },
 ];
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { signOut, user } = useAuth();
+  const { setCurrentSystem } = useSystem();
 
   const handleSignOut = async () => {
     await signOut();
@@ -99,17 +122,30 @@ export function Sidebar() {
       <div className="flex items-center justify-between p-4">
         {!collapsed && (
           <div className="flex items-center space-x-3">
-            <div className="p-2 rounded-lg bg-sidebar-primary">
-              <Droplets className="h-6 w-6 text-sidebar-primary-foreground" />
+            <div className="flex-shrink-0">
+              <img 
+                src={logoSecretaria} 
+                alt="Logo Secretaria de Educação" 
+                className="h-12 w-auto object-contain"
+              />
             </div>
             <div>
               <h1 className="text-lg font-bold text-sidebar-foreground">
-                Água Manager
+                Sistema Manager
               </h1>
               <p className="text-xs text-sidebar-foreground/70">
-                Gestão de Gastos
+                Gestão Educacional
               </p>
             </div>
+          </div>
+        )}
+        {collapsed && (
+          <div className="flex justify-center">
+            <img 
+              src={logoSecretaria} 
+              alt="Logo Secretaria de Educação" 
+              className="h-8 w-auto object-contain"
+            />
           </div>
         )}
         <Button
@@ -161,22 +197,22 @@ export function Sidebar() {
           <ul className="space-y-1">
             {systemManagement.map((item) => (
               <li key={item.name}>
-                <NavLink
-                  to={item.href}
-                  className={({ isActive }) =>
-                    cn(
-                      "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                      isActive
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                      collapsed && "justify-center"
-                    )
-                  }
+                <button
+                  onClick={() => {
+                    setCurrentSystem(item.system as any);
+                    // Navigate to dashboard after setting system
+                    window.location.href = item.href;
+                  }}
+                  className={cn(
+                    "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full text-left",
+                    "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                    collapsed && "justify-center"
+                  )}
                   title={collapsed ? item.name : undefined}
                 >
                   <item.icon className={cn("h-5 w-5", item.color)} />
                   {!collapsed && <span className="ml-3">{item.name}</span>}
-                </NavLink>
+                </button>
               </li>
             ))}
           </ul>

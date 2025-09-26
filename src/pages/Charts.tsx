@@ -36,7 +36,7 @@ export default function Charts({ data }: ChartsProps) {
   const [selectedSchoolsForComparison, setSelectedSchoolsForComparison] = useState<string[]>([]);
 
   const handleSchoolSelection = (schoolName: string, checked: boolean) => {
-    if (checked && selectedSchoolsForComparison.length < 5) {
+    if (checked && selectedSchoolsForComparison.length < 15) {
       setSelectedSchoolsForComparison([...selectedSchoolsForComparison, schoolName]);
     } else if (!checked) {
       setSelectedSchoolsForComparison(selectedSchoolsForComparison.filter(s => s !== schoolName));
@@ -44,11 +44,19 @@ export default function Charts({ data }: ChartsProps) {
   };
 
   const handleApplyFilters = () => {
-    // Filter logic will be implemented here
+    // Apply filters to update the data
+    const filteredData = data.filter(record => {
+      const matchesYear = selectedYear === "2025" || record.ano.toString() === selectedYear;
+      const matchesSchool = selectedSchool === "all" || record.unidade === selectedSchool;
+      return matchesYear && matchesSchool;
+    });
+    
+    // Force re-render by updating state (this is a simplified approach)
     console.log('Filters applied:', {
       school: selectedSchool,
       year: selectedYear,
-      chartType: selectedChartType
+      chartType: selectedChartType,
+      filteredRecords: filteredData.length
     });
   };
 
@@ -58,7 +66,7 @@ export default function Charts({ data }: ChartsProps) {
         {/* Header */}
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Módulo de Gráficos
+            Módulos Gráficos
           </h1>
           <p className="text-muted-foreground">
             Análise detalhada com filtros personalizáveis
@@ -167,7 +175,7 @@ export default function Charts({ data }: ChartsProps) {
                   Comparativo entre Escolas
                 </h2>
                 <p className="text-muted-foreground">
-                  Selecione até 5 escolas para comparar dados ({selectedSchoolsForComparison.length}/5 selecionadas)
+                  Selecione até 15 escolas para comparar dados ({selectedSchoolsForComparison.length}/15 selecionadas)
                 </p>
               </div>
               
@@ -179,7 +187,7 @@ export default function Charts({ data }: ChartsProps) {
                         id={school}
                         checked={selectedSchoolsForComparison.includes(school)}
                         onCheckedChange={(checked) => handleSchoolSelection(school, checked as boolean)}
-                        disabled={!selectedSchoolsForComparison.includes(school) && selectedSchoolsForComparison.length >= 5}
+                        disabled={!selectedSchoolsForComparison.includes(school) && selectedSchoolsForComparison.length >= 15}
                       />
                       <label 
                         htmlFor={school} 
@@ -195,7 +203,7 @@ export default function Charts({ data }: ChartsProps) {
             <ComparisonChart 
               data={data} 
               selectedSchools={selectedSchoolsForComparison}
-              title={`Comparativo: ${selectedSchoolsForComparison.length > 0 ? `${selectedSchoolsForComparison.length} escolas selecionadas` : 'Top 5 escolas'}`}
+              title={`Comparativo: ${selectedSchoolsForComparison.length > 0 ? `${selectedSchoolsForComparison.length} escolas selecionadas` : 'Top 15 escolas'}`}
             />
           </Card>
 

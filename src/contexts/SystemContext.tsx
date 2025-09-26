@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 
-export type SystemType = 'water' | 'energy' | 'fixed-line' | 'mobile';
+export type SystemType = 'water' | 'energy' | 'fixed-line' | 'mobile' | 'hr' | 'supplies';
 
 export interface SystemConfig {
   id: SystemType;
@@ -116,6 +116,47 @@ const systemConfigs: Record<SystemType, SystemConfig> = {
       { name: 'consumo_mb', label: 'Consumo (MB)', type: 'number' },
       { name: 'valor_gasto', label: 'Valor Gasto', type: 'number' },
       { name: 'valor_servicos', label: 'Valor Serviços', type: 'number' },
+    ]
+  },
+  hr: {
+    id: 'hr',
+    name: 'Gestão de RH',
+    icon: 'Users',
+    color: 'orange',
+    unit: 'profissionais',
+    consumptionLabel: 'Recursos Humanos',
+    fields: [
+      { name: 'nome_completo', label: 'Nome Completo', type: 'text', required: true },
+      { name: 'cpf', label: 'CPF', type: 'text', required: true },
+      { name: 'matricula', label: 'Número de Matrícula', type: 'text', required: true },
+      { name: 'cargo', label: 'Cargo', type: 'select', required: true, options: ['Professor', 'Diretor', 'Coordenador', 'Agente Administrativo', 'Inspetor de Alunos', 'Merendeira', 'Profissional Readaptado', 'Assistente de Direção'] },
+      { name: 'escola_lotacao', label: 'Escola/Lotação', type: 'text', required: true },
+      { name: 'salario_base', label: 'Salário Base', type: 'number', required: true },
+      { name: 'data_admissao', label: 'Data de Admissão', type: 'text', required: true },
+      { name: 'jornada_trabalho', label: 'Jornada de Trabalho (horas)', type: 'number' },
+      { name: 'regime_trabalho', label: 'Regime de Trabalho', type: 'select', options: ['Estatutário', 'CLT', 'Temporário'] },
+      { name: 'formacao_academica', label: 'Formação Acadêmica', type: 'text' },
+      { name: 'turno_trabalho', label: 'Turno de Trabalho', type: 'select', options: ['Matutino', 'Vespertino', 'Noturno', 'Integral'] },
+    ]
+  },
+  supplies: {
+    id: 'supplies',
+    name: 'Gestão de Suprimentos',
+    icon: 'Package',
+    color: 'teal',
+    unit: 'itens',
+    consumptionLabel: 'Suprimentos',
+    fields: [
+      { name: 'nome_escola', label: 'Nome da Escola', type: 'text', required: true },
+      { name: 'categoria', label: 'Categoria', type: 'select', required: true, options: ['Mobiliário Geral', 'Tecnologia e Eletrônicos', 'Material de Escritório e Didático', 'Materiais Pedagógicos e Educativos', 'Equipamentos para Áreas Externas', 'Equipamentos para Cozinha/Refeitório', 'Materiais de Limpeza', 'Itens de Segurança', 'Itens de Conforto'] },
+      { name: 'item', label: 'Item/Produto', type: 'text', required: true },
+      { name: 'quantidade', label: 'Quantidade', type: 'number', required: true },
+      { name: 'valor_unitario', label: 'Valor Unitário', type: 'number', required: true },
+      { name: 'valor_total', label: 'Valor Total', type: 'number', required: true },
+      { name: 'nivel_ensino', label: 'Nível de Ensino', type: 'select', required: true, options: ['Creche (0-3 anos)', 'Pré-escola (4-5 anos)', 'Anos Iniciais (6-10 anos)', 'Anos Finais (11-14 anos)', 'Todos os Níveis'] },
+      { name: 'fornecedor', label: 'Fornecedor', type: 'text' },
+      { name: 'data_aquisicao', label: 'Data de Aquisição', type: 'text' },
+      { name: 'estado_conservacao', label: 'Estado de Conservação', type: 'select', options: ['Novo', 'Bom', 'Regular', 'Ruim', 'Descarte'] },
     ]
   }
 };
