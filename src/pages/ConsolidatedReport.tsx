@@ -201,6 +201,22 @@ export default function ConsolidatedReport() {
     return 200 + (h % 801); // Stable between 200-1000
   };
 
+  // Calculate average costs
+  const totalStudents = consolidatedData.reduce((sum, school) => sum + getStudentCount(school.schoolName), 0);
+  const totalSchools = consolidatedData.length;
+  
+  // Average costs per student (per hour, day, month, year)
+  const avgCostPerStudentHour = totalStudents > 0 ? grandTotal / totalStudents / 365 / 24 : 0;
+  const avgCostPerStudentDay = totalStudents > 0 ? grandTotal / totalStudents / 365 : 0;
+  const avgCostPerStudentMonth = totalStudents > 0 ? grandTotal / totalStudents / 12 : 0;
+  const avgCostPerStudentYear = totalStudents > 0 ? grandTotal / totalStudents : 0;
+  
+  // Average costs per school (per hour, day, month, year)
+  const avgCostPerSchoolHour = totalSchools > 0 ? grandTotal / totalSchools / 365 / 24 : 0;
+  const avgCostPerSchoolDay = totalSchools > 0 ? grandTotal / totalSchools / 365 : 0;
+  const avgCostPerSchoolMonth = totalSchools > 0 ? grandTotal / totalSchools / 12 : 0;
+  const avgCostPerSchoolYear = totalSchools > 0 ? grandTotal / totalSchools : 0;
+
   const handleSearch = () => {
     if (searchTerm.trim() === '') {
       setFilteredSchools(mockSchools);
@@ -396,6 +412,107 @@ export default function ConsolidatedReport() {
                 <p className="text-xs text-muted-foreground">
                   {consolidatedData.length} escolas + RH
                 </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Average Cost Mini Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
+        {/* Student Average Costs */}
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4 text-center">
+            <div className="flex flex-col items-center space-y-1">
+              <Users className="h-5 w-5 text-blue-600" />
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Aluno/Hora</p>
+                <p className="text-lg font-bold text-blue-600">{formatCurrency(avgCostPerStudentHour)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4 text-center">
+            <div className="flex flex-col items-center space-y-1">
+              <Users className="h-5 w-5 text-blue-600" />
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Aluno/Dia</p>
+                <p className="text-lg font-bold text-blue-600">{formatCurrency(avgCostPerStudentDay)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4 text-center">
+            <div className="flex flex-col items-center space-y-1">
+              <Users className="h-5 w-5 text-blue-600" />
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Aluno/Mês</p>
+                <p className="text-lg font-bold text-blue-600">{formatCurrency(avgCostPerStudentMonth)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-blue-200 bg-blue-50">
+          <CardContent className="p-4 text-center">
+            <div className="flex flex-col items-center space-y-1">
+              <Users className="h-5 w-5 text-blue-600" />
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Aluno/Ano</p>
+                <p className="text-lg font-bold text-blue-600">{formatCurrency(avgCostPerStudentYear)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* School Average Costs */}
+        <Card className="border-emerald-200 bg-emerald-50">
+          <CardContent className="p-4 text-center">
+            <div className="flex flex-col items-center space-y-1">
+              <BarChart3 className="h-5 w-5 text-emerald-600" />
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Escola/Hora</p>
+                <p className="text-lg font-bold text-emerald-600">{formatCurrency(avgCostPerSchoolHour)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-emerald-200 bg-emerald-50">
+          <CardContent className="p-4 text-center">
+            <div className="flex flex-col items-center space-y-1">
+              <BarChart3 className="h-5 w-5 text-emerald-600" />
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Escola/Dia</p>
+                <p className="text-lg font-bold text-emerald-600">{formatCurrency(avgCostPerSchoolDay)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-emerald-200 bg-emerald-50">
+          <CardContent className="p-4 text-center">
+            <div className="flex flex-col items-center space-y-1">
+              <BarChart3 className="h-5 w-5 text-emerald-600" />
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Escola/Mês</p>
+                <p className="text-lg font-bold text-emerald-600">{formatCurrency(avgCostPerSchoolMonth)}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-emerald-200 bg-emerald-50">
+          <CardContent className="p-4 text-center">
+            <div className="flex flex-col items-center space-y-1">
+              <BarChart3 className="h-5 w-5 text-emerald-600" />
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Escola/Ano</p>
+                <p className="text-lg font-bold text-emerald-600">{formatCurrency(avgCostPerSchoolYear)}</p>
               </div>
             </div>
           </CardContent>
