@@ -31,7 +31,14 @@ const reportTypes = [
   { value: 'by-id', label: 'Por ID Cadastro' },
   { value: 'comparative', label: 'Comparativo entre Escolas' },
   { value: 'temporal', label: 'Evolução Temporal' },
-  { value: 'consolidated', label: 'Consolidado Geral' },
+  { value: 'consolidated', label: 'Relatório Geral' },
+  { value: 'emef', label: 'EMEF' },
+  { value: 'emei', label: 'EMEI' },
+  { value: 'emeif', label: 'EMEIF' },
+  { value: 'par', label: 'PAR' },
+  { value: 'comp', label: 'COMP' },
+  { value: 'sede', label: 'SEDE' },
+  { value: 'value-range', label: 'Faixa de Valores' },
 ];
 
 const months = [
@@ -47,6 +54,9 @@ export default function Reports({ data }: ReportsProps) {
   const [selectedSchool, setSelectedSchool] = useState<string>("all");
   const [reportType, setReportType] = useState<string>("consolidated");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [selectedSchools, setSelectedSchools] = useState<string[]>([]);
+  const [minValue, setMinValue] = useState<string>("");
+  const [maxValue, setMaxValue] = useState<string>("");
   const { toast } = useToast();
 
   const formatCurrency = (value: number) => {
@@ -64,15 +74,41 @@ export default function Reports({ data }: ReportsProps) {
       filteredData = filteredData.filter(record => record.mes === selectedMonth);
     }
 
-    if (reportType === 'by-school' || reportType === 'consolidated') {
+    // Apply school type filters
+    if (['emef', 'emei', 'emeif', 'par', 'comp', 'sede'].includes(reportType)) {
+      filteredData = filteredData.filter(record => 
+        record.unidade.toLowerCase().includes(reportType.toUpperCase())
+      );
+    }
+
+    if (reportType === 'by-school' || reportType === 'consolidated' || 
+        reportType === 'value-range' || reportType === 'comparative' ||
+        ['emef', 'emei', 'emeif', 'par', 'comp', 'sede'].includes(reportType)) {
       const aggregated = aggregateBySchool(filteredData);
-      return aggregated
+      let result = aggregated
         .filter(school => 
           selectedSchool === 'all' || school.schoolName === selectedSchool
         )
         .filter(school =>
           searchTerm === '' || school.schoolName.toLowerCase().includes(searchTerm.toLowerCase())
         );
+
+      // Apply value range filter
+      if (reportType === 'value-range' || minValue || maxValue) {
+        result = result.filter(school => {
+          const totalValue = school.totalValue;
+          const min = minValue ? parseFloat(minValue) : 0;
+          const max = maxValue ? parseFloat(maxValue) : Infinity;
+          return totalValue >= min && totalValue <= max;
+        });
+      }
+
+      // Apply comparative filter
+      if (reportType === 'comparative' && selectedSchools.length > 0) {
+        result = result.filter(school => selectedSchools.includes(school.schoolName));
+      }
+
+      return result;
     }
 
     return filteredData.filter(record =>
@@ -278,6 +314,64 @@ export default function Reports({ data }: ReportsProps) {
               </Button>
             </div>
           </div>
+
+          {/* Conditional Additional Filters */}
+          {reportType === 'value-range' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Valor Mínimo (R$)</label>
+                <Input
+                  type="number"
+                  placeholder="0"
+                  value={minValue}
+                  onChange={(e) => setMinValue(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">Valor Máximo (R$)</label>
+                <Input
+                  type="number"
+                  placeholder="Sem limite"
+                  value={maxValue}
+                  onChange={(e) => setMaxValue(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
+          {reportType === 'comparative' && (
+            <div className="mt-4 pt-4 border-t">
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                Selecionar Escolas para Comparativo (até 15)
+              </label>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+                {schoolNames.slice(0, 15).map((school) => (
+                  <label key={school} className="flex items-center space-x-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={selectedSchools.includes(school)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          if (selectedSchools.length < 15) {
+                            setSelectedSchools([...selectedSchools, school]);
+                          }
+                        } else {
+                          setSelectedSchools(selectedSchools.filter(s => s !== school));
+                        }
+                      }}
+                      className="rounded"
+                    />
+                    <span className="truncate" title={school}>
+                      {school.replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '').slice(0, 15)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {selectedSchools.length}/15 escolas selecionadas
+              </p>
+            </div>
+          )}
         </Card>
 
         {/* Export Buttons */}

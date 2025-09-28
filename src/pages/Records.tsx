@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Plus, Droplets, Zap, Phone, Smartphone } from 'lucide-react';
+import { Plus, Droplets, Zap, Phone, Smartphone, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -84,6 +84,36 @@ const fieldLabels: Record<string, string> = {
   ocorrencias_pendencias: 'Verificar Ocorrência'
 };
 
+const macroregiaoOptions = ['HB', 'Vila Toninho', 'Schmidt', 'Represa', 'Bosque', 'Talhado', 'Central', 'Cidade da Criança', 'Pinheirinho', 'Ceu'];
+
+// Mock school data for search
+const mockSchools = [
+  {
+    name: 'EMEF João Silva',
+    cadastro: 'WATER-1001',
+    proprietario: 'Prefeitura Municipal',
+    endereco: 'Rua das Flores, 123',
+    numero: '123',
+    bairro: 'Centro'
+  },
+  {
+    name: 'EMEI Maria Santos',
+    cadastro: 'WATER-1002', 
+    proprietario: 'Prefeitura Municipal',
+    endereco: 'Av. Brasil, 456',
+    numero: '456',
+    bairro: 'Jardim das Rosas'
+  },
+  {
+    name: 'EMEIF Pedro Costa',
+    cadastro: 'WATER-1003',
+    proprietario: 'Prefeitura Municipal',
+    endereco: 'Rua da Escola, 789',
+    numero: '789', 
+    bairro: 'Vila Nova'
+  }
+];
+
 export default function Records() {
   const location = useLocation();
   const urlParams = new URLSearchParams(location.search);
@@ -95,6 +125,8 @@ export default function Records() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [prefillSchool, setPrefillSchool] = useState<string>('');
+  const [showSchoolSearch, setShowSchoolSearch] = useState(false);
+  const [searchSchoolTerm, setSearchSchoolTerm] = useState('');
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -190,6 +222,28 @@ export default function Records() {
     }
   };
 
+  const handleSchoolSelect = (school: any) => {
+    const newFormData = { ...formData };
+    
+    // Auto-fill common fields
+    newFormData['cadastro'] = school.cadastro;
+    newFormData['cadastro_cliente'] = school.cadastro;
+    newFormData['proprietario'] = school.proprietario;
+    newFormData['nome_escola'] = school.name;
+    newFormData['endereco'] = school.endereco;
+    newFormData['endereco_completo'] = school.endereco;
+    newFormData['numero'] = school.numero;
+    newFormData['bairro'] = school.bairro;
+    
+    setFormData(newFormData);
+    setShowSchoolSearch(false);
+    setSearchSchoolTerm('');
+  };
+
+  const filteredSchools = mockSchools.filter(school =>
+    school.name.toLowerCase().includes(searchSchoolTerm.toLowerCase())
+  );
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -267,12 +321,54 @@ export default function Records() {
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* School Search Button */}
+              <div className="mb-4 p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="font-medium text-foreground">Buscar Escola Cadastrada</h4>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowSchoolSearch(!showSchoolSearch)}
+                  >
+                    <Search className="h-4 w-4 mr-2" />
+                    Buscar
+                  </Button>
+                </div>
+                
+                {showSchoolSearch && (
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Digite o nome da escola..."
+                      value={searchSchoolTerm}
+                      onChange={(e) => setSearchSchoolTerm(e.target.value)}
+                    />
+                    {searchSchoolTerm && (
+                      <div className="max-h-32 overflow-y-auto border rounded-md">
+                        {filteredSchools.map((school, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            className="w-full text-left px-3 py-2 hover:bg-muted/80 border-b last:border-b-0"
+                            onClick={() => handleSchoolSelect(school)}
+                          >
+                            <p className="font-medium">{school.name}</p>
+                            <p className="text-sm text-muted-foreground">{school.endereco}</p>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 {config.fields.map(field => {
                   const isTextarea = field.includes('servicos') || field.includes('ocorrencias');
                   const isDate = field.includes('data_') || field === 'data_vencimento';
                   const isNumber = field.includes('valor') || field.includes('consumo') || field.includes('demanda') || field === 'numero_dias';
                   const isRequired = ['cadastro', 'cadastro_cliente', 'nome_escola'].includes(field);
+                  const isMacroregiao = field === 'macroregiao';
                   const colSpan = isTextarea ? 'col-span-2' : '';
 
                   return (
@@ -287,6 +383,19 @@ export default function Records() {
                           onChange={(e) => handleInputChange(field, e.target.value)}
                           required={isRequired}
                         />
+                      ) : isMacroregiao ? (
+                        <Select value={formData[field] || ''} onValueChange={(value) => handleInputChange(field, value)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a macrorregião" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {macroregiaoOptions.map((option) => (
+                              <SelectItem key={option} value={option}>
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       ) : (
                         <Input
                           id={field}

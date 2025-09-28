@@ -50,13 +50,12 @@ export function MonthlyMiniCards({ data }: MonthlyMiniCardsProps) {
               )}>
                 {formatCurrency(month.totalValue)}
               </p>
-              <div className={cn(
-                "text-xs space-y-1",
-                index === currentMonth ? "text-current opacity-75" : "text-muted-foreground"
-              )}>
-                <p>{month.totalConsumption.toFixed(0)}{systemConfig.unit}</p>
-                <p>{month.schoolCount} escolas</p>
-              </div>
+               <div className={cn(
+                 "text-xs",
+                 index === currentMonth ? "text-current opacity-75" : "text-muted-foreground"
+               )}>
+                 <p>{month.totalConsumption.toFixed(0)}{systemConfig.unit}</p>
+               </div>
             </div>
           </Card>
         ))}
