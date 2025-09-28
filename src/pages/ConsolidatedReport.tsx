@@ -60,6 +60,8 @@ export default function ConsolidatedReport() {
   const [selectedMacroregiao, setSelectedMacroregiao] = useState('all');
   const [selectedTipoEscola, setSelectedTipoEscola] = useState('all');
   const [selectedSchool, setSelectedSchool] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredSchools, setFilteredSchools] = useState(mockSchools);
 
   // Generate mock data for all systems
   const allData: UnifiedRecord[] = [
@@ -166,6 +168,18 @@ export default function ConsolidatedReport() {
     return grandTotal > 0 ? ((value / grandTotal) * 100) : 0;
   };
 
+  const handleSearch = () => {
+    if (searchTerm.trim() === '') {
+      setFilteredSchools(mockSchools);
+      return;
+    }
+    
+    const filtered = mockSchools.filter(school =>
+      school.nome.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredSchools(filtered);
+  };
+
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
@@ -251,10 +265,11 @@ export default function ConsolidatedReport() {
       </Card>
 
       {/* Summary Cards - Reordered */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
         <Card className="border-orange-200 bg-orange-50">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+          <CardContent className="p-6 text-center">
+            <div className="flex flex-col items-center space-y-2">
+              <Users className="h-8 w-8 text-orange-600" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Gestão de RH</p>
                 <p className="text-2xl font-bold text-orange-600">{formatCurrency(grandTotal * 0.65)}</p>
@@ -262,29 +277,14 @@ export default function ConsolidatedReport() {
                   Recursos humanos
                 </p>
               </div>
-              <Users className="h-8 w-8 text-orange-600" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Geral</p>
-                <p className="text-2xl font-bold text-primary">{formatCurrency(grandTotal)}</p>
-                <p className="text-xs text-muted-foreground">
-                  {consolidatedData.length} escolas
-                </p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-primary" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-water/20 bg-water/5">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+          <CardContent className="p-6 text-center">
+            <div className="flex flex-col items-center space-y-2">
+              <Droplets className="h-8 w-8 text-water" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Água</p>
                 <p className="text-2xl font-bold text-water">{formatCurrency(totals.water)}</p>
@@ -292,14 +292,14 @@ export default function ConsolidatedReport() {
                   {getPercentage(totals.water).toFixed(1)}% do total
                 </p>
               </div>
-              <Droplets className="h-8 w-8 text-water" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-energy/20 bg-energy/5">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+          <CardContent className="p-6 text-center">
+            <div className="flex flex-col items-center space-y-2">
+              <Zap className="h-8 w-8 text-energy" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Energia</p>
                 <p className="text-2xl font-bold text-energy">{formatCurrency(totals.energy)}</p>
@@ -307,14 +307,14 @@ export default function ConsolidatedReport() {
                   {getPercentage(totals.energy).toFixed(1)}% do total
                 </p>
               </div>
-              <Zap className="h-8 w-8 text-energy" />
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-fixed-line/20 bg-fixed-line/5">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+          <CardContent className="p-6 text-center">
+            <div className="flex flex-col items-center space-y-2">
+              <Phone className="h-8 w-8 text-fixed-line" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Linha Fixa</p>
                 <p className="text-2xl font-bold text-fixed-line">{formatCurrency(totals.fixedLine)}</p>
@@ -322,7 +322,36 @@ export default function ConsolidatedReport() {
                   {getPercentage(totals.fixedLine).toFixed(1)}% do total
                 </p>
               </div>
-              <Phone className="h-8 w-8 text-fixed-line" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-mobile/20 bg-mobile/5">
+          <CardContent className="p-6 text-center">
+            <div className="flex flex-col items-center space-y-2">
+              <Smartphone className="h-8 w-8 text-mobile" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Celular</p>
+                <p className="text-2xl font-bold text-mobile">{formatCurrency(totals.mobile)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {getPercentage(totals.mobile).toFixed(1)}% do total
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-primary/20 bg-primary/5">
+          <CardContent className="p-6 text-center">
+            <div className="flex flex-col items-center space-y-2">
+              <TrendingUp className="h-8 w-8 text-primary" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Total Geral</p>
+                <p className="text-2xl font-bold text-primary">{formatCurrency(grandTotal)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {consolidatedData.length} escolas
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -333,7 +362,7 @@ export default function ConsolidatedReport() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="h-5 w-5" />
-            Relatório de Custos por Escola - Geral
+            Relatório de Custos Escola/Aluno
           </CardTitle>
           <CardDescription>
             Análise de custos detalhada por escola (dia, mês e ano) e custo por aluno
@@ -345,36 +374,51 @@ export default function ConsolidatedReport() {
               <Input 
                 placeholder="Buscar escola..." 
                 className="max-w-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
               />
-              <Button>
+              <Button onClick={handleSearch}>
                 <Search className="h-4 w-4 mr-2" />
                 Buscar
               </Button>
             </div>
             
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse border border-border">
+              <table className="w-full border-collapse border border-border rounded-lg overflow-hidden shadow-sm">
                 <thead>
-                  <tr className="bg-muted">
-                    <th className="border border-border p-2 text-left">Escola</th>
-                    <th className="border border-border p-2 text-left">Custo/Dia</th>
-                    <th className="border border-border p-2 text-left">Custo/Mês</th>
-                    <th className="border border-border p-2 text-left">Custo/Ano</th>
-                    <th className="border border-border p-2 text-left">Custo/Aluno Dia</th>
-                    <th className="border border-border p-2 text-left">Custo/Aluno Mês</th>
-                    <th className="border border-border p-2 text-left">Custo/Aluno Ano</th>
+                  <tr className="bg-gradient-to-r from-primary/10 to-primary/5">
+                    <th className="border border-border p-3 text-left font-semibold text-primary">Escola</th>
+                    <th className="border border-border p-3 text-center font-semibold text-blue-600">Custo/Dia</th>
+                    <th className="border border-border p-3 text-center font-semibold text-green-600">Custo/Mês</th>
+                    <th className="border border-border p-3 text-center font-semibold text-purple-600">Custo/Ano</th>
+                    <th className="border border-border p-3 text-center font-semibold text-orange-600">Custo/Aluno Dia</th>
+                    <th className="border border-border p-3 text-center font-semibold text-red-600">Custo/Aluno Mês</th>
+                    <th className="border border-border p-3 text-center font-semibold text-indigo-600">Custo/Aluno Ano</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {mockSchools.slice(0, 10).map((school, index) => (
-                    <tr key={index} className="hover:bg-muted/50">
-                      <td className="border border-border p-2">{school.nome}</td>
-                      <td className="border border-border p-2">R$ {(school.custoTotal / 365).toFixed(2)}</td>
-                      <td className="border border-border p-2">R$ {(school.custoTotal / 12).toFixed(2)}</td>
-                      <td className="border border-border p-2">R$ {school.custoTotal.toFixed(2)}</td>
-                      <td className="border border-border p-2">R$ {(school.custoTotal / 365 / school.totalAlunos).toFixed(2)}</td>
-                      <td className="border border-border p-2">R$ {(school.custoTotal / 12 / school.totalAlunos).toFixed(2)}</td>
-                      <td className="border border-border p-2">R$ {(school.custoTotal / school.totalAlunos).toFixed(2)}</td>
+                  {filteredSchools.slice(0, 10).map((school, index) => (
+                    <tr key={index} className="hover:bg-muted/50 transition-colors duration-200 border-b border-border/50">
+                      <td className="border border-border p-3 font-medium text-foreground">{school.nome}</td>
+                      <td className="border border-border p-3 text-center font-medium text-blue-600 bg-blue-50">
+                        R$ {(school.custoTotal / 365).toFixed(2)}
+                      </td>
+                      <td className="border border-border p-3 text-center font-medium text-green-600 bg-green-50">
+                        R$ {(school.custoTotal / 12).toFixed(2)}
+                      </td>
+                      <td className="border border-border p-3 text-center font-medium text-purple-600 bg-purple-50">
+                        R$ {school.custoTotal.toFixed(2)}
+                      </td>
+                      <td className="border border-border p-3 text-center font-medium text-orange-600 bg-orange-50">
+                        R$ {(school.custoTotal / 365 / school.totalAlunos).toFixed(2)}
+                      </td>
+                      <td className="border border-border p-3 text-center font-medium text-red-600 bg-red-50">
+                        R$ {(school.custoTotal / 12 / school.totalAlunos).toFixed(2)}
+                      </td>
+                      <td className="border border-border p-3 text-center font-medium text-indigo-600 bg-indigo-50">
+                        R$ {(school.custoTotal / school.totalAlunos).toFixed(2)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

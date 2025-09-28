@@ -131,6 +131,38 @@ export default function Records() {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  const handleCSVImport = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        toast({
+          title: "Importação CSV",
+          description: `Arquivo ${file.name} selecionado. Funcionalidade de importação será implementada em breve.`
+        });
+      }
+    };
+    input.click();
+  };
+
+  const handleXLSXImport = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.xlsx,.xls';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        toast({
+          title: "Importação XLSX",
+          description: `Arquivo ${file.name} selecionado. Funcionalidade de importação será implementada em breve.`
+        });
+      }
+    };
+    input.click();
+  };
+
   const config = systemConfigs[currentSystem];
   const Icon = config.icon;
 
@@ -266,11 +298,11 @@ export default function Records() {
                 Selecione o Sistema de Gestão
               </h2>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={handleCSVImport}>
                   <Upload className="h-4 w-4 mr-2" />
                   Importar CSV
                 </Button>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" onClick={handleXLSXImport}>
                   <Upload className="h-4 w-4 mr-2" />
                   Importar XLSX
                 </Button>
