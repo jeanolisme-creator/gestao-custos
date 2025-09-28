@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, PieChart, Pie, Cell } from "recharts";
@@ -79,17 +80,17 @@ const categoryDistribution = [
 ];
 
 const salaryRanges = [
-  'Até R$ 2.000',
-  'R$ 2.001 - R$ 4.000', 
-  'R$ 4.001 - R$ 6.000',
-  'R$ 6.001 - R$ 8.000',
-  'Acima de R$ 8.000'
+  'Até R$ 4.500,00',
+  'De R$ 4.501,00 até R$ 7.500,00', 
+  'De R$ 7.501,00 até R$ 9.500,00',
+  'De R$ 9.501,00 até R$ 13.500,00',
+  'Personalizado'
 ];
 
-const years = ['2022', '2023', '2024'];
+const years = ['2025', '2026', '2027'];
 
 export function CostAnalysis() {
-  const [selectedYear, setSelectedYear] = useState('2024');
+  const [selectedYear, setSelectedYear] = useState('2025');
   const [selectedSchool, setSelectedSchool] = useState('all');
   const [selectedSalaryRange, setSelectedSalaryRange] = useState('all');
 
@@ -181,6 +182,12 @@ export function CostAnalysis() {
                   ))}
                 </SelectContent>
               </Select>
+              {selectedSalaryRange === 'Personalizado' && (
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <Input placeholder="Valor inicial (R$)" type="number" />
+                  <Input placeholder="Valor final (R$)" type="number" />
+                </div>
+              )}
             </div>
           </div>
         </CardContent>

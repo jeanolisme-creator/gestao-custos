@@ -14,7 +14,8 @@ import {
   Sheet,
   TrendingUp,
   TrendingDown,
-  Minus
+  Minus,
+  Users
 } from 'lucide-react';
 import { useSystem } from '@/contexts/SystemContext';
 import { generateMockSystemData, UnifiedRecord } from '@/utils/systemData';
@@ -314,12 +315,28 @@ export default function ConsolidatedReport() {
         </Card>
       </div>
 
+      {/* HR Costs Card */}
+      <Card className="border-orange-200 bg-orange-50">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Gestão de RH</p>
+              <p className="text-2xl font-bold text-orange-600">R$ 4.850.000</p>
+              <p className="text-xs text-muted-foreground">
+                Custo mensal total
+              </p>
+            </div>
+            <Users className="h-8 w-8 text-orange-600" />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Detailed Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Detalhamento por Escola</CardTitle>
+          <CardTitle>Relatório de Custos por Escola</CardTitle>
           <CardDescription>
-            Custos detalhados de água, energia, telefonia fixa e celulares por escola
+            Custos por dia, mês e ano de todas as escolas (água, energia, telefonia fixa e celulares)
           </CardDescription>
         </CardHeader>
         <CardContent>

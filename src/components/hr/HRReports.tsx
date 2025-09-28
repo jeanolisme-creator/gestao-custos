@@ -64,7 +64,7 @@ const mockReportData: ReportData = {
 
 export function HRReports() {
   const [selectedReportType, setSelectedReportType] = useState('folha');
-  const [selectedPeriod, setSelectedPeriod] = useState('2024-12');
+  const [selectedPeriod, setSelectedPeriod] = useState('2025-12');
   const [startDate, setStartDate] = useState('2024-01-01');
   const [endDate, setEndDate] = useState('2024-12-31');
   const [generatedReports, setGeneratedReports] = useState<string[]>([]);
@@ -309,18 +309,18 @@ export function HRReports() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="2024-01">Janeiro 2024</SelectItem>
-                  <SelectItem value="2024-02">Fevereiro 2024</SelectItem>
-                  <SelectItem value="2024-03">Março 2024</SelectItem>
-                  <SelectItem value="2024-04">Abril 2024</SelectItem>
-                  <SelectItem value="2024-05">Maio 2024</SelectItem>
-                  <SelectItem value="2024-06">Junho 2024</SelectItem>
-                  <SelectItem value="2024-07">Julho 2024</SelectItem>
-                  <SelectItem value="2024-08">Agosto 2024</SelectItem>
-                  <SelectItem value="2024-09">Setembro 2024</SelectItem>
-                  <SelectItem value="2024-10">Outubro 2024</SelectItem>
-                  <SelectItem value="2024-11">Novembro 2024</SelectItem>
-                  <SelectItem value="2024-12">Dezembro 2024</SelectItem>
+                  <SelectItem value="2025-01">Janeiro 2025</SelectItem>
+                  <SelectItem value="2025-02">Fevereiro 2025</SelectItem>
+                  <SelectItem value="2025-03">Março 2025</SelectItem>
+                  <SelectItem value="2025-04">Abril 2025</SelectItem>
+                  <SelectItem value="2025-05">Maio 2025</SelectItem>
+                  <SelectItem value="2025-06">Junho 2025</SelectItem>
+                  <SelectItem value="2025-07">Julho 2025</SelectItem>
+                  <SelectItem value="2025-08">Agosto 2025</SelectItem>
+                  <SelectItem value="2025-09">Setembro 2025</SelectItem>
+                  <SelectItem value="2025-10">Outubro 2025</SelectItem>
+                  <SelectItem value="2025-11">Novembro 2025</SelectItem>
+                  <SelectItem value="2025-12">Dezembro 2025</SelectItem>
                 </SelectContent>
               </Select>
             </div>

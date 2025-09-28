@@ -127,16 +127,13 @@ export function Sidebar() {
               <img 
                 src={logoSecretaria} 
                 alt="Logo Secretaria de Educação" 
-                className="h-48 w-auto object-contain"
+                className="h-12 w-auto object-contain"
               />
             </div>
             <div>
               <h1 className="text-lg font-bold text-sidebar-foreground">
-                Sistema de Gestão- SME
+                Gestão de Custos – SME
               </h1>
-              <p className="text-xs text-sidebar-foreground/70">
-                Gestão de Custos
-              </p>
             </div>
           </div>
         )}

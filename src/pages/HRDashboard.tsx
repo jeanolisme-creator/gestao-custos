@@ -152,22 +152,30 @@ export default function HRDashboard() {
         </div>
 
         {/* Employee Distribution Mini Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {hrData.employeeDistribution.map((item, index) => {
-            const icons = [GraduationCap, Briefcase, Shield, Eye, UserCheck, Utensils];
-            const Icon = icons[index];
-            
-            return (
-              <Card key={index} className="p-4">
-                <div className="flex items-center space-x-2 mb-2">
-                  <Icon className="h-4 w-4" style={{ color: item.color }} />
-                  <span className="text-xs font-medium text-muted-foreground">{item.name}</span>
-                </div>
-                <p className="text-lg font-bold text-foreground">{item.value}</p>
-                <p className="text-xs text-muted-foreground">{item.percentage}%</p>
-              </Card>
-            );
-          })}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+          {[
+            { name: 'Prof. PEB I', value: 324, color: '#3b82f6' },
+            { name: 'Prof. PEB II', value: 280, color: '#10b981' },
+            { name: 'PEB I Temp', value: 68, color: '#f59e0b' },
+            { name: 'PEB II Temp', value: 52, color: '#ef4444' },
+            { name: 'Tec. Contabilidade', value: 28, color: '#8b5cf6' },
+            { name: 'Assessor', value: 18, color: '#06b6d4' },
+            { name: 'Assistente de Direção', value: 45, color: '#84cc16' },
+            { name: 'Supervisor', value: 32, color: '#f97316' },
+            { name: 'Aux. Serv. Gerais', value: 156, color: '#ec4899' },
+            { name: 'Motorista', value: 42, color: '#14b8a6' },
+            { name: 'Estagiário', value: 89, color: '#8b5cf6' },
+            { name: 'Digitador', value: 24, color: '#f59e0b' },
+            { name: 'Atendente', value: 36, color: '#ef4444' },
+          ].map((item, index) => (
+            <Card key={index} className="p-3">
+              <div className="flex items-center space-x-1 mb-1">
+                <DollarSign className="h-3 w-3" style={{ color: item.color }} />
+                <span className="text-xs font-medium text-muted-foreground">{item.name}</span>
+              </div>
+              <p className="text-sm font-bold text-foreground">{item.value}</p>
+            </Card>
+          ))}
         </div>
 
         {/* Charts Section */}

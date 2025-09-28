@@ -317,6 +317,17 @@ export function EmployeeRegistration() {
                       onChange={(e) => handleInputChange('dataNascimento', e.target.value)}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="idade">Idade</Label>
+                    <Input
+                      id="idade"
+                      type="number"
+                      value={formData.dataNascimento ? calculateAge(formData.dataNascimento) : ''}
+                      readOnly
+                      className="bg-muted"
+                      placeholder="Calculado automaticamente"
+                    />
+                  </div>
                 </div>
               </TabsContent>
               
@@ -333,23 +344,47 @@ export function EmployeeRegistration() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="cargaHoraria">Carga Horária</Label>
-                    <Input
-                      id="cargaHoraria"
-                      type="number"
-                      value={formData.cargaHoraria}
-                      onChange={(e) => handleInputChange('cargaHoraria', e.target.value)}
-                      placeholder="40"
-                    />
+                    <Select value={formData.cargaHoraria} onValueChange={(value) => handleInputChange('cargaHoraria', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="120">120 horas</SelectItem>
+                        <SelectItem value="160">160 horas</SelectItem>
+                        <SelectItem value="175">175 horas</SelectItem>
+                        <SelectItem value="200">200 horas</SelectItem>
+                        <SelectItem value="outro">Outro (digitar manualmente)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {formData.cargaHoraria === 'outro' && (
+                      <Input
+                        type="number"
+                        placeholder="Digite a carga horária"
+                        onChange={(e) => handleInputChange('cargaHoraria', e.target.value)}
+                      />
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="cargaHorariaEfetiva">Carga Horária Efetiva</Label>
-                    <Input
-                      id="cargaHorariaEfetiva"
-                      type="number"
-                      value={formData.cargaHorariaEfetiva}
-                      onChange={(e) => handleInputChange('cargaHorariaEfetiva', e.target.value)}
-                      placeholder="40"
-                    />
+                    <Select value={formData.cargaHorariaEfetiva} onValueChange={(value) => handleInputChange('cargaHorariaEfetiva', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="120">120 horas</SelectItem>
+                        <SelectItem value="160">160 horas</SelectItem>
+                        <SelectItem value="175">175 horas</SelectItem>
+                        <SelectItem value="200">200 horas</SelectItem>
+                        <SelectItem value="outro">Outro (digitar manualmente)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {formData.cargaHorariaEfetiva === 'outro' && (
+                      <Input
+                        type="number"
+                        placeholder="Digite a carga horária efetiva"
+                        onChange={(e) => handleInputChange('cargaHorariaEfetiva', e.target.value)}
+                      />
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="vinculo">Vínculo</Label>
@@ -358,20 +393,35 @@ export function EmployeeRegistration() {
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Estatutário">Estatutário</SelectItem>
-                        <SelectItem value="CLT">CLT</SelectItem>
+                        <SelectItem value="Efetivo">Efetivo</SelectItem>
                         <SelectItem value="Temporário">Temporário</SelectItem>
+                        <SelectItem value="CLT">CLT</SelectItem>
+                        <SelectItem value="Estagiário">Estagiário</SelectItem>
+                        <SelectItem value="outro">Outro (digitar manualmente)</SelectItem>
                       </SelectContent>
                     </Select>
+                    {formData.vinculo === 'outro' && (
+                      <Input
+                        placeholder="Digite o vínculo"
+                        onChange={(e) => handleInputChange('vinculo', e.target.value)}
+                      />
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="localLotacao">Local de Lotação</Label>
-                    <Input
-                      id="localLotacao"
-                      value={formData.localLotacao}
-                      onChange={(e) => handleInputChange('localLotacao', e.target.value)}
-                      placeholder="Nome da escola"
-                    />
+                    <Select value={formData.localLotacao} onValueChange={(value) => handleInputChange('localLotacao', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione a escola" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="EMEF João Silva">EMEF João Silva</SelectItem>
+                        <SelectItem value="EMEI Maria Santos">EMEI Maria Santos</SelectItem>
+                        <SelectItem value="EMEIF Pedro Costa">EMEIF Pedro Costa</SelectItem>
+                        <SelectItem value="COMP Ana Lima">COMP Ana Lima</SelectItem>
+                        <SelectItem value="PAR Carlos Souza">PAR Carlos Souza</SelectItem>
+                        <SelectItem value="SEDE Central">SEDE Central</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="tipoEscola">Tipo de Escola</Label>
@@ -396,16 +446,34 @@ export function EmployeeRegistration() {
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Professor">Professor</SelectItem>
                         <SelectItem value="Diretor">Diretor</SelectItem>
                         <SelectItem value="Coordenador">Coordenador</SelectItem>
                         <SelectItem value="Agente Administrativo">Agente Administrativo</SelectItem>
                         <SelectItem value="Inspetor de Alunos">Inspetor de Alunos</SelectItem>
-                        <SelectItem value="Merendeira">Merendeira</SelectItem>
                         <SelectItem value="Profissional Readaptado">Profissional Readaptado</SelectItem>
+                        <SelectItem value="Merendeira">Merendeira</SelectItem>
                         <SelectItem value="Assistente de Direção">Assistente de Direção</SelectItem>
+                        <SelectItem value="Prof. PEB I">Prof. PEB I</SelectItem>
+                        <SelectItem value="Prof. PEB II">Prof. PEB II</SelectItem>
+                        <SelectItem value="PEB I Temp">PEB I Temp</SelectItem>
+                        <SelectItem value="PEB II Temp">PEB II Temp</SelectItem>
+                        <SelectItem value="Tec. Contabilidade">Tec. Contabilidade</SelectItem>
+                        <SelectItem value="Assessor">Assessor</SelectItem>
+                        <SelectItem value="Supervisor">Supervisor</SelectItem>
+                        <SelectItem value="Aux. Serv. Gerais">Aux. Serv. Gerais</SelectItem>
+                        <SelectItem value="Motorista">Motorista</SelectItem>
+                        <SelectItem value="Estagiario">Estagiário</SelectItem>
+                        <SelectItem value="Digitador">Digitador</SelectItem>
+                        <SelectItem value="Atendente">Atendente</SelectItem>
+                        <SelectItem value="outro">Outro (digitar manualmente)</SelectItem>
                       </SelectContent>
                     </Select>
+                    {formData.cargoEfetivo === 'outro' && (
+                      <Input
+                        placeholder="Digite o cargo efetivo"
+                        onChange={(e) => handleInputChange('cargoEfetivo', e.target.value)}
+                      />
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="cargoAtual">Cargo Atual</Label>
@@ -414,16 +482,34 @@ export function EmployeeRegistration() {
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Professor">Professor</SelectItem>
                         <SelectItem value="Diretor">Diretor</SelectItem>
                         <SelectItem value="Coordenador">Coordenador</SelectItem>
                         <SelectItem value="Agente Administrativo">Agente Administrativo</SelectItem>
                         <SelectItem value="Inspetor de Alunos">Inspetor de Alunos</SelectItem>
-                        <SelectItem value="Merendeira">Merendeira</SelectItem>
                         <SelectItem value="Profissional Readaptado">Profissional Readaptado</SelectItem>
+                        <SelectItem value="Merendeira">Merendeira</SelectItem>
                         <SelectItem value="Assistente de Direção">Assistente de Direção</SelectItem>
+                        <SelectItem value="Prof. PEB I">Prof. PEB I</SelectItem>
+                        <SelectItem value="Prof. PEB II">Prof. PEB II</SelectItem>
+                        <SelectItem value="PEB I Temp">PEB I Temp</SelectItem>
+                        <SelectItem value="PEB II Temp">PEB II Temp</SelectItem>
+                        <SelectItem value="Tec. Contabilidade">Tec. Contabilidade</SelectItem>
+                        <SelectItem value="Assessor">Assessor</SelectItem>
+                        <SelectItem value="Supervisor">Supervisor</SelectItem>
+                        <SelectItem value="Aux. Serv. Gerais">Aux. Serv. Gerais</SelectItem>
+                        <SelectItem value="Motorista">Motorista</SelectItem>
+                        <SelectItem value="Estagiario">Estagiário</SelectItem>
+                        <SelectItem value="Digitador">Digitador</SelectItem>
+                        <SelectItem value="Atendente">Atendente</SelectItem>
+                        <SelectItem value="outro">Outro (digitar manualmente)</SelectItem>
                       </SelectContent>
                     </Select>
+                    {formData.cargoAtual === 'outro' && (
+                      <Input
+                        placeholder="Digite o cargo atual"
+                        onChange={(e) => handleInputChange('cargoAtual', e.target.value)}
+                      />
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="salario">Salário (R$)</Label>
