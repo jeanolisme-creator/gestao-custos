@@ -274,42 +274,47 @@ export default function Records() {
                   <Upload className="h-4 w-4 mr-2" />
                   Importar XLSX
                 </Button>
-        <div className="flex flex-wrap gap-2 mb-4">
-          {Object.entries(systemConfigs).map(([systemId, sysConfig]) => {
-            const SysIcon = sysConfig.icon;
-            const isActive = currentSystem === systemId;
+              </div>
+            </div>
             
-            return (
-              <Button
-                key={systemId}
-                onClick={() => {
-                  setCurrentSystem(systemId as SystemType);
-                  window.history.pushState({}, '', `/records?system=${systemId}`);
-                  resetForm();
-                }}
-                variant={isActive ? "default" : "outline"}
-                size="sm"
-                className={cn(
-                  "transition-all duration-300",
-                  isActive && [
-                    systemId === 'water' && 'bg-water text-white hover:bg-water/90',
-                    systemId === 'energy' && 'bg-energy text-white hover:bg-energy/90',
-                    systemId === 'fixed-line' && 'bg-fixed-line text-white hover:bg-fixed-line/90',
-                    systemId === 'mobile' && 'bg-mobile text-white hover:bg-mobile/90',
-                  ],
-                  !isActive && [
-                    systemId === 'water' && 'border-water/30 text-water hover:bg-water/10',
-                    systemId === 'energy' && 'border-energy/30 text-energy hover:bg-energy/10',
-                    systemId === 'fixed-line' && 'border-fixed-line/30 text-fixed-line hover:bg-fixed-line/10',
-                    systemId === 'mobile' && 'border-mobile/30 text-mobile hover:bg-mobile/10',
-                  ]
-                )}
-              >
-                <SysIcon className="h-4 w-4 mr-2" />
-                {sysConfig.name}
-              </Button>
-            );
-          })}
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(systemConfigs).map(([systemId, sysConfig]) => {
+                const SysIcon = sysConfig.icon;
+                const isActive = currentSystem === systemId;
+                
+                return (
+                  <Button
+                    key={systemId}
+                    onClick={() => {
+                      setCurrentSystem(systemId as SystemType);
+                      window.history.pushState({}, '', `/records?system=${systemId}`);
+                      resetForm();
+                    }}
+                    variant={isActive ? "default" : "outline"}
+                    size="sm"
+                    className={cn(
+                      "transition-all duration-300",
+                      isActive && [
+                        systemId === 'water' && 'bg-water text-white hover:bg-water/90',
+                        systemId === 'energy' && 'bg-energy text-white hover:bg-energy/90',
+                        systemId === 'fixed-line' && 'bg-fixed-line text-white hover:bg-fixed-line/90',
+                        systemId === 'mobile' && 'bg-mobile text-white hover:bg-mobile/90',
+                      ],
+                      !isActive && [
+                        systemId === 'water' && 'border-water/30 text-water hover:bg-water/10',
+                        systemId === 'energy' && 'border-energy/30 text-energy hover:bg-energy/10',
+                        systemId === 'fixed-line' && 'border-fixed-line/30 text-fixed-line hover:bg-fixed-line/10',
+                        systemId === 'mobile' && 'border-mobile/30 text-mobile hover:bg-mobile/10',
+                      ]
+                    )}
+                  >
+                    <SysIcon className="h-4 w-4 mr-2" />
+                    {sysConfig.name}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </Card>
 
@@ -468,7 +473,13 @@ export default function Records() {
                       </TableCell>
                       <TableCell>{record.nome_escola}</TableCell>
                       <TableCell>
-                        {record.valor_gasto ? `R$ ${record.valor_gasto.toFixed(2)}` : '-'}
+                        {record.valor_gasto 
+                          ? new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL'
+                            }).format(record.valor_gasto)
+                          : '-'
+                        }
                       </TableCell>
                       <TableCell>
                         {new Date(record.created_at).toLocaleDateString('pt-BR')}

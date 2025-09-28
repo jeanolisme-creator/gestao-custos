@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
 import { 
   Droplets, 
   Zap, 
@@ -15,7 +16,11 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Users
+  Users,
+  Package,
+  DollarSign,
+  BarChart3,
+  Search
 } from 'lucide-react';
 import { useSystem } from '@/contexts/SystemContext';
 import { generateMockSystemData, UnifiedRecord } from '@/utils/systemData';
@@ -38,6 +43,15 @@ interface ConsolidatedData {
   macroregiao?: string;
   tipoEscola?: string;
 }
+
+// Mock schools data for detailed cost report
+const mockSchools = [
+  { nome: 'EMEF João Silva', custoTotal: 45000, totalAlunos: 320 },
+  { nome: 'EMEI Maria Santos', custoTotal: 32000, totalAlunos: 180 },
+  { nome: 'EMEIF Pedro Costa', custoTotal: 38000, totalAlunos: 250 },
+  { nome: 'PAR Central', custoTotal: 28000, totalAlunos: 150 },
+  { nome: 'COMP Norte', custoTotal: 42000, totalAlunos: 290 },
+];
 
 export default function ConsolidatedReport() {
   const { allSystems } = useSystem();
@@ -236,7 +250,6 @@ export default function ConsolidatedReport() {
         </CardContent>
       </Card>
 
-
       {/* Summary Cards - Reordered */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="border-orange-200 bg-orange-50">
@@ -268,15 +281,105 @@ export default function ConsolidatedReport() {
             </div>
           </CardContent>
         </Card>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Gestão de RH</p>
-              <p className="text-2xl font-bold text-orange-600">R$ 4.850.000</p>
-              <p className="text-xs text-muted-foreground">
-                Custo mensal total
-              </p>
+
+        <Card className="border-water/20 bg-water/5">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Água</p>
+                <p className="text-2xl font-bold text-water">{formatCurrency(totals.water)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {getPercentage(totals.water).toFixed(1)}% do total
+                </p>
+              </div>
+              <Droplets className="h-8 w-8 text-water" />
             </div>
-            <Users className="h-8 w-8 text-orange-600" />
+          </CardContent>
+        </Card>
+
+        <Card className="border-energy/20 bg-energy/5">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Energia</p>
+                <p className="text-2xl font-bold text-energy">{formatCurrency(totals.energy)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {getPercentage(totals.energy).toFixed(1)}% do total
+                </p>
+              </div>
+              <Zap className="h-8 w-8 text-energy" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-fixed-line/20 bg-fixed-line/5">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Linha Fixa</p>
+                <p className="text-2xl font-bold text-fixed-line">{formatCurrency(totals.fixedLine)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {getPercentage(totals.fixedLine).toFixed(1)}% do total
+                </p>
+              </div>
+              <Phone className="h-8 w-8 text-fixed-line" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Fixed Cost Analysis Report */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Relatório de Custos por Escola - Geral
+          </CardTitle>
+          <CardDescription>
+            Análise de custos detalhada por escola (dia, mês e ano) e custo por aluno
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex gap-4">
+              <Input 
+                placeholder="Buscar escola..." 
+                className="max-w-sm"
+              />
+              <Button>
+                <Search className="h-4 w-4 mr-2" />
+                Buscar
+              </Button>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse border border-border">
+                <thead>
+                  <tr className="bg-muted">
+                    <th className="border border-border p-2 text-left">Escola</th>
+                    <th className="border border-border p-2 text-left">Custo/Dia</th>
+                    <th className="border border-border p-2 text-left">Custo/Mês</th>
+                    <th className="border border-border p-2 text-left">Custo/Ano</th>
+                    <th className="border border-border p-2 text-left">Custo/Aluno Dia</th>
+                    <th className="border border-border p-2 text-left">Custo/Aluno Mês</th>
+                    <th className="border border-border p-2 text-left">Custo/Aluno Ano</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mockSchools.slice(0, 10).map((school, index) => (
+                    <tr key={index} className="hover:bg-muted/50">
+                      <td className="border border-border p-2">{school.nome}</td>
+                      <td className="border border-border p-2">R$ {(school.custoTotal / 365).toFixed(2)}</td>
+                      <td className="border border-border p-2">R$ {(school.custoTotal / 12).toFixed(2)}</td>
+                      <td className="border border-border p-2">R$ {school.custoTotal.toFixed(2)}</td>
+                      <td className="border border-border p-2">R$ {(school.custoTotal / 365 / school.totalAlunos).toFixed(2)}</td>
+                      <td className="border border-border p-2">R$ {(school.custoTotal / 12 / school.totalAlunos).toFixed(2)}</td>
+                      <td className="border border-border p-2">R$ {(school.custoTotal / school.totalAlunos).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -303,11 +406,11 @@ export default function ConsolidatedReport() {
                   <th className="text-right p-3 font-medium text-fixed-line">Linha Fixa</th>
                   <th className="text-right p-3 font-medium text-mobile">Celular</th>
                   <th className="text-right p-3 font-medium">Total</th>
-                     <th className="text-right p-3 font-medium">Custo/Aluno</th>
-                   <th className="text-right p-3 font-medium">Custo/Dia</th>
-                   <th className="text-right p-3 font-medium">Custo/Mês</th>
-                   <th className="text-right p-3 font-medium">Custo/Ano</th>
-                   <th className="text-center p-3 font-medium">Distribuição</th>
+                  <th className="text-right p-3 font-medium">Custo/Aluno</th>
+                  <th className="text-right p-3 font-medium">Custo/Dia</th>
+                  <th className="text-right p-3 font-medium">Custo/Mês</th>
+                  <th className="text-right p-3 font-medium">Custo/Ano</th>
+                  <th className="text-center p-3 font-medium">Distribuição</th>
                 </tr>
               </thead>
               <tbody>
@@ -343,19 +446,19 @@ export default function ConsolidatedReport() {
                       <td className="p-3 text-right font-bold">
                         {formatCurrency(school.total)}
                       </td>
-                       <td className="p-3 text-right font-medium text-primary">
-                         {formatCurrency(costPerStudent)}
-                       </td>
-                       <td className="p-3 text-right font-medium text-secondary">
-                         {formatCurrency(school.total / 365)}
-                       </td>
-                       <td className="p-3 text-right font-medium text-accent">
-                         {formatCurrency(school.total / 12)}
-                       </td>
-                       <td className="p-3 text-right font-medium text-primary">
-                         {formatCurrency(school.total)}
-                       </td>
-                       <td className="p-3">
+                      <td className="p-3 text-right font-medium text-primary">
+                        {formatCurrency(costPerStudent)}
+                      </td>
+                      <td className="p-3 text-right font-medium text-secondary">
+                        {formatCurrency(school.total / 365)}
+                      </td>
+                      <td className="p-3 text-right font-medium text-accent">
+                        {formatCurrency(school.total / 12)}
+                      </td>
+                      <td className="p-3 text-right font-medium text-primary">
+                        {formatCurrency(school.total)}
+                      </td>
+                      <td className="p-3">
                         <div className="flex items-center gap-2 min-w-[200px]">
                           <div className="flex-1 space-y-1">
                             <div className="flex gap-1">
@@ -375,12 +478,6 @@ export default function ConsolidatedReport() {
                                 className="h-2 bg-mobile rounded-sm" 
                                 style={{ width: `${(school.mobile.value / school.total) * 100}%` }}
                               />
-                            </div>
-                            <div className="flex justify-between text-xs text-muted-foreground">
-                              <span>{((school.water.value / school.total) * 100).toFixed(0)}%</span>
-                              <span>{((school.energy.value / school.total) * 100).toFixed(0)}%</span>
-                              <span>{((school.fixedLine.value / school.total) * 100).toFixed(0)}%</span>
-                              <span>{((school.mobile.value / school.total) * 100).toFixed(0)}%</span>
                             </div>
                           </div>
                         </div>

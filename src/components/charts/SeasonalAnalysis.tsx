@@ -13,12 +13,23 @@ import { Badge } from "@/components/ui/badge";
 import { Thermometer, CloudRain, Sun, Snowflake } from "lucide-react";
 import { getMonthlyTotals } from "@/utils/mockData";
 import { getSystemMonthlyTotals } from "@/utils/systemData";
+import { useSystem } from "@/contexts/SystemContext";
 
 interface SeasonalAnalysisProps {
   data: any[];
 }
 
 export function SeasonalAnalysis({ data }: SeasonalAnalysisProps) {
+  const { currentSystem } = useSystem();
+  
+  const getUnit = () => {
+    switch (currentSystem) {
+      case 'energy': return 'KWh';
+      case 'fixed-line': return 'plano';
+      case 'mobile': return 'dados';
+      default: return 'm³';
+    }
+  };
   // Check if data has unified system structure
   const hasSystemType = data.length > 0 && data[0]?.system_type;
   const monthlyData = hasSystemType ? getSystemMonthlyTotals(data) : getMonthlyTotals(data);
@@ -48,7 +59,7 @@ export function SeasonalAnalysis({ data }: SeasonalAnalysisProps) {
       total_consumo: Math.round(totalConsumption * 10) / 10,
       total_valor: Math.round(totalValue),
       months: seasonMonths.map(m => m.month),
-      efficiency: avgConsumption / avgValue * 1000, // m³ per R$ 1000
+      efficiency: avgConsumption / avgValue * 1000,
     };
   });
 
@@ -77,13 +88,13 @@ export function SeasonalAnalysis({ data }: SeasonalAnalysisProps) {
           </div>
           <div className="space-y-1">
             <p className="text-sm text-primary">
-              Consumo médio: <span className="font-medium">{data.consumo}m³</span>
+              Consumo médio: <span className="font-medium">{data.consumo}{getUnit()}</span>
             </p>
             <p className="text-sm text-success">
               Valor médio: <span className="font-medium">{formatCurrency(data.valor)}</span>
             </p>
             <p className="text-sm text-warning">
-              Total período: <span className="font-medium">{data.total_consumo}m³</span>
+              Total período: <span className="font-medium">{data.total_consumo}{getUnit()}</span>
             </p>
             <p className="text-sm text-muted-foreground">
               Meses: {data.months.join(', ')}
@@ -114,7 +125,7 @@ export function SeasonalAnalysis({ data }: SeasonalAnalysisProps) {
             <span className="font-medium text-foreground">Maior Consumo</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            {highestSeason?.season} com média de {highestSeason?.consumo}m³
+            {highestSeason?.season} com média de {highestSeason?.consumo}{getUnit()}
           </p>
           <Badge variant="destructive" className="mt-2 text-xs">
             +{Math.round(((maxConsumption - minConsumption) / minConsumption) * 100)}% vs menor
@@ -127,7 +138,7 @@ export function SeasonalAnalysis({ data }: SeasonalAnalysisProps) {
             <span className="font-medium text-foreground">Menor Consumo</span>
           </div>
           <p className="text-sm text-muted-foreground">
-            {lowestSeason?.season} com média de {lowestSeason?.consumo}m³
+            {lowestSeason?.season} com média de {lowestSeason?.consumo}{getUnit()}
           </p>
           <Badge variant="secondary" className="mt-2 text-xs">
             Mais eficiente
@@ -147,7 +158,7 @@ export function SeasonalAnalysis({ data }: SeasonalAnalysisProps) {
             <YAxis
               className="fill-muted-foreground"
               fontSize={11}
-              tickFormatter={(value) => `${value}m³`}
+              tickFormatter={(value) => `${value}${getUnit()}`}
             />
             <Tooltip content={<CustomTooltip />} />
             <Bar dataKey="consumo" radius={[4, 4, 0, 0]}>
@@ -169,7 +180,7 @@ export function SeasonalAnalysis({ data }: SeasonalAnalysisProps) {
             />
             <p className="text-xs font-medium text-foreground">{season.season}</p>
             <p className="text-sm font-semibold" style={{ color: season.color }}>
-              {season.consumo}m³
+              {season.consumo}{getUnit()}
             </p>
             <p className="text-xs text-muted-foreground">
               {formatCurrency(season.valor)}
@@ -192,7 +203,7 @@ export function SeasonalAnalysis({ data }: SeasonalAnalysisProps) {
                   <span className="text-sm text-foreground">{season.season}</span>
                 </div>
                 <span className="text-sm font-medium text-primary">
-                  {season.efficiency.toFixed(2)} m³/R$1k
+                  {season.efficiency.toFixed(2)} {getUnit()}/R$1k
                 </span>
               </div>
             ))}
