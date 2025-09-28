@@ -49,14 +49,14 @@ export function MetricCard({
       className
     )}>
       <div className="flex items-center justify-between">
-        <div className="space-y-2">
+        <div className="space-y-2 text-center flex-1">
           <p className={cn(
             "text-sm font-medium",
             variant === 'default' ? 'text-muted-foreground' : 'text-current opacity-90'
           )}>
             {title}
           </p>
-          <div className="flex items-baseline space-x-2">
+          <div className="flex items-baseline justify-center space-x-2">
             <p className={cn(
               "text-2xl font-bold tracking-tight",
               variant === 'default' ? 'text-foreground' : 'text-current'

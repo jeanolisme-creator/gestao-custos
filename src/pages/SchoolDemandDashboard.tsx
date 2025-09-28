@@ -118,6 +118,13 @@ export default function SchoolDemandDashboard() {
                   Integrações
                 </Button>
                 <Button 
+                  variant="outline"
+                  onClick={() => window.location.href = '/school-demand/importar'}
+                >
+                  <GraduationCap className="h-4 w-4 mr-2" />
+                  Importar Dados
+                </Button>
+                <Button 
                   className="bg-school-demand text-white hover:bg-school-demand/90"
                   onClick={() => window.location.href = '/school-demand/cadastro'}
                 >

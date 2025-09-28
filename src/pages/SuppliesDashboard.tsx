@@ -22,6 +22,7 @@ import {
   Shield,
   Utensils,
 } from "lucide-react";
+import { ReportsGenerator } from "@/components/supplies/ReportsGenerator";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 
 // Mock Supplies data
@@ -140,8 +141,8 @@ export default function SuppliesDashboard() {
             const Icon = icons[index];
             
             return (
-              <Card key={index} className="p-4">
-                <div className="flex items-center space-x-2 mb-2">
+              <Card key={index} className="p-4 text-center">
+                <div className="flex items-center justify-center space-x-2 mb-2">
                   <Icon className="h-4 w-4" style={{ color: item.color }} />
                   <span className="text-xs font-medium text-muted-foreground">{item.name}</span>
                 </div>
@@ -155,7 +156,7 @@ export default function SuppliesDashboard() {
         {/* Education Level Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {suppliesData.educationLevelData.map((level, index) => (
-            <Card key={index} className="p-4">
+            <Card key={index} className="p-4 text-center">
               <div className="space-y-2">
                 <h4 className="font-medium text-foreground">{level.level}</h4>
                 <div className="space-y-1">
@@ -277,11 +278,14 @@ export default function SuppliesDashboard() {
           </Card>
         </div>
 
+        {/* Reports Generator */}
+        <ReportsGenerator />
+
         {/* Summary Tables */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* School Summary */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">
+          <Card className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 border-blue-200 dark:border-blue-800">
+            <h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-4">
               Resumo por Escola
             </h3>
             
@@ -322,8 +326,8 @@ export default function SuppliesDashboard() {
           </Card>
 
           {/* Top Items */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">
+          <Card className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200 dark:border-green-800">
+            <h3 className="text-lg font-semibold text-green-900 dark:text-green-100 mb-4">
               Itens de Maior Custo
             </h3>
             

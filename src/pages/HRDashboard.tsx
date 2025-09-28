@@ -168,8 +168,8 @@ export default function HRDashboard() {
             { name: 'Digitador', value: 24, color: '#f59e0b', icon: Briefcase },
             { name: 'Atendente', value: 36, color: '#ef4444', icon: Utensils },
           ].map((item, index) => (
-            <Card key={index} className="p-3">
-              <div className="flex items-center space-x-1 mb-1">
+            <Card key={index} className="p-3 text-center">
+              <div className="flex items-center justify-center space-x-1 mb-1">
                 <item.icon className="h-3 w-3" style={{ color: item.color }} />
                 <span className="text-xs font-medium text-muted-foreground">{item.name}</span>
               </div>
