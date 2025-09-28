@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -62,6 +63,8 @@ export default function ConsolidatedReport() {
   const [selectedSchool, setSelectedSchool] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredSchools, setFilteredSchools] = useState(mockSchools);
+  const [searchTerm2, setSearchTerm2] = useState('');
+  const [filteredConsolidatedData, setFilteredConsolidatedData] = useState<ConsolidatedData[]>([]);
 
   // Generate mock data for all systems
   const allData: UnifiedRecord[] = [
@@ -146,6 +149,11 @@ export default function ConsolidatedReport() {
     return Object.values(groupedBySchool).sort((a, b) => b.total - a.total);
   })();
 
+  // Update filtered consolidated data when consolidatedData changes
+  React.useEffect(() => {
+    setFilteredConsolidatedData(consolidatedData);
+  }, [consolidatedData]);
+
   // Calculate totals
   const totals = {
     water: consolidatedData.reduce((sum, school) => sum + school.water.value, 0),
@@ -178,6 +186,18 @@ export default function ConsolidatedReport() {
       school.nome.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredSchools(filtered);
+  };
+
+  const handleSearch2 = () => {
+    if (searchTerm2.trim() === '') {
+      setFilteredConsolidatedData(consolidatedData);
+      return;
+    }
+    
+    const filtered = consolidatedData.filter(school =>
+      school.schoolName.toLowerCase().includes(searchTerm2.toLowerCase())
+    );
+    setFilteredConsolidatedData(filtered);
   };
 
   return (
@@ -347,9 +367,9 @@ export default function ConsolidatedReport() {
               <TrendingUp className="h-8 w-8 text-primary" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Geral</p>
-                <p className="text-2xl font-bold text-primary">{formatCurrency(grandTotal)}</p>
+                <p className="text-2xl font-bold text-primary">{formatCurrency(grandTotal + (grandTotal * 0.65))}</p>
                 <p className="text-xs text-muted-foreground">
-                  {consolidatedData.length} escolas
+                  {consolidatedData.length} escolas + RH
                 </p>
               </div>
             </div>
@@ -433,104 +453,130 @@ export default function ConsolidatedReport() {
         <CardHeader>
           <CardTitle>Relatório de Custos por Escola</CardTitle>
           <CardDescription>
-            Custos por dia, mês e ano de todas as escolas (água, energia, telefonia fixa e celulares)
+            Custos por dia, mês e ano de todas as escolas (água, energia, telefonia fixa, celulares e RH)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-3 font-medium">Escola</th>
-                  <th className="text-left p-3 font-medium">Tipo</th>
-                  <th className="text-left p-3 font-medium">Macrorregião</th>
-                  <th className="text-left p-3 font-medium">Nº Alunos</th>
-                  <th className="text-right p-3 font-medium text-water">Água</th>
-                  <th className="text-right p-3 font-medium text-energy">Energia</th>
-                  <th className="text-right p-3 font-medium text-fixed-line">Linha Fixa</th>
-                  <th className="text-right p-3 font-medium text-mobile">Celular</th>
-                  <th className="text-right p-3 font-medium">Total</th>
-                  <th className="text-right p-3 font-medium">Custo/Aluno</th>
-                  <th className="text-right p-3 font-medium">Custo/Dia</th>
-                  <th className="text-right p-3 font-medium">Custo/Mês</th>
-                  <th className="text-right p-3 font-medium">Custo/Ano</th>
-                  <th className="text-center p-3 font-medium">Distribuição</th>
-                </tr>
-              </thead>
-              <tbody>
-                {consolidatedData.map((school, index) => {
-                  // Mock student count - in real app, this would come from school data
-                  const studentCount = Math.floor(Math.random() * 800) + 200;
-                  const costPerStudent = school.total / studentCount;
+          <div className="space-y-4">
+            <div className="flex gap-4">
+              <Input 
+                placeholder="Buscar escola..." 
+                className="max-w-sm"
+                value={searchTerm2}
+                onChange={(e) => setSearchTerm2(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch2()}
+              />
+              <Button onClick={handleSearch2}>
+                <Search className="h-4 w-4 mr-2" />
+                Buscar
+              </Button>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse border border-border rounded-lg overflow-hidden shadow-sm">
+                <thead>
+                  <tr className="bg-gradient-to-r from-primary/10 to-primary/5">
+                    <th className="border border-border p-3 text-left font-semibold text-primary">Escola</th>
+                    <th className="border border-border p-3 text-center font-semibold text-blue-600">Tipo</th>
+                    <th className="border border-border p-3 text-center font-semibold text-green-600">Macrorregião</th>
+                    <th className="border border-border p-3 text-center font-semibold text-purple-600">Nº Alunos</th>
+                    <th className="border border-border p-3 text-center font-semibold text-water">Água</th>
+                    <th className="border border-border p-3 text-center font-semibold text-energy">Energia</th>
+                    <th className="border border-border p-3 text-center font-semibold text-fixed-line">Linha Fixa</th>
+                    <th className="border border-border p-3 text-center font-semibold text-mobile">Celular</th>
+                    <th className="border border-border p-3 text-center font-semibold text-orange-600">RH</th>
+                    <th className="border border-border p-3 text-center font-semibold text-primary">Total</th>
+                    <th className="border border-border p-3 text-center font-semibold text-secondary">Custo/Aluno</th>
+                    <th className="border border-border p-3 text-center font-semibold text-accent">Custo/Dia</th>
+                    <th className="border border-border p-3 text-center font-semibold text-destructive">Custo/Mês</th>
+                    <th className="border border-border p-3 text-center font-semibold text-primary">Custo/Ano</th>
+                    <th className="border border-border p-3 text-center font-semibold text-muted-foreground">Distribuição</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredConsolidatedData.map((school, index) => {
+                    // Mock student count - in real app, this would come from school data
+                    const studentCount = Math.floor(Math.random() * 800) + 200;
+                    const hrCost = school.total * 0.65; // 65% para RH
+                    const totalWithHR = school.total + hrCost;
+                    const costPerStudent = totalWithHR / studentCount;
 
-                  return (
-                    <tr key={index} className="border-b hover:bg-muted/50">
-                      <td className="p-3 font-medium">{school.schoolName}</td>
-                      <td className="p-3">
-                        <Badge variant="outline">{school.tipoEscola}</Badge>
-                      </td>
-                      <td className="p-3">
-                        <Badge variant="secondary">{school.macroregiao}</Badge>
-                      </td>
-                      <td className="p-3 font-medium">
-                        {studentCount} alunos
-                      </td>
-                      <td className="p-3 text-right text-water font-medium">
-                        {formatCurrency(school.water.value)}
-                      </td>
-                      <td className="p-3 text-right text-energy font-medium">
-                        {formatCurrency(school.energy.value)}
-                      </td>
-                      <td className="p-3 text-right text-fixed-line font-medium">
-                        {formatCurrency(school.fixedLine.value)}
-                      </td>
-                      <td className="p-3 text-right text-mobile font-medium">
-                        {formatCurrency(school.mobile.value)}
-                      </td>
-                      <td className="p-3 text-right font-bold">
-                        {formatCurrency(school.total)}
-                      </td>
-                      <td className="p-3 text-right font-medium text-primary">
-                        {formatCurrency(costPerStudent)}
-                      </td>
-                      <td className="p-3 text-right font-medium text-secondary">
-                        {formatCurrency(school.total / 365)}
-                      </td>
-                      <td className="p-3 text-right font-medium text-accent">
-                        {formatCurrency(school.total / 12)}
-                      </td>
-                      <td className="p-3 text-right font-medium text-primary">
-                        {formatCurrency(school.total)}
-                      </td>
-                      <td className="p-3">
-                        <div className="flex items-center gap-2 min-w-[200px]">
-                          <div className="flex-1 space-y-1">
-                            <div className="flex gap-1">
-                              <div 
-                                className="h-2 bg-water rounded-sm" 
-                                style={{ width: `${(school.water.value / school.total) * 100}%` }}
-                              />
-                              <div 
-                                className="h-2 bg-energy rounded-sm" 
-                                style={{ width: `${(school.energy.value / school.total) * 100}%` }}
-                              />
-                              <div 
-                                className="h-2 bg-fixed-line rounded-sm" 
-                                style={{ width: `${(school.fixedLine.value / school.total) * 100}%` }}
-                              />
-                              <div 
-                                className="h-2 bg-mobile rounded-sm" 
-                                style={{ width: `${(school.mobile.value / school.total) * 100}%` }}
-                              />
+                    return (
+                      <tr key={index} className="hover:bg-muted/50 transition-colors duration-200 border-b border-border/50">
+                        <td className="border border-border p-3 font-medium text-foreground">{school.schoolName}</td>
+                        <td className="border border-border p-3 text-center">
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">{school.tipoEscola}</Badge>
+                        </td>
+                        <td className="border border-border p-3 text-center">
+                          <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">{school.macroregiao}</Badge>
+                        </td>
+                        <td className="border border-border p-3 text-center font-medium text-purple-600 bg-purple-50">
+                          {studentCount}
+                        </td>
+                        <td className="border border-border p-3 text-center text-water font-medium bg-water/5">
+                          {formatCurrency(school.water.value)}
+                        </td>
+                        <td className="border border-border p-3 text-center text-energy font-medium bg-energy/5">
+                          {formatCurrency(school.energy.value)}
+                        </td>
+                        <td className="border border-border p-3 text-center text-fixed-line font-medium bg-fixed-line/5">
+                          {formatCurrency(school.fixedLine.value)}
+                        </td>
+                        <td className="border border-border p-3 text-center text-mobile font-medium bg-mobile/5">
+                          {formatCurrency(school.mobile.value)}
+                        </td>
+                        <td className="border border-border p-3 text-center font-medium text-orange-600 bg-orange-50">
+                          {formatCurrency(hrCost)}
+                        </td>
+                        <td className="border border-border p-3 text-center font-bold text-primary bg-primary/5">
+                          {formatCurrency(totalWithHR)}
+                        </td>
+                        <td className="border border-border p-3 text-center font-medium text-secondary bg-secondary/5">
+                          {formatCurrency(costPerStudent)}
+                        </td>
+                        <td className="border border-border p-3 text-center font-medium text-accent bg-accent/5">
+                          {formatCurrency(totalWithHR / 365)}
+                        </td>
+                        <td className="border border-border p-3 text-center font-medium text-destructive bg-destructive/5">
+                          {formatCurrency(totalWithHR / 12)}
+                        </td>
+                        <td className="border border-border p-3 text-center font-medium text-primary bg-primary/5">
+                          {formatCurrency(totalWithHR)}
+                        </td>
+                        <td className="border border-border p-3 text-center">
+                          <div className="flex items-center justify-center gap-2 min-w-[200px]">
+                            <div className="flex-1 space-y-1">
+                              <div className="flex gap-1 rounded-lg overflow-hidden">
+                                <div 
+                                  className="h-3 bg-water rounded-sm" 
+                                  style={{ width: `${(school.water.value / totalWithHR) * 100}%` }}
+                                />
+                                <div 
+                                  className="h-3 bg-energy rounded-sm" 
+                                  style={{ width: `${(school.energy.value / totalWithHR) * 100}%` }}
+                                />
+                                <div 
+                                  className="h-3 bg-fixed-line rounded-sm" 
+                                  style={{ width: `${(school.fixedLine.value / totalWithHR) * 100}%` }}
+                                />
+                                <div 
+                                  className="h-3 bg-mobile rounded-sm" 
+                                  style={{ width: `${(school.mobile.value / totalWithHR) * 100}%` }}
+                                />
+                                <div 
+                                  className="h-3 bg-orange-500 rounded-sm" 
+                                  style={{ width: `${(hrCost / totalWithHR) * 100}%` }}
+                                />
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                    </tr>
-                  );
+                        </td>
+                      </tr>
+                    );
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         </CardContent>
       </Card>

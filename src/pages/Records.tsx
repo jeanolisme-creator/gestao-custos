@@ -131,33 +131,108 @@ export default function Records() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const handleCSVImport = () => {
+  const handleCSVImport = async () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.csv';
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        toast({
-          title: "Importação CSV",
-          description: `Arquivo ${file.name} selecionado. Funcionalidade de importação será implementada em breve.`
-        });
+        try {
+          const text = await file.text();
+          const lines = text.split('\n').filter(line => line.trim());
+          const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+          const dataRows = lines.slice(1);
+          
+          let importedRecords = 0;
+          
+          for (const row of dataRows) {
+            const values = row.split(',').map(v => v.trim().replace(/"/g, ''));
+            const record: any = {};
+            
+            headers.forEach((header, index) => {
+              record[header] = values[index] || '';
+            });
+            
+            // Add required fields
+            record.user_id = user?.id;
+            record.created_at = new Date().toISOString();
+            record.updated_at = new Date().toISOString();
+            
+            const { error } = await supabase
+              .from(config.table as any)
+              .insert(record);
+              
+            if (!error) {
+              importedRecords++;
+            }
+          }
+          
+          toast({
+            title: "Importação CSV Concluída",
+            description: `${importedRecords} registros importados com sucesso para ${config.name}.`
+          });
+          
+          fetchRecords(); // Refresh the records list
+        } catch (error) {
+          toast({
+            variant: "destructive",
+            title: "Erro na Importação",
+            description: "Erro ao processar o arquivo CSV. Verifique o formato do arquivo."
+          });
+        }
       }
     };
     input.click();
   };
 
-  const handleXLSXImport = () => {
+  const handleXLSXImport = async () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.xlsx,.xls';
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        toast({
-          title: "Importação XLSX",
-          description: `Arquivo ${file.name} selecionado. Funcionalidade de importação será implementada em breve.`
-        });
+        try {
+          const XLSX = await import('xlsx');
+          const arrayBuffer = await file.arrayBuffer();
+          const workbook = XLSX.read(arrayBuffer);
+          const sheetName = workbook.SheetNames[0];
+          const sheet = workbook.Sheets[sheetName];
+          const jsonData = XLSX.utils.sheet_to_json(sheet);
+          
+          let importedRecords = 0;
+          
+          for (const row of jsonData) {
+            const record: any = typeof row === 'object' && row !== null ? { ...row } : {};
+            
+            // Add required fields
+            record.user_id = user?.id;
+            record.created_at = new Date().toISOString();
+            record.updated_at = new Date().toISOString();
+            
+            const { error } = await supabase
+              .from(config.table as any)
+              .insert(record);
+              
+            if (!error) {
+              importedRecords++;
+            }
+          }
+          
+          toast({
+            title: "Importação XLSX Concluída",
+            description: `${importedRecords} registros importados com sucesso para ${config.name}.`
+          });
+          
+          fetchRecords(); // Refresh the records list
+        } catch (error) {
+          toast({
+            variant: "destructive",
+            title: "Erro na Importação",
+            description: "Erro ao processar o arquivo XLSX. Verifique o formato do arquivo."
+          });
+        }
       }
     };
     input.click();
