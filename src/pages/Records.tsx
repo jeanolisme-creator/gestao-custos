@@ -10,6 +10,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -93,6 +94,7 @@ export default function Records() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
+  const [prefillSchool, setPrefillSchool] = useState<string>('');
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -220,8 +222,18 @@ export default function Records() {
                 size="sm"
                 className={cn(
                   "transition-all duration-300",
-                  isActive && sysConfig.color,
-                  !isActive && `border-opacity-30 ${sysConfig.color} hover:bg-opacity-10`
+                  isActive && [
+                    systemId === 'water' && 'bg-water text-white hover:bg-water/90',
+                    systemId === 'energy' && 'bg-energy text-white hover:bg-energy/90',
+                    systemId === 'fixed-line' && 'bg-fixed-line text-white hover:bg-fixed-line/90',
+                    systemId === 'mobile' && 'bg-mobile text-white hover:bg-mobile/90',
+                  ],
+                  !isActive && [
+                    systemId === 'water' && 'border-water/30 text-water hover:bg-water/10',
+                    systemId === 'energy' && 'border-energy/30 text-energy hover:bg-energy/10',
+                    systemId === 'fixed-line' && 'border-fixed-line/30 text-fixed-line hover:bg-fixed-line/10',
+                    systemId === 'mobile' && 'border-mobile/30 text-mobile hover:bg-mobile/10',
+                  ]
                 )}
               >
                 <SysIcon className="h-4 w-4 mr-2" />

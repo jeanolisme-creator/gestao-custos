@@ -57,8 +57,8 @@ export default function ConsolidatedReport() {
   const months = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 
                   'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 
-  const macroregioes = ['Norte', 'Sul', 'Leste', 'Oeste', 'Centro'];
-  const tiposEscola = ['EMEF', 'EMEI', 'EMEIF', 'PAR', 'COMP'];
+  const macroregioes = ['HB', 'Vila Toninho', 'Schmidt', 'Represa', 'Bosque', 'Talhado', 'Central', 'Cidade da Criança', 'Pinheirinho', 'Ceu'];
+  const tiposEscola = ['EMEF', 'EMEI', 'EMEIF', 'PAR', 'COMP', 'SEDE'];
   
   // Get unique school names for filter
   const availableSchools = [...new Set(allData.map(record => record.nome_escola))].sort();
@@ -155,7 +155,7 @@ export default function ConsolidatedReport() {
     <div className="p-6 space-y-6">
       {/* Header */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Relatório Consolidado</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Relatório Geral</h1>
         <p className="text-muted-foreground">
           Visão integrada dos custos de água, energia, telefonia fixa e celulares por escola
         </p>
@@ -235,25 +235,6 @@ export default function ConsolidatedReport() {
         </CardContent>
       </Card>
 
-      {/* Separate Cost Analysis Link */}
-      <Card className="p-6 bg-gradient-card border-border shadow-card">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">Análise de Custos Detalhada</h3>
-            <p className="text-sm text-muted-foreground">
-              Visualize custos por aluno e por escola com análises detalhadas
-            </p>
-          </div>
-          <Button 
-            variant="default" 
-            onClick={() => window.location.href = '/consolidated-costs'}
-            className="bg-primary hover:bg-primary/90 text-primary-foreground"
-          >
-            <TrendingUp className="mr-2 h-4 w-4" />
-            Ver Análise de Custos
-          </Button>
-        </div>
-      </Card>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">

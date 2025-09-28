@@ -1,6 +1,6 @@
 import { SystemSelector } from "@/components/navigation/SystemSelector";
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   BarChart3,
   PieChart,
@@ -106,6 +106,7 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { signOut, user } = useAuth();
   const { setCurrentSystem } = useSystem();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     await signOut();
@@ -126,15 +127,15 @@ export function Sidebar() {
               <img 
                 src={logoSecretaria} 
                 alt="Logo Secretaria de Educação" 
-                className="h-12 w-auto object-contain"
+                className="h-48 w-auto object-contain"
               />
             </div>
             <div>
               <h1 className="text-lg font-bold text-sidebar-foreground">
-                Sistema Manager
+                Sistema de Gestão- SME
               </h1>
               <p className="text-xs text-sidebar-foreground/70">
-                Gestão Educacional
+                Gestão de Custos
               </p>
             </div>
           </div>
@@ -200,8 +201,8 @@ export function Sidebar() {
                 <button
                   onClick={() => {
                     setCurrentSystem(item.system as any);
-                    // Navigate to dashboard after setting system
-                    window.location.href = item.href;
+                    // Navigate to dashboard after setting system without reloading the page
+                    navigate(item.href);
                   }}
                   className={cn(
                     "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full text-left",
