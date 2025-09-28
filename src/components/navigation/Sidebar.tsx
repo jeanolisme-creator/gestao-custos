@@ -122,16 +122,16 @@ export function Sidebar() {
       {/* Header */}
       <div className="flex items-center justify-between p-4">
         {!collapsed && (
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-col items-center space-y-2 w-full">
             <div className="flex-shrink-0">
               <img 
                 src={logoSecretaria} 
                 alt="Logo Secretaria de Educação" 
-                className="h-12 w-auto object-contain"
+                className="h-16 w-auto object-contain"
               />
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-sidebar-foreground">
+            <div className="text-center">
+              <h1 className="text-sm font-bold text-sidebar-foreground">
                 Gestão de Custos – SME
               </h1>
             </div>

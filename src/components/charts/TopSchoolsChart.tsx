@@ -14,6 +14,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { aggregateBySchool } from "@/utils/mockData";
 import { aggregateSystemData, UnifiedRecord } from "@/utils/systemData";
+import { useSystem } from "@/contexts/SystemContext";
 
 interface TopSchoolsChartProps {
   data: any[];
@@ -21,6 +22,16 @@ interface TopSchoolsChartProps {
 }
 
 export function TopSchoolsChart({ data, month = 'dezembro' }: TopSchoolsChartProps) {
+  const { currentSystem } = useSystem();
+  
+  const getUnit = () => {
+    switch (currentSystem) {
+      case 'energy': return 'KWh';
+      case 'fixed-line': return 'plano';
+      case 'mobile': return 'dados';
+      default: return 'm³';
+    }
+  };
   // Check if data is unified system data or old school data
   const isSystemData = data.length > 0 && 'system_type' in data[0];
   
@@ -60,7 +71,7 @@ export function TopSchoolsChart({ data, month = 'dezembro' }: TopSchoolsChartPro
           <p className="font-medium text-popover-foreground mb-2">{data.fullName}</p>
           <div className="space-y-1">
             <p className="text-sm text-primary">
-              Consumo: <span className="font-medium">{data.consumo}m³</span>
+              Consumo: <span className="font-medium">{data.consumo}{getUnit()}</span>
             </p>
             <p className="text-sm text-success">
               Valor: <span className="font-medium">{formatCurrency(data.valor)}</span>
@@ -79,7 +90,7 @@ export function TopSchoolsChart({ data, month = 'dezembro' }: TopSchoolsChartPro
           15 Maiores Gastos/Consumo - {month.charAt(0).toUpperCase() + month.slice(1)}
         </h3>
         <p className="text-sm text-muted-foreground">
-          Barras: consumo (m³) • Linha: valor gasto (R$)
+          Barras: consumo ({getUnit()}) • Linha: valor gasto (R$)
         </p>
       </div>
       
@@ -122,7 +133,7 @@ export function TopSchoolsChart({ data, month = 'dezembro' }: TopSchoolsChartPro
               yAxisId="left"
               dataKey="consumo"
               fill="hsl(var(--primary))"
-              name="Consumo (m³)"
+              name={`Consumo (${getUnit()})`}
               radius={[2, 2, 0, 0]}
             />
             <Line

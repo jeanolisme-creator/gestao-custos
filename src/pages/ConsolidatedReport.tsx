@@ -237,64 +237,19 @@ export default function ConsolidatedReport() {
       </Card>
 
 
-      {/* Summary Cards */}
+      {/* Summary Cards - Reordered */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Card className="border-water/20 bg-water/5">
+        <Card className="border-orange-200 bg-orange-50">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Água</p>
-                <p className="text-2xl font-bold text-water">{formatCurrency(totals.water)}</p>
+                <p className="text-sm font-medium text-muted-foreground">Gestão de RH</p>
+                <p className="text-2xl font-bold text-orange-600">{formatCurrency(grandTotal * 0.65)}</p>
                 <p className="text-xs text-muted-foreground">
-                  {getPercentage(totals.water).toFixed(1)}% do total
+                  Recursos humanos
                 </p>
               </div>
-              <Droplets className="h-8 w-8 text-water" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-energy/20 bg-energy/5">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Energia</p>
-                <p className="text-2xl font-bold text-energy">{formatCurrency(totals.energy)}</p>
-                <p className="text-xs text-muted-foreground">
-                  {getPercentage(totals.energy).toFixed(1)}% do total
-                </p>
-              </div>
-              <Zap className="h-8 w-8 text-energy" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-fixed-line/20 bg-fixed-line/5">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Linha Fixa</p>
-                <p className="text-2xl font-bold text-fixed-line">{formatCurrency(totals.fixedLine)}</p>
-                <p className="text-xs text-muted-foreground">
-                  {getPercentage(totals.fixedLine).toFixed(1)}% do total
-                </p>
-              </div>
-              <Phone className="h-8 w-8 text-fixed-line" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-mobile/20 bg-mobile/5">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Celular</p>
-                <p className="text-2xl font-bold text-mobile">{formatCurrency(totals.mobile)}</p>
-                <p className="text-xs text-muted-foreground">
-                  {getPercentage(totals.mobile).toFixed(1)}% do total
-                </p>
-              </div>
-              <Smartphone className="h-8 w-8 text-mobile" />
+              <Users className="h-8 w-8 text-orange-600" />
             </div>
           </CardContent>
         </Card>
@@ -313,11 +268,6 @@ export default function ConsolidatedReport() {
             </div>
           </CardContent>
         </Card>
-      </div>
-
-      {/* HR Costs Card */}
-      <Card className="border-orange-200 bg-orange-50">
-        <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Gestão de RH</p>

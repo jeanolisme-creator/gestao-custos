@@ -11,6 +11,7 @@ import {
 } from "recharts";
 import { Card } from "@/components/ui/card";
 import { getMonthlyTotals } from "@/utils/mockData";
+import { useSystem } from "@/contexts/SystemContext";
 
 interface EvolutionChartProps {
   data: any[];
@@ -23,6 +24,16 @@ export function EvolutionChart({
   title = "Evolução Mensal de Gastos - 2025",
   type = 'area'
 }: EvolutionChartProps) {
+  const { currentSystem } = useSystem();
+  
+  const getUnit = () => {
+    switch (currentSystem) {
+      case 'energy': return 'KWh';
+      case 'fixed-line': return 'plano';
+      case 'mobile': return 'dados';
+      default: return 'm³';
+    }
+  };
   const monthlyData = getMonthlyTotals(data).map(month => ({
     month: month.month.slice(0, 3).toUpperCase(),
     fullMonth: month.month,
@@ -53,7 +64,7 @@ export function EvolutionChart({
               Valor Total: <span className="font-medium">{formatCurrency(data.valor)}</span>
             </p>
             <p className="text-sm text-success">
-              Consumo: <span className="font-medium">{data.consumo}m³</span>
+              Consumo: <span className="font-medium">{data.consumo}{getUnit()}</span>
             </p>
             <p className="text-sm text-warning">
               Serviços: <span className="font-medium">{formatCurrency(data.servicos)}</span>

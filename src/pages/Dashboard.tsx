@@ -123,15 +123,15 @@ export default function Dashboard({ data }: DashboardProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <MetricCard
             title={`${systemConfig.consumptionLabel} Total Mensal`}
-            value={`${currentMonthConsumption.toFixed(0)}${systemConfig.unit}`}
-            icon={Droplets}
+            value={`${currentMonthConsumption.toFixed(0)} ${currentSystem === 'energy' ? 'KWh' : currentSystem === 'fixed-line' ? 'plano' : currentSystem === 'mobile' ? 'dados' : systemConfig.unit}`}
+            icon={currentSystem === 'energy' ? Activity : currentSystem === 'fixed-line' ? DollarSign : currentSystem === 'mobile' ? Activity : Droplets}
             description="Dezembro 2025"
             variant="primary"
           />
           <MetricCard
             title={`${systemConfig.consumptionLabel} Total Anual`}
-            value={`${yearlyConsumption.toFixed(0)}${systemConfig.unit}`}
-            icon={Droplets}
+            value={`${yearlyConsumption.toFixed(0)} ${currentSystem === 'energy' ? 'KWh' : currentSystem === 'fixed-line' ? 'plano' : currentSystem === 'mobile' ? 'dados' : systemConfig.unit}`}
+            icon={currentSystem === 'energy' ? Activity : currentSystem === 'fixed-line' ? DollarSign : currentSystem === 'mobile' ? Activity : Droplets}
             description="Janeiro - Dezembro 2025"
             variant="success"
           />

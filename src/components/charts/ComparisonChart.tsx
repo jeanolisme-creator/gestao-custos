@@ -11,6 +11,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { aggregateBySchool } from "@/utils/mockData";
 import { aggregateSystemData, UnifiedRecord } from "@/utils/systemData";
+import { useSystem } from "@/contexts/SystemContext";
 
 interface ComparisonChartProps {
   data: any[];
@@ -23,6 +24,16 @@ export function ComparisonChart({
   title = "Comparativo entre Escolas",
   selectedSchools = []
 }: ComparisonChartProps) {
+  const { currentSystem } = useSystem();
+  
+  const getUnit = () => {
+    switch (currentSystem) {
+      case 'energy': return 'KWh';
+      case 'fixed-line': return 'plano';
+      case 'mobile': return 'dados';
+      default: return 'm³';
+    }
+  };
   // Check if data is unified system data or old school data
   const isSystemData = data.length > 0 && 'system_type' in data[0];
   
@@ -83,7 +94,7 @@ export function ComparisonChart({
               Total: <span className="font-medium">{formatCurrency(data.total)}</span>
             </p>
             <p className="text-sm text-muted-foreground">
-              Consumo: <span className="font-medium">{data.consumo}m³</span>
+              Consumo: <span className="font-medium">{data.consumo}{getUnit()}</span>
             </p>
           </div>
         </div>

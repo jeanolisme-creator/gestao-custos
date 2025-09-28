@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Droplets, Zap, Phone, Smartphone, Search } from 'lucide-react';
+import { Plus, Droplets, Zap, Phone, Smartphone, Search, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -259,6 +259,21 @@ export default function Records() {
     <div className="space-y-6">
       {/* System Selector */}
       <Card className="p-4 bg-gradient-card border-border shadow-card">
+        <div className="space-y-6">
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-foreground">
+                Selecione o Sistema de Gestão
+              </h2>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Importar CSV
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Importar XLSX
+                </Button>
         <div className="flex flex-wrap gap-2 mb-4">
           {Object.entries(systemConfigs).map(([systemId, sysConfig]) => {
             const SysIcon = sysConfig.icon;
