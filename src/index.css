@@ -105,9 +105,13 @@
     --fixed-line-secondary: 142 30% 95%;
     --fixed-line-accent: 142 50% 88%;
     
-    --mobile-primary: 262 52% 47%;
-    --mobile-secondary: 262 30% 95%;
-    --mobile-accent: 262 50% 88%;
+    --mobile-primary: 260 85% 60%;
+    --mobile-secondary: 260 30% 95%;
+    --mobile-accent: 260 50% 88%;
+
+    --school-demand-primary: 230 75% 60%;
+    --school-demand-secondary: 230 30% 95%;
+    --school-demand-accent: 230 50% 88%;
   }
 
   .dark {
@@ -195,6 +199,10 @@
     --mobile-primary: 262 52% 60%;
     --mobile-secondary: 262 30% 15%;
     --mobile-accent: 262 50% 25%;
+
+    --school-demand-primary: 230 75% 70%;
+    --school-demand-secondary: 230 30% 15%;
+    --school-demand-accent: 230 50% 25%;
   }
 }
 
@@ -232,6 +240,12 @@
     --accent: var(--mobile-accent);
   }
 
+  .theme-school-demand {
+    --primary: var(--school-demand-primary);
+    --secondary: var(--school-demand-secondary);
+    --accent: var(--school-demand-accent);
+  }
+
   /* Utility classes for system colors */
   .text-water { color: hsl(var(--water-primary)); }
   .bg-water { background-color: hsl(var(--water-primary)); }
@@ -248,4 +262,8 @@
   .text-mobile { color: hsl(var(--mobile-primary)); }
   .bg-mobile { background-color: hsl(var(--mobile-primary)); }
   .border-mobile { border-color: hsl(var(--mobile-primary)); }
+
+  .text-school-demand { color: hsl(var(--school-demand-primary)); }
+  .bg-school-demand { background-color: hsl(var(--school-demand-primary)); }
+  .border-school-demand { border-color: hsl(var(--school-demand-primary)); }
 }

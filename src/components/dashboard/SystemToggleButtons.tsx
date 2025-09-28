@@ -2,13 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useSystem, SystemType } from "@/contexts/SystemContext";
 import { cn } from "@/lib/utils";
-import { Droplets, Zap, Phone, Smartphone } from "lucide-react";
+import { Droplets, Zap, Phone, Smartphone, GraduationCap } from "lucide-react";
 
 const systemIcons = {
   water: { icon: Droplets, label: "Água", color: "water" },
   energy: { icon: Zap, label: "Energia", color: "energy" },
   "fixed-line": { icon: Phone, label: "Linha Fixa", color: "fixed-line" },
   mobile: { icon: Smartphone, label: "Celular", color: "mobile" },
+  "school-demand": { icon: GraduationCap, label: "Demanda Escolar", color: "school-demand" },
 };
 
 export function SystemToggleButtons() {
@@ -41,12 +42,14 @@ export function SystemToggleButtons() {
                     systemIcon?.color === "energy" && "bg-energy text-white hover:bg-energy/90", 
                     systemIcon?.color === "fixed-line" && "bg-fixed-line text-white hover:bg-fixed-line/90",
                     systemIcon?.color === "mobile" && "bg-mobile text-white hover:bg-mobile/90",
+                    systemIcon?.color === "school-demand" && "bg-school-demand text-white hover:bg-school-demand/90",
                   ],
                   !isActive && [
                     systemIcon?.color === "water" && "border-water/30 text-water hover:bg-water/10",
                     systemIcon?.color === "energy" && "border-energy/30 text-energy hover:bg-energy/10",
                     systemIcon?.color === "fixed-line" && "border-fixed-line/30 text-fixed-line hover:bg-fixed-line/10", 
                     systemIcon?.color === "mobile" && "border-mobile/30 text-mobile hover:bg-mobile/10",
+                    systemIcon?.color === "school-demand" && "border-school-demand/30 text-school-demand hover:bg-school-demand/10",
                   ]
                 )}
               >

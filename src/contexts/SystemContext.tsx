@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 
-export type SystemType = 'water' | 'energy' | 'fixed-line' | 'mobile' | 'hr' | 'supplies';
+export type SystemType = 'water' | 'energy' | 'fixed-line' | 'mobile' | 'hr' | 'supplies' | 'school-demand';
 
 export interface SystemConfig {
   id: SystemType;
@@ -157,6 +157,28 @@ const systemConfigs: Record<SystemType, SystemConfig> = {
       { name: 'fornecedor', label: 'Fornecedor', type: 'text' },
       { name: 'data_aquisicao', label: 'Data de Aquisição', type: 'text' },
       { name: 'estado_conservacao', label: 'Estado de Conservação', type: 'select', options: ['Novo', 'Bom', 'Regular', 'Ruim', 'Descarte'] },
+    ]
+  },
+  'school-demand': {
+    id: 'school-demand',
+    name: 'Gestão de Demanda Escolar',
+    icon: 'GraduationCap',
+    color: 'indigo',
+    unit: 'alunos',
+    consumptionLabel: 'Demanda Escolar',
+    fields: [
+      { name: 'nome_escola', label: 'Nome da Escola', type: 'text', required: true },
+      { name: 'endereco_completo', label: 'Endereço Completo', type: 'text' },
+      { name: 'numero', label: 'Número', type: 'text' },
+      { name: 'bairro', label: 'Bairro', type: 'text' },
+      { name: 'macroregiao', label: 'Macrorregião', type: 'select', options: ['HB', 'Vila Toninho', 'Schmidt', 'Represa', 'Bosque', 'Talhado', 'Central', 'Cidade da Criança', 'Pinheirinho', 'Ceu'] },
+      { name: 'telefone', label: 'Telefone', type: 'text' },
+      { name: 'email', label: 'E-mail', type: 'text' },
+      { name: 'alunos_creche', label: 'Alunos Creche (0-3 anos)', type: 'number' },
+      { name: 'alunos_infantil', label: 'Alunos Infantil/Pré-escola (4-5 anos)', type: 'number' },
+      { name: 'alunos_fundamental_i', label: 'Alunos Fundamental I (6-10 anos)', type: 'number' },
+      { name: 'alunos_fundamental_ii', label: 'Alunos Fundamental II (11-14 anos)', type: 'number' },
+      { name: 'alunos_por_turma', label: 'Alunos por Turma', type: 'number' },
     ]
   }
 };

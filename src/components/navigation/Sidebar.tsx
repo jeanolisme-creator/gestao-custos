@@ -16,6 +16,7 @@ import {
   Smartphone,
   Users,
   Package,
+  GraduationCap,
 } from "lucide-react";
 import { useSystem } from "@/contexts/SystemContext";
 import logoSecretaria from "@/assets/logo-secretaria.jpg";
@@ -99,6 +100,13 @@ const systemManagement = [
     system: "supplies",
     icon: Package,
     color: "text-teal-500",
+  },
+  {
+    name: "Gestão de Demanda Escolar",
+    href: "/school-demand-dashboard",
+    system: "school-demand",
+    icon: GraduationCap,
+    color: "text-school-demand",
   },
 ];
 
