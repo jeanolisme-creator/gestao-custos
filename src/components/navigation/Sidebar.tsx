@@ -88,14 +88,14 @@ const systemManagement = [
   },
   {
     name: "Gestão de RH",
-    href: "/",
+    href: "/hr-dashboard",
     system: "hr",
     icon: Users,
     color: "text-orange-500",
   },
   {
     name: "Gestão de Suprimentos",
-    href: "/",
+    href: "/supplies-dashboard",
     system: "supplies",
     icon: Package,
     color: "text-teal-500",

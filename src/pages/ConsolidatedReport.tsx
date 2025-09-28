@@ -235,76 +235,25 @@ export default function ConsolidatedReport() {
         </CardContent>
       </Card>
 
-      {/* Cost Calculation Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-primary/20 bg-primary/5">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Custo por Aluno Mensal</p>
-                <p className="text-2xl font-bold text-primary">
-                  {formatCurrency(grandTotal / (consolidatedData.length * 500) * 12)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Média por aluno/mês
-                </p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-primary" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-secondary/20 bg-secondary/5">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Custo por Aluno Anual</p>
-                <p className="text-2xl font-bold text-secondary-foreground">
-                  {formatCurrency(grandTotal / (consolidatedData.length * 500) * 12)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Média por aluno/ano
-                </p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-secondary-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-accent/20 bg-accent/5">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Custo Escola Mês</p>
-                <p className="text-2xl font-bold text-accent-foreground">
-                  {formatCurrency(grandTotal / consolidatedData.length / 12)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Média por escola/mês
-                </p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-accent-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-muted/20 bg-muted/5">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Custo Escola Anual</p>
-                <p className="text-2xl font-bold text-muted-foreground">
-                  {formatCurrency(grandTotal / consolidatedData.length)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Média por escola/ano
-                </p>
-              </div>
-              <TrendingUp className="h-8 w-8 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Separate Cost Analysis Link */}
+      <Card className="p-6 bg-gradient-card border-border shadow-card">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Análise de Custos Detalhada</h3>
+            <p className="text-sm text-muted-foreground">
+              Visualize custos por aluno e por escola com análises detalhadas
+            </p>
+          </div>
+          <Button 
+            variant="default" 
+            onClick={() => window.location.href = '/consolidated-costs'}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
+          >
+            <TrendingUp className="mr-2 h-4 w-4" />
+            Ver Análise de Custos
+          </Button>
+        </div>
+      </Card>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">

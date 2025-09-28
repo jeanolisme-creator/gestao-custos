@@ -8,7 +8,10 @@ import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 import { AuthProvider } from "./hooks/useAuth";
 import { SystemProvider } from "./contexts/SystemContext";
 import ConsolidatedReport from "./pages/ConsolidatedReport";
+import ConsolidatedCosts from "./pages/ConsolidatedCosts";
 import Dashboard from "./pages/Dashboard";
+import HRDashboard from "./pages/HRDashboard";
+import SuppliesDashboard from "./pages/SuppliesDashboard";
 import Charts from "./pages/Charts";
 import Reports from "./pages/Reports";
 import Records from "./pages/Records";
@@ -55,6 +58,9 @@ const App = () => {
                   <Route path="charts" element={<Charts data={schoolData} />} />
                   <Route path="reports" element={<Reports data={schoolData} />} />
                   <Route path="consolidated-report" element={<ConsolidatedReport />} />
+                  <Route path="consolidated-costs" element={<ConsolidatedCosts data={schoolData} />} />
+                  <Route path="hr-dashboard" element={<HRDashboard />} />
+                  <Route path="supplies-dashboard" element={<SuppliesDashboard />} />
                   <Route path="records" element={<Records />} />
                   <Route path="data-management" element={<DataManagement onDataUpdate={handleDataUpdate} currentDataCount={schoolData.length} />} />
                 </Route>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -34,6 +34,12 @@ export default function Charts({ data }: ChartsProps) {
   const [selectedYear, setSelectedYear] = useState<string>("2025");
   const [selectedChartType, setSelectedChartType] = useState<string>("line");
   const [selectedSchoolsForComparison, setSelectedSchoolsForComparison] = useState<string[]>([]);
+  const [filteredData, setFilteredData] = useState<SchoolData[]>(data);
+
+  // Initialize filtered data when component mounts or data changes
+  useEffect(() => {
+    setFilteredData(data);
+  }, [data]);
 
   const handleSchoolSelection = (schoolName: string, checked: boolean) => {
     if (checked && selectedSchoolsForComparison.length < 15) {
@@ -45,18 +51,19 @@ export default function Charts({ data }: ChartsProps) {
 
   const handleApplyFilters = () => {
     // Apply filters to update the data
-    const filteredData = data.filter(record => {
+    const filtered = data.filter(record => {
       const matchesYear = selectedYear === "2025" || record.ano.toString() === selectedYear;
       const matchesSchool = selectedSchool === "all" || record.unidade === selectedSchool;
       return matchesYear && matchesSchool;
     });
     
-    // Force re-render by updating state (this is a simplified approach)
+    setFilteredData(filtered);
+    
     console.log('Filters applied:', {
       school: selectedSchool,
       year: selectedYear,
       chartType: selectedChartType,
-      filteredRecords: filteredData.length
+      filteredRecords: filtered.length
     });
   };
 
@@ -151,7 +158,7 @@ export default function Charts({ data }: ChartsProps) {
                 Comparação com escola selecionada: {selectedSchool === 'all' ? 'Todas' : selectedSchool}
               </p>
             </div>
-            <EvolutionChart data={data} />
+            <EvolutionChart data={filteredData} />
           </Card>
 
           {/* Distribution Chart */}
@@ -164,7 +171,7 @@ export default function Charts({ data }: ChartsProps) {
                 Água, Manutenção, Limpeza, Outros
               </p>
             </div>
-            <SchoolTypeDistribution data={data} />
+            <SchoolTypeDistribution data={filteredData} />
           </Card>
 
           {/* Comparison Chart */}
@@ -201,7 +208,7 @@ export default function Charts({ data }: ChartsProps) {
               </div>
             </div>
             <ComparisonChart 
-              data={data} 
+              data={filteredData} 
               selectedSchools={selectedSchoolsForComparison}
               title={`Comparativo: ${selectedSchoolsForComparison.length > 0 ? `${selectedSchoolsForComparison.length} escolas selecionadas` : 'Top 15 escolas'}`}
             />
@@ -217,7 +224,7 @@ export default function Charts({ data }: ChartsProps) {
                 Ranking das escolas por gastos totais
               </p>
             </div>
-            <TopSchoolsChart data={data} />
+            <TopSchoolsChart data={filteredData} />
           </Card>
         </div>
 
