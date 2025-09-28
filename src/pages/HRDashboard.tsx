@@ -1,4 +1,10 @@
 import { useState } from "react";
+import { HRNavigation } from "@/components/hr/HRNavigation";
+import { EmployeeRegistration } from "@/components/hr/EmployeeRegistration";
+import { PayrollManagement } from "@/components/hr/PayrollManagement";
+import { CostAnalysis } from "@/components/hr/CostAnalysis";
+import { HRReports } from "@/components/hr/HRReports";
+import { HRSettings } from "@/components/hr/HRSettings";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { Card } from "@/components/ui/card";
 import {
@@ -68,6 +74,8 @@ const hrData = {
 };
 
 export default function HRDashboard() {
+  const [currentTab, setCurrentTab] = useState('dashboard');
+  
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -79,9 +87,25 @@ export default function HRDashboard() {
 
   const costVariation = ((hrData.monthlyEvolution[5].cost - hrData.monthlyEvolution[4].cost) / hrData.monthlyEvolution[4].cost) * 100;
 
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="p-6 space-y-8">
+  const renderCurrentTab = () => {
+    switch (currentTab) {
+      case 'employees':
+        return <EmployeeRegistration />;
+      case 'payroll':
+        return <PayrollManagement />;
+      case 'costs':
+        return <CostAnalysis />;
+      case 'reports':
+        return <HRReports />;
+      case 'settings':
+        return <HRSettings />;
+      default:
+        return renderDashboard();
+    }
+  };
+
+  const renderDashboard = () => (
+    <div className="space-y-8">
         {/* Header */}
         <div className="space-y-4">
           <div className="space-y-2">
@@ -306,6 +330,14 @@ export default function HRDashboard() {
             </Table>
           </div>
         </Card>
+      </div>
+    );
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="p-6 space-y-6">
+        <HRNavigation currentTab={currentTab} onTabChange={setCurrentTab} />
+        {renderCurrentTab()}
       </div>
     </div>
   );
