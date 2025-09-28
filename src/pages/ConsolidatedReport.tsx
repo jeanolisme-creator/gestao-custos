@@ -140,6 +140,28 @@ export default function ConsolidatedReport() {
     setFilteredConsolidatedData(consolidatedData);
   }, [consolidatedData]);
 
+  // Live filter for Escola/Aluno table
+  useEffect(() => {
+    if (searchTerm.trim() === '') {
+      setFilteredSchools(mockSchools);
+    } else {
+      setFilteredSchools(
+        mockSchools.filter((s) => s.nome.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+    }
+  }, [searchTerm]);
+
+  // Live filter for Detailed table
+  useEffect(() => {
+    if (searchTerm2.trim() === '') {
+      setFilteredConsolidatedData(consolidatedData);
+    } else {
+      setFilteredConsolidatedData(
+        consolidatedData.filter((s) => s.schoolName.toLowerCase().includes(searchTerm2.toLowerCase()))
+      );
+    }
+  }, [searchTerm2, consolidatedData]);
+
   // Calculate totals
   const totals = {
     water: consolidatedData.reduce((sum, school) => sum + school.water.value, 0),
@@ -382,7 +404,7 @@ export default function ConsolidatedReport() {
                 className="max-w-sm"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               />
               <Button onClick={handleSearch}>
                 <Search className="h-4 w-4 mr-2" />
@@ -450,7 +472,7 @@ export default function ConsolidatedReport() {
                 className="max-w-sm"
                 value={searchTerm2}
                 onChange={(e) => setSearchTerm2(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch2()}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch2()}
               />
               <Button onClick={handleSearch2}>
                 <Search className="h-4 w-4 mr-2" />
