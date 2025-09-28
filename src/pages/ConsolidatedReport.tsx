@@ -501,7 +501,7 @@ export default function ConsolidatedReport() {
               <table className="w-full border-collapse border border-border rounded-lg overflow-hidden shadow-sm">
                 <thead>
                   <tr className="bg-gradient-to-r from-primary/10 to-primary/5">
-                    <th className="border border-border p-3 text-left font-semibold text-primary">Escola</th>
+                    <th className="border border-border p-3 text-center font-semibold text-primary">Escola</th>
                     <th className="border border-border p-3 text-center font-semibold text-blue-600">Tipo</th>
                     <th className="border border-border p-3 text-center font-semibold text-green-600">Macrorregião</th>
                     <th className="border border-border p-3 text-center font-semibold text-purple-600">Nº Alunos</th>
@@ -511,11 +511,7 @@ export default function ConsolidatedReport() {
                     <th className="border border-border p-3 text-center font-semibold text-mobile">Celular</th>
                     <th className="border border-border p-3 text-center font-semibold text-orange-600">RH</th>
                     <th className="border border-border p-3 text-center font-semibold text-primary">Total</th>
-                    <th className="border border-border p-3 text-center font-semibold text-secondary">Custo/Aluno</th>
-                    <th className="border border-border p-3 text-center font-semibold text-accent">Custo/Dia</th>
-                    <th className="border border-border p-3 text-center font-semibold text-destructive">Custo/Mês</th>
-                    <th className="border border-border p-3 text-center font-semibold text-primary">Custo/Ano</th>
-                    <th className="border border-border p-3 text-center font-semibold text-muted-foreground">Distribuição</th>
+                    <th className="border border-border p-3 text-center font-semibold text-muted-foreground">Distribuição (%)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -556,43 +552,36 @@ export default function ConsolidatedReport() {
                         <td className="border border-border p-3 text-center font-bold text-primary bg-primary/5">
                           {formatCurrency(totalWithHR)}
                         </td>
-                        <td className="border border-border p-3 text-center font-medium text-secondary bg-secondary/5">
-                          {formatCurrency(costPerStudent)}
-                        </td>
-                        <td className="border border-border p-3 text-center font-medium text-accent bg-accent/5">
-                          {formatCurrency(totalWithHR / 365)}
-                        </td>
-                        <td className="border border-border p-3 text-center font-medium text-destructive bg-destructive/5">
-                          {formatCurrency(totalWithHR / 12)}
-                        </td>
-                        <td className="border border-border p-3 text-center font-medium text-primary bg-primary/5">
-                          {formatCurrency(totalWithHR)}
-                        </td>
                         <td className="border border-border p-3 text-center">
-                          <div className="flex items-center justify-center gap-2 min-w-[200px]">
-                            <div className="flex-1 space-y-1">
-                              <div className="flex gap-1 rounded-lg overflow-hidden">
-                                <div 
-                                  className="h-3 bg-water rounded-sm" 
-                                  style={{ width: `${(school.water.value / totalWithHR) * 100}%` }}
-                                />
-                                <div 
-                                  className="h-3 bg-energy rounded-sm" 
-                                  style={{ width: `${(school.energy.value / totalWithHR) * 100}%` }}
-                                />
-                                <div 
-                                  className="h-3 bg-fixed-line rounded-sm" 
-                                  style={{ width: `${(school.fixedLine.value / totalWithHR) * 100}%` }}
-                                />
-                                <div 
-                                  className="h-3 bg-mobile rounded-sm" 
-                                  style={{ width: `${(school.mobile.value / totalWithHR) * 100}%` }}
-                                />
-                                <div 
-                                  className="h-3 bg-orange-500 rounded-sm" 
-                                  style={{ width: `${(hrCost / totalWithHR) * 100}%` }}
-                                />
-                              </div>
+                          <div className="space-y-1 min-w-[200px]">
+                            <div className="flex gap-1 rounded-lg overflow-hidden">
+                              <div 
+                                className="h-3 bg-water rounded-sm" 
+                                style={{ width: `${(school.water.value / totalWithHR) * 100}%` }}
+                              />
+                              <div 
+                                className="h-3 bg-energy rounded-sm" 
+                                style={{ width: `${(school.energy.value / totalWithHR) * 100}%` }}
+                              />
+                              <div 
+                                className="h-3 bg-fixed-line rounded-sm" 
+                                style={{ width: `${(school.fixedLine.value / totalWithHR) * 100}%` }}
+                              />
+                              <div 
+                                className="h-3 bg-mobile rounded-sm" 
+                                style={{ width: `${(school.mobile.value / totalWithHR) * 100}%` }}
+                              />
+                              <div 
+                                className="h-3 bg-orange-500 rounded-sm" 
+                                style={{ width: `${(hrCost / totalWithHR) * 100}%` }}
+                              />
+                            </div>
+                            <div className="text-xs text-muted-foreground grid grid-cols-5 gap-1">
+                              <span className="text-water">{((school.water.value / totalWithHR) * 100).toFixed(1)}%</span>
+                              <span className="text-energy">{((school.energy.value / totalWithHR) * 100).toFixed(1)}%</span>
+                              <span className="text-fixed-line">{((school.fixedLine.value / totalWithHR) * 100).toFixed(1)}%</span>
+                              <span className="text-mobile">{((school.mobile.value / totalWithHR) * 100).toFixed(1)}%</span>
+                              <span className="text-orange-600">{((hrCost / totalWithHR) * 100).toFixed(1)}%</span>
                             </div>
                           </div>
                         </td>
