@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
@@ -52,13 +52,13 @@ export default function ConsolidatedReport() {
   const [searchTerm2, setSearchTerm2] = useState('');
   const [filteredConsolidatedData, setFilteredConsolidatedData] = useState<ConsolidatedData[]>([]);
 
-  // Generate mock data for all systems
-  const allData: UnifiedRecord[] = [
+  // Generate mock data for all systems (estável)
+  const allData: UnifiedRecord[] = useMemo(() => ([
     ...generateMockSystemData('water', 30),
     ...generateMockSystemData('energy', 30),
     ...generateMockSystemData('fixed-line', 30),
     ...generateMockSystemData('mobile', 30),
-  ];
+  ]), []);
 
   const months = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 
                   'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
@@ -70,7 +70,7 @@ export default function ConsolidatedReport() {
   const availableSchools = [...new Set(allData.map(record => record.nome_escola))].sort();
 
   // Filter and consolidate data
-  const consolidatedData: ConsolidatedData[] = (() => {
+  const consolidatedData: ConsolidatedData[] = useMemo(() => {
     let filteredData = allData;
 
     if (selectedMonth && selectedMonth !== 'all') {
@@ -133,7 +133,7 @@ export default function ConsolidatedReport() {
     }, {} as Record<string, ConsolidatedData>);
 
     return Object.values(groupedBySchool).sort((a, b) => b.total - a.total);
-  })();
+  }, [allData, selectedMonth, selectedMacroregiao, selectedTipoEscola, selectedSchool]);
 
   // Update filtered consolidated data when consolidatedData changes
   useEffect(() => {
@@ -182,6 +182,23 @@ export default function ConsolidatedReport() {
 
   const getPercentage = (value: number) => {
     return grandTotal > 0 ? ((value / grandTotal) * 100) : 0;
+  };
+
+  // Deterministic helpers for student count
+  const hashString = (str: string) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0; // Convert to 32bit integer
+    }
+    return Math.abs(hash);
+  };
+
+  const getStudentCount = (schoolName: string) => {
+    const found = mockSchools.find((s) => s.nome === schoolName);
+    if (found) return found.totalAlunos;
+    const h = hashString(schoolName);
+    return 200 + (h % 801); // Stable between 200-1000
   };
 
   const handleSearch = () => {
@@ -504,7 +521,7 @@ export default function ConsolidatedReport() {
                 <tbody>
                   {filteredConsolidatedData.map((school, index) => {
                     // Mock student count - in real app, this would come from school data
-                    const studentCount = Math.floor(Math.random() * 800) + 200;
+                    const studentCount = getStudentCount(school.schoolName);
                     const hrCost = school.total * 0.65; // 65% para RH
                     const totalWithHR = school.total + hrCost;
                     const costPerStudent = totalWithHR / studentCount;
