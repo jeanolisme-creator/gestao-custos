@@ -8,6 +8,7 @@ import {
   Building2,
   Phone,
   Mail,
+  Link,
 } from "lucide-react";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -99,23 +100,32 @@ export default function SchoolDemandDashboard() {
       <div className="p-6 space-y-8">
         {/* Header */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold tracking-tight text-foreground">
-                Dashboard de Demanda Escolar
-              </h1>
-              <p className="text-muted-foreground">
-                Acompanhamento completo da demanda de alunos nas escolas municipais
-              </p>
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">
+                  Dashboard de Demanda Escolar
+                </h1>
+                <p className="text-muted-foreground">
+                  Acompanhamento completo da demanda de alunos nas escolas municipais
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  onClick={() => window.location.href = '/school-demand/integracoes'}
+                >
+                  <Link className="h-4 w-4 mr-2" />
+                  Integrações
+                </Button>
+                <Button 
+                  className="bg-school-demand text-white hover:bg-school-demand/90"
+                  onClick={() => window.location.href = '/school-demand/cadastro'}
+                >
+                  <GraduationCap className="h-4 w-4 mr-2" />
+                  Nova Escola
+                </Button>
+              </div>
             </div>
-            <Button 
-              className="bg-school-demand text-white hover:bg-school-demand/90"
-              onClick={() => window.location.href = '/school-demand/cadastro'}
-            >
-              <GraduationCap className="h-4 w-4 mr-2" />
-              Nova Escola
-            </Button>
-          </div>
         </div>
 
         {/* Main Metrics Cards */}
