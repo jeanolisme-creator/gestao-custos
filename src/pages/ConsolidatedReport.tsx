@@ -1,10 +1,8 @@
-import { useState } from 'react';
-import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { 
   Droplets, 
@@ -15,24 +13,12 @@ import {
   FileText,
   Sheet,
   TrendingUp,
-  TrendingDown,
-  Minus,
   Users,
-  Package,
-  DollarSign,
   BarChart3,
   Search
 } from 'lucide-react';
 import { useSystem } from '@/contexts/SystemContext';
 import { generateMockSystemData, UnifiedRecord } from '@/utils/systemData';
-import { cn } from '@/lib/utils';
-
-const systemIcons = {
-  water: { icon: Droplets, color: 'text-water' },
-  energy: { icon: Zap, color: 'text-energy' },
-  'fixed-line': { icon: Phone, color: 'text-fixed-line' },
-  mobile: { icon: Smartphone, color: 'text-mobile' },
-};
 
 interface ConsolidatedData {
   schoolName: string;
@@ -150,7 +136,7 @@ export default function ConsolidatedReport() {
   })();
 
   // Update filtered consolidated data when consolidatedData changes
-  React.useEffect(() => {
+  useEffect(() => {
     setFilteredConsolidatedData(consolidatedData);
   }, [consolidatedData]);
 
@@ -573,9 +559,9 @@ export default function ConsolidatedReport() {
                         </td>
                       </tr>
                     );
-                })}
-              </tbody>
-            </table>
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         </CardContent>
