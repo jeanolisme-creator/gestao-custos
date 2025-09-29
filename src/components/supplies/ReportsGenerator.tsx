@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Download, FileText } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface ReportFilters {
   schoolName: string;
@@ -39,6 +40,9 @@ export function ReportsGenerator() {
     },
   });
 
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showResults, setShowResults] = useState(false);
+
   const { toast } = useToast();
 
   const handleEducationLevelChange = (level: keyof ReportFilters['educationLevels'], checked: boolean) => {
@@ -49,6 +53,47 @@ export function ReportsGenerator() {
         [level]: checked,
       }
     }));
+  };
+
+  const handleSearch = () => {
+    // Mock search results
+    const mockResults = [
+      {
+        school: "EMEF João Silva Santos",
+        item: "Papel Sulfite A4",
+        quantity: 50,
+        unitValue: 25.90,
+        totalValue: 1295.00,
+        macroRegion: "Norte",
+        educationLevel: "Anos Iniciais"
+      },
+      {
+        school: "EMEI Maria Oliveira",
+        item: "Lápis de Cor 12 cores",
+        quantity: 30,
+        unitValue: 8.50,
+        totalValue: 255.00,
+        macroRegion: "Sul",
+        educationLevel: "Pré-escola"
+      },
+      {
+        school: "EMEIF Pedro Costa Lima",
+        item: "Caderno Brochura 96 folhas",
+        quantity: 120,
+        unitValue: 3.20,
+        totalValue: 384.00,
+        macroRegion: "Centro",
+        educationLevel: "Anos Finais"
+      },
+    ];
+    
+    setSearchResults(mockResults);
+    setShowResults(true);
+    
+    toast({
+      title: "Busca realizada",
+      description: `Encontrados ${mockResults.length} resultados com base nos filtros aplicados.`,
+    });
   };
 
   const handleGenerateReport = () => {
@@ -81,6 +126,8 @@ export function ReportsGenerator() {
         todosNiveis: false,
       },
     });
+    setShowResults(false);
+    setSearchResults([]);
   };
 
   return (
@@ -188,8 +235,16 @@ export function ReportsGenerator() {
         {/* Action Buttons */}
         <div className="flex gap-3 pt-4">
           <Button 
+            onClick={handleSearch}
+            className="bg-supplies text-white hover:bg-supplies/90 flex-1"
+          >
+            <Search className="h-4 w-4 mr-2" />
+            Buscar
+          </Button>
+          <Button 
             onClick={handleGenerateReport}
             className="bg-supplies text-white hover:bg-supplies/90 flex-1"
+            disabled={!showResults}
           >
             <Download className="h-4 w-4 mr-2" />
             Gerar Relatório
@@ -199,11 +254,52 @@ export function ReportsGenerator() {
             variant="outline"
             className="border-supplies text-supplies hover:bg-supplies/10"
           >
-            <Search className="h-4 w-4 mr-2" />
             Limpar Filtros
           </Button>
         </div>
       </CardContent>
+
+      {/* Search Results Section */}
+      {showResults && (
+        <Card className="mt-6 bg-gradient-to-br from-supplies/5 to-supplies/10 border-supplies/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-supplies">
+              <FileText className="h-5 w-5" />
+              Resultados da Busca
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Escola</TableHead>
+                    <TableHead>Item</TableHead>
+                    <TableHead>Quantidade</TableHead>
+                    <TableHead>Valor Unitário</TableHead>
+                    <TableHead>Valor Total</TableHead>
+                    <TableHead>Macrorregião</TableHead>
+                    <TableHead>Nível de Ensino</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {searchResults.map((result, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{result.school}</TableCell>
+                      <TableCell>{result.item}</TableCell>
+                      <TableCell>{result.quantity}</TableCell>
+                      <TableCell>R$ {result.unitValue.toFixed(2)}</TableCell>
+                      <TableCell className="font-semibold">R$ {result.totalValue.toFixed(2)}</TableCell>
+                      <TableCell>{result.macroRegion}</TableCell>
+                      <TableCell>{result.educationLevel}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </Card>
   );
 }

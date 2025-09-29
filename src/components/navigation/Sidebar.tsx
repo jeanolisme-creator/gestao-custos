@@ -135,7 +135,7 @@ export function Sidebar() {
               <img 
                 src={logoSjrp} 
                 alt="Logo São José do Rio Preto" 
-                className="h-16 w-auto object-contain"
+                className="h-32 w-auto object-contain"
               />
             </div>
             <div className="text-center">
@@ -150,7 +150,7 @@ export function Sidebar() {
             <img 
               src={logoSjrp} 
               alt="Logo São José do Rio Preto" 
-              className="h-8 w-auto object-contain"
+              className="h-16 w-auto object-contain"
             />
           </div>
         )}

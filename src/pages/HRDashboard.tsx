@@ -126,7 +126,6 @@ export default function HRDashboard() {
             icon={DollarSign}
             description="Folha de pagamento"
             variant="primary"
-            trend={{ value: costVariation, isPositive: costVariation > 0 }}
           />
           <MetricCard
             title="Total de Alunos"
@@ -154,26 +153,28 @@ export default function HRDashboard() {
         {/* Employee Distribution Mini Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
           {[
-            { name: 'Prof. PEB I', value: 324, color: '#3b82f6', icon: GraduationCap },
-            { name: 'Prof. PEB II', value: 280, color: '#10b981', icon: GraduationCap },
-            { name: 'PEB I Temp', value: 68, color: '#f59e0b', icon: UserCheck },
-            { name: 'PEB II Temp', value: 52, color: '#ef4444', icon: UserCheck },
-            { name: 'Tec. Contabilidade', value: 28, color: '#8b5cf6', icon: Briefcase },
-            { name: 'Assessor', value: 18, color: '#06b6d4', icon: Shield },
-            { name: 'Assistente de Direção', value: 45, color: '#84cc16', icon: Users },
-            { name: 'Supervisor', value: 32, color: '#f97316', icon: Eye },
-            { name: 'Aux. Serv. Gerais', value: 156, color: '#ec4899', icon: Building2 },
-            { name: 'Motorista', value: 42, color: '#14b8a6', icon: TrendingUp },
-            { name: 'Estagiário', value: 89, color: '#8b5cf6', icon: GraduationCap },
-            { name: 'Digitador', value: 24, color: '#f59e0b', icon: Briefcase },
-            { name: 'Atendente', value: 36, color: '#ef4444', icon: Utensils },
+            { name: 'Prof. PEB I', value: 324, color: '#3b82f6', icon: GraduationCap, monthlyCost: 1296000 },
+            { name: 'Prof. PEB II', value: 280, color: '#10b981', icon: GraduationCap, monthlyCost: 1120000 },
+            { name: 'PEB I Temp', value: 68, color: '#f59e0b', icon: UserCheck, monthlyCost: 204000 },
+            { name: 'PEB II Temp', value: 52, color: '#ef4444', icon: UserCheck, monthlyCost: 156000 },
+            { name: 'Tec. Contabilidade', value: 28, color: '#8b5cf6', icon: Briefcase, monthlyCost: 168000 },
+            { name: 'Assessor', value: 18, color: '#06b6d4', icon: Shield, monthlyCost: 144000 },
+            { name: 'Assistente de Direção', value: 45, color: '#84cc16', icon: Users, monthlyCost: 225000 },
+            { name: 'Supervisor', value: 32, color: '#f97316', icon: Eye, monthlyCost: 192000 },
+            { name: 'Aux. Serv. Gerais', value: 156, color: '#ec4899', icon: Building2, monthlyCost: 468000 },
+            { name: 'Motorista', value: 42, color: '#14b8a6', icon: TrendingUp, monthlyCost: 210000 },
+            { name: 'Estagiário', value: 89, color: '#8b5cf6', icon: GraduationCap, monthlyCost: 133500 },
+            { name: 'Digitador', value: 24, color: '#f59e0b', icon: Briefcase, monthlyCost: 96000 },
+            { name: 'Atendente', value: 36, color: '#ef4444', icon: Utensils, monthlyCost: 108000 },
+            { name: 'Total Professores', value: 724, color: '#dc2626', icon: GraduationCap, monthlyCost: 2776000 },
           ].map((item, index) => (
-            <Card key={index} className="p-3 text-center">
+            <Card key={index} className="p-3 text-center" style={{ backgroundColor: `${item.color}15` }}>
               <div className="flex items-center justify-center space-x-1 mb-1">
                 <item.icon className="h-3 w-3" style={{ color: item.color }} />
                 <span className="text-xs font-medium text-muted-foreground">{item.name}</span>
               </div>
               <p className="text-sm font-bold text-foreground">{item.value}</p>
+              <p className="text-xs text-muted-foreground mt-1">{formatCurrency(item.monthlyCost)}</p>
             </Card>
           ))}
         </div>
