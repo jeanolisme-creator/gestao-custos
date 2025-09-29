@@ -19,7 +19,7 @@ import {
   GraduationCap,
 } from "lucide-react";
 import { useSystem } from "@/contexts/SystemContext";
-import logoSecretaria from "@/assets/logo-secretaria.jpg";
+import logoSjrp from "@/assets/logo-sjrp.png";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { cn } from "@/lib/utils";
@@ -133,8 +133,8 @@ export function Sidebar() {
           <div className="flex flex-col items-center space-y-2 w-full">
             <div className="flex-shrink-0">
               <img 
-                src={logoSecretaria} 
-                alt="Logo Secretaria de Educação" 
+                src={logoSjrp} 
+                alt="Logo São José do Rio Preto" 
                 className="h-16 w-auto object-contain"
               />
             </div>
@@ -148,8 +148,8 @@ export function Sidebar() {
         {collapsed && (
           <div className="flex justify-center">
             <img 
-              src={logoSecretaria} 
-              alt="Logo Secretaria de Educação" 
+              src={logoSjrp} 
+              alt="Logo São José do Rio Preto" 
               className="h-8 w-auto object-contain"
             />
           </div>
