@@ -107,7 +107,7 @@ export default function OutsourcedDashboard() {
         </CardContent>
       </Card>
 
-      {/* Cards de Custo Total Mensal e Anual */}
+      {/* Cards de Custo Total Mensal e Anual em uma linha */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="border-cyan-200 bg-cyan-50">
           <CardHeader className="text-center">

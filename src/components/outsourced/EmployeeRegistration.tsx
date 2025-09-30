@@ -1,634 +1,538 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Search, Building2, UserPlus, Trash2 } from "lucide-react";
-import { toast } from "@/components/ui/sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Search, Plus, X, Building2, Users } from "lucide-react";
+import { toast } from "sonner";
 
-interface SchoolPosition {
-  position: string;
-  quantity: number;
-}
-
-interface School {
-  id: string;
-  name: string;
-  phone: string;
-  address: string;
-  number: string;
-  district: string;
-  positions: SchoolPosition[];
-}
+// Mock de escolas cadastradas
+const mockSchools = [
+  {
+    id: '1',
+    name: 'EMEF João Silva',
+    phone: '(17) 3333-4444',
+    address: 'Rua das Flores',
+    number: '100',
+    neighborhood: 'Centro'
+  },
+  {
+    id: '2',
+    name: 'EMEI Maria Santos',
+    phone: '(17) 3333-5555',
+    address: 'Av. Principal',
+    number: '200',
+    neighborhood: 'Jardim Paulista'
+  },
+  {
+    id: '3',
+    name: 'EMEIF Carlos Lima',
+    phone: '(17) 3333-6666',
+    address: 'Rua da Escola',
+    number: '300',
+    neighborhood: 'Vila Nova'
+  }
+];
 
 interface Employee {
   id: string;
   company: string;
-  workplace: string;
-  positions: string;
-  role: string;
+  customCompany?: string;
+  position: string;
+  customPosition?: string;
+  quantity: number;
   workload: string;
-  value: number;
+  customWorkload?: string;
+  unitValue: number;
+  totalValue: number;
+  status: string;
   observations: string;
 }
 
-const POSITIONS = [
-  "Aux. Apoio Escolar",
-  "Apoio Administrativo",
-  "Porteiro",
-  "Auxiliar de Limpeza",
-  "Agente de Higienização",
-  "Apoio Ed. Especial",
-];
-
-const COMPANIES = ["Produserv", "GF", "Eficience", "Assej"];
-const WORKLOADS = ["40h", "44h", "12x36h"];
+interface SchoolData {
+  name: string;
+  phone: string;
+  address: string;
+  number: string;
+  neighborhood: string;
+}
 
 export function EmployeeRegistration() {
-  const [schools, setSchools] = useState<School[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
-  const [showSchoolDialog, setShowSchoolDialog] = useState(false);
-  const [showEmployeeDialog, setShowEmployeeDialog] = useState(false);
-  const [searchSchool, setSearchSchool] = useState("");
-  const [selectedSchool, setSelectedSchool] = useState<School | null>(null);
-
-  // School form state
-  const [schoolForm, setSchoolForm] = useState({
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [searchSchoolName, setSearchSchoolName] = useState("");
+  
+  const [schoolData, setSchoolData] = useState<SchoolData>({
     name: "",
     phone: "",
     address: "",
     number: "",
-    district: "",
+    neighborhood: ""
   });
-  const [schoolPositions, setSchoolPositions] = useState<SchoolPosition[]>([
-    { position: "", quantity: 0 }
-  ]);
 
-  // Employee form state
-  const [employeeForm, setEmployeeForm] = useState({
+  const [employees, setEmployees] = useState<Employee[]>([{
+    id: '1',
     company: "",
-    customCompany: "",
-    workplace: "",
-    positions: "",
-    customPositions: "",
-    role: "",
-    customRole: "",
+    position: "",
+    quantity: 0,
     workload: "",
-    customWorkload: "",
-    value: "",
-    observations: "",
-  });
+    unitValue: 0,
+    totalValue: 0,
+    status: "",
+    observations: ""
+  }]);
 
-  const handleSearchSchool = (searchTerm: string) => {
-    setSearchSchool(searchTerm);
-    const found = schools.find(s => 
-      s.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const [registeredEmployees, setRegisteredEmployees] = useState<any[]>([]);
+
+  const handleSearchSchool = () => {
+    if (!searchSchoolName.trim()) {
+      toast.error("Digite o nome da escola para buscar");
+      return;
+    }
+
+    const foundSchool = mockSchools.find(school => 
+      school.name.toLowerCase().includes(searchSchoolName.toLowerCase())
     );
-    if (found) {
-      setSelectedSchool(found);
-      setSchoolForm({
-        name: found.name,
-        phone: found.phone,
-        address: found.address,
-        number: found.number,
-        district: found.district,
+
+    if (foundSchool) {
+      setSchoolData({
+        name: foundSchool.name,
+        phone: foundSchool.phone,
+        address: foundSchool.address,
+        number: foundSchool.number,
+        neighborhood: foundSchool.neighborhood
       });
-      setSchoolPositions(found.positions.length > 0 ? found.positions : [{ position: "", quantity: 0 }]);
+      toast.success("Escola encontrada! Dados preenchidos automaticamente.");
     } else {
-      setSelectedSchool(null);
-      setSchoolForm({
-        name: searchTerm,
+      toast.info("Escola não encontrada. Preencha os dados manualmente.");
+      setSchoolData({
+        name: searchSchoolName,
         phone: "",
         address: "",
         number: "",
-        district: "",
+        neighborhood: ""
       });
-      setSchoolPositions([{ position: "", quantity: 0 }]);
     }
   };
 
-  const addSchoolPosition = () => {
-    setSchoolPositions([...schoolPositions, { position: "", quantity: 0 }]);
-  };
-
-  const removeSchoolPosition = (index: number) => {
-    setSchoolPositions(schoolPositions.filter((_, i) => i !== index));
-  };
-
-  const updateSchoolPosition = (index: number, field: keyof SchoolPosition, value: string | number) => {
-    const updated = [...schoolPositions];
-    updated[index] = { ...updated[index], [field]: value };
-    setSchoolPositions(updated);
-  };
-
-  const handleSaveSchool = () => {
-    if (!schoolForm.name) {
-      toast.error("Nome da escola é obrigatório");
-      return;
-    }
-
-    const newSchool: School = {
-      id: selectedSchool?.id || Math.random().toString(36).substr(2, 9),
-      ...schoolForm,
-      positions: schoolPositions.filter(p => p.position && p.quantity > 0),
-    };
-
-    if (selectedSchool) {
-      setSchools(schools.map(s => s.id === selectedSchool.id ? newSchool : s));
-      toast.success("Escola atualizada com sucesso!");
-    } else {
-      setSchools([...schools, newSchool]);
-      toast.success("Escola cadastrada com sucesso!");
-    }
-
-    setShowSchoolDialog(false);
-    resetSchoolForm();
-  };
-
-  const resetSchoolForm = () => {
-    setSchoolForm({ name: "", phone: "", address: "", number: "", district: "" });
-    setSchoolPositions([{ position: "", quantity: 0 }]);
-    setSearchSchool("");
-    setSelectedSchool(null);
-  };
-
-  const handleSaveEmployee = () => {
-    if (!employeeForm.workplace || !employeeForm.value) {
-      toast.error("Local de trabalho e valor do posto são obrigatórios");
-      return;
-    }
-
-    const newEmployee: Employee = {
-      id: Math.random().toString(36).substr(2, 9),
-      company: employeeForm.company === "Outro" ? employeeForm.customCompany : employeeForm.company,
-      workplace: employeeForm.workplace,
-      positions: employeeForm.positions === "Outro" ? employeeForm.customPositions : employeeForm.positions,
-      role: employeeForm.role === "Outro" ? employeeForm.customRole : employeeForm.role,
-      workload: employeeForm.workload === "Outro" ? employeeForm.customWorkload : employeeForm.workload,
-      value: parseFloat(employeeForm.value),
-      observations: employeeForm.observations,
-    };
-
-    setEmployees([...employees, newEmployee]);
-    toast.success("Funcionário cadastrado com sucesso!");
-    setShowEmployeeDialog(false);
-    resetEmployeeForm();
-  };
-
-  const resetEmployeeForm = () => {
-    setEmployeeForm({
+  const handleAddEmployee = () => {
+    setEmployees([...employees, {
+      id: Date.now().toString(),
       company: "",
-      customCompany: "",
-      workplace: "",
-      positions: "",
-      customPositions: "",
-      role: "",
-      customRole: "",
+      position: "",
+      quantity: 0,
       workload: "",
-      customWorkload: "",
-      value: "",
-      observations: "",
-    });
+      unitValue: 0,
+      totalValue: 0,
+      status: "",
+      observations: ""
+    }]);
   };
 
-  const deleteEmployee = (id: string) => {
-    setEmployees(employees.filter(e => e.id !== id));
-    toast.success("Funcionário removido com sucesso!");
+  const handleRemoveEmployee = (id: string) => {
+    if (employees.length > 1) {
+      setEmployees(employees.filter(emp => emp.id !== id));
+    }
+  };
+
+  const handleEmployeeChange = (id: string, field: string, value: any) => {
+    setEmployees(employees.map(emp => {
+      if (emp.id === id) {
+        const updated = { ...emp, [field]: value };
+        
+        // Calcular valor total automaticamente
+        if (field === 'quantity' || field === 'unitValue') {
+          updated.totalValue = updated.quantity * updated.unitValue;
+        }
+        
+        return updated;
+      }
+      return emp;
+    }));
+  };
+
+  const handleSave = () => {
+    // Validação básica
+    if (!schoolData.name || !schoolData.phone || !schoolData.neighborhood) {
+      toast.error("Preencha os campos obrigatórios da escola");
+      return;
+    }
+
+    const hasInvalidEmployee = employees.some(emp => 
+      !emp.company || !emp.position || !emp.workload || !emp.status || emp.quantity === 0
+    );
+
+    if (hasInvalidEmployee) {
+      toast.error("Preencha todos os campos obrigatórios dos funcionários");
+      return;
+    }
+
+    // Salvar dados
+    const newRecord = {
+      id: Date.now().toString(),
+      school: schoolData,
+      employees: employees
+    };
+
+    setRegisteredEmployees([...registeredEmployees, newRecord]);
+    
+    // Reset form
+    setIsDialogOpen(false);
+    setSearchSchoolName("");
+    setSchoolData({
+      name: "",
+      phone: "",
+      address: "",
+      number: "",
+      neighborhood: ""
+    });
+    setEmployees([{
+      id: '1',
+      company: "",
+      position: "",
+      quantity: 0,
+      workload: "",
+      unitValue: 0,
+      totalValue: 0,
+      status: "",
+      observations: ""
+    }]);
+
+    toast.success("Cadastro realizado com sucesso!");
+  };
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
   };
 
   return (
     <div className="space-y-6">
-      {/* Botões de ação */}
-      <div className="flex gap-4">
-        <Dialog open={showSchoolDialog} onOpenChange={setShowSchoolDialog}>
-          <DialogTrigger asChild>
-            <Button className="bg-cyan-500 hover:bg-cyan-600">
-              <Building2 className="h-4 w-4 mr-2" />
-              Cadastrar Escola
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Cadastrar Escola</DialogTitle>
-              <DialogDescription>
-                Busque uma escola existente ou cadastre uma nova
-              </DialogDescription>
-            </DialogHeader>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogTrigger asChild>
+          <Button className="w-full md:w-auto">
+            <Plus className="h-4 w-4 mr-2" />
+            Cadastrar Funcionário
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Cadastro de Funcionário</DialogTitle>
+          </DialogHeader>
 
+          <div className="space-y-6">
+            {/* Buscar Escola */}
             <div className="space-y-4">
-              {/* Busca de escola */}
-              <div className="space-y-2">
-                <Label>Buscar Escola</Label>
-                <div className="flex gap-2">
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <Label htmlFor="searchSchool">Buscar Escola</Label>
                   <Input
-                    placeholder="Digite o nome da escola..."
-                    value={searchSchool}
-                    onChange={(e) => handleSearchSchool(e.target.value)}
+                    id="searchSchool"
+                    placeholder="Digite o nome da escola"
+                    value={searchSchoolName}
+                    onChange={(e) => setSearchSchoolName(e.target.value)}
                   />
-                  <Button variant="outline" size="icon">
-                    <Search className="h-4 w-4" />
-                  </Button>
                 </div>
+                <Button onClick={handleSearchSchool} className="mt-auto">
+                  <Search className="h-4 w-4" />
+                </Button>
               </div>
 
-              {/* Formulário de escola */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2 col-span-2">
-                  <Label>Nome da Escola *</Label>
+              {/* Dados da Escola */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="schoolName">Nome da Escola *</Label>
                   <Input
-                    value={schoolForm.name}
-                    onChange={(e) => setSchoolForm({ ...schoolForm, name: e.target.value })}
+                    id="schoolName"
+                    value={schoolData.name}
+                    onChange={(e) => setSchoolData({...schoolData, name: e.target.value})}
+                    placeholder="Nome da escola"
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <Label>Telefone</Label>
+                <div>
+                  <Label htmlFor="schoolPhone">Telefone *</Label>
                   <Input
-                    value={schoolForm.phone}
-                    onChange={(e) => setSchoolForm({ ...schoolForm, phone: e.target.value })}
+                    id="schoolPhone"
+                    value={schoolData.phone}
+                    onChange={(e) => setSchoolData({...schoolData, phone: e.target.value})}
+                    placeholder="(17) 3333-4444"
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <Label>Bairro</Label>
+                <div>
+                  <Label htmlFor="schoolAddress">Endereço Completo</Label>
                   <Input
-                    value={schoolForm.district}
-                    onChange={(e) => setSchoolForm({ ...schoolForm, district: e.target.value })}
+                    id="schoolAddress"
+                    value={schoolData.address}
+                    onChange={(e) => setSchoolData({...schoolData, address: e.target.value})}
+                    placeholder="Rua, Avenida..."
                   />
                 </div>
-
-                <div className="space-y-2 col-span-2">
-                  <Label>Endereço Completo</Label>
+                <div>
+                  <Label htmlFor="schoolNumber">Número</Label>
                   <Input
-                    value={schoolForm.address}
-                    onChange={(e) => setSchoolForm({ ...schoolForm, address: e.target.value })}
+                    id="schoolNumber"
+                    value={schoolData.number}
+                    onChange={(e) => setSchoolData({...schoolData, number: e.target.value})}
+                    placeholder="123"
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <Label>Número</Label>
+                <div>
+                  <Label htmlFor="schoolNeighborhood">Bairro *</Label>
                   <Input
-                    value={schoolForm.number}
-                    onChange={(e) => setSchoolForm({ ...schoolForm, number: e.target.value })}
+                    id="schoolNeighborhood"
+                    value={schoolData.neighborhood}
+                    onChange={(e) => setSchoolData({...schoolData, neighborhood: e.target.value})}
+                    placeholder="Centro, Jardim..."
                   />
                 </div>
               </div>
+            </div>
 
-              {/* Módulo de funcionários */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <Label className="text-base">Funcionários Terceirizados</Label>
-                  <Button onClick={addSchoolPosition} size="sm" variant="outline">
-                    <Plus className="h-4 w-4 mr-1" />
-                    Adicionar Cargo
-                  </Button>
-                </div>
+            {/* Funcionários Terceirizados */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Funcionários Terceirizados</h3>
+                <Button onClick={handleAddEmployee} variant="outline" size="sm">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Funcionário
+                </Button>
+              </div>
 
-                {schoolPositions.map((pos, index) => (
-                  <div key={index} className="flex gap-2 items-end">
-                    <div className="flex-1 space-y-2">
-                      <Label>Cargo</Label>
-                      <Select
-                        value={pos.position}
-                        onValueChange={(value) => updateSchoolPosition(index, "position", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o cargo" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {POSITIONS.map(p => (
-                            <SelectItem key={p} value={p}>{p}</SelectItem>
-                          ))}
-                          <SelectItem value="Outro">Outro</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {pos.position === "Outro" && (
-                      <div className="flex-1 space-y-2">
-                        <Label>Especificar Cargo</Label>
-                        <Input
-                          placeholder="Digite o cargo"
-                          value={pos.position}
-                          onChange={(e) => updateSchoolPosition(index, "position", e.target.value)}
-                        />
-                      </div>
-                    )}
-
-                    <div className="w-32 space-y-2">
-                      <Label>Quantidade</Label>
-                      <Input
-                        type="number"
-                        value={pos.quantity}
-                        onChange={(e) => updateSchoolPosition(index, "quantity", parseInt(e.target.value) || 0)}
-                      />
-                    </div>
-
-                    {schoolPositions.length > 1 && (
+              {employees.map((employee, index) => (
+                <Card key={employee.id} className="relative">
+                  <CardContent className="pt-6 space-y-4">
+                    {employees.length > 1 && (
                       <Button
-                        variant="destructive"
+                        variant="ghost"
                         size="icon"
-                        onClick={() => removeSchoolPosition(index)}
+                        className="absolute top-2 right-2"
+                        onClick={() => handleRemoveEmployee(employee.id)}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <X className="h-4 w-4" />
                       </Button>
                     )}
-                  </div>
-                ))}
-              </div>
 
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowSchoolDialog(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleSaveSchool} className="bg-cyan-500 hover:bg-cyan-600">
-                  Salvar Escola
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showEmployeeDialog} onOpenChange={setShowEmployeeDialog}>
-          <DialogTrigger asChild>
-            <Button variant="outline" className="border-cyan-500 text-cyan-600 hover:bg-cyan-50">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Novo Funcionário
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Cadastrar Novo Funcionário</DialogTitle>
-              <DialogDescription>
-                Preencha os dados do funcionário terceirizado
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Empresa *</Label>
-                  <Select
-                    value={employeeForm.company}
-                    onValueChange={(value) => setEmployeeForm({ ...employeeForm, company: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a empresa" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COMPANIES.map(c => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
-                      ))}
-                      <SelectItem value="Outro">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {employeeForm.company === "Outro" && (
-                  <div className="space-y-2">
-                    <Label>Especificar Empresa</Label>
-                    <Input
-                      value={employeeForm.customCompany}
-                      onChange={(e) => setEmployeeForm({ ...employeeForm, customCompany: e.target.value })}
-                    />
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label>Local de Trabalho *</Label>
-                  <Select
-                    value={employeeForm.workplace}
-                    onValueChange={(value) => setEmployeeForm({ ...employeeForm, workplace: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a escola" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {schools.map(s => (
-                        <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Número de Postos de Trabalho</Label>
-                  <Select
-                    value={employeeForm.positions}
-                    onValueChange={(value) => setEmployeeForm({ ...employeeForm, positions: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o posto" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {POSITIONS.map(p => (
-                        <SelectItem key={p} value={p}>{p}</SelectItem>
-                      ))}
-                      <SelectItem value="Outro">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {employeeForm.positions === "Outro" && (
-                  <div className="space-y-2">
-                    <Label>Especificar Posto</Label>
-                    <Input
-                      value={employeeForm.customPositions}
-                      onChange={(e) => setEmployeeForm({ ...employeeForm, customPositions: e.target.value })}
-                    />
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label>Cargo</Label>
-                  <Select
-                    value={employeeForm.role}
-                    onValueChange={(value) => setEmployeeForm({ ...employeeForm, role: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o cargo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {POSITIONS.map(p => (
-                        <SelectItem key={p} value={p}>{p}</SelectItem>
-                      ))}
-                      <SelectItem value="Outro">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {employeeForm.role === "Outro" && (
-                  <div className="space-y-2">
-                    <Label>Especificar Cargo</Label>
-                    <Input
-                      value={employeeForm.customRole}
-                      onChange={(e) => setEmployeeForm({ ...employeeForm, customRole: e.target.value })}
-                    />
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label>Carga Horária</Label>
-                  <Select
-                    value={employeeForm.workload}
-                    onValueChange={(value) => setEmployeeForm({ ...employeeForm, workload: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a carga horária" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {WORKLOADS.map(w => (
-                        <SelectItem key={w} value={w}>{w}</SelectItem>
-                      ))}
-                      <SelectItem value="Outro">Outro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {employeeForm.workload === "Outro" && (
-                  <div className="space-y-2">
-                    <Label>Especificar Carga Horária</Label>
-                    <Input
-                      value={employeeForm.customWorkload}
-                      onChange={(e) => setEmployeeForm({ ...employeeForm, customWorkload: e.target.value })}
-                    />
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label>Valor Posto *</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={employeeForm.value}
-                    onChange={(e) => setEmployeeForm({ ...employeeForm, value: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-2 col-span-2">
-                  <Label>Observações</Label>
-                  <Textarea
-                    value={employeeForm.observations}
-                    onChange={(e) => setEmployeeForm({ ...employeeForm, observations: e.target.value })}
-                    rows={3}
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowEmployeeDialog(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleSaveEmployee} className="bg-cyan-500 hover:bg-cyan-600">
-                  Salvar Funcionário
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Lista de escolas cadastradas */}
-      {schools.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Escolas Cadastradas</CardTitle>
-            <CardDescription>Total de {schools.length} escola(s)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {schools.map(school => (
-                <Card key={school.id} className="border-cyan-200">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <h3 className="font-semibold text-lg">{school.name}</h3>
-                        <div className="text-sm text-muted-foreground space-y-1">
-                          <p>📞 {school.phone || "Não informado"}</p>
-                          <p>📍 {school.address}, {school.number} - {school.district}</p>
-                        </div>
-                        {school.positions.length > 0 && (
-                          <div className="mt-2">
-                            <p className="text-sm font-medium mb-1">Funcionários:</p>
-                            <div className="flex flex-wrap gap-2">
-                              {school.positions.map((pos, idx) => (
-                                <span key={idx} className="text-xs bg-cyan-100 text-cyan-700 px-2 py-1 rounded">
-                                  {pos.position}: {pos.quantity}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label>Empresa *</Label>
+                        <Select
+                          value={employee.company}
+                          onValueChange={(value) => handleEmployeeChange(employee.id, 'company', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Assej">Assej</SelectItem>
+                            <SelectItem value="Produserv">Produserv</SelectItem>
+                            <SelectItem value="GF">GF</SelectItem>
+                            <SelectItem value="Eficience">Eficience</SelectItem>
+                            <SelectItem value="outro">Outro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {employee.company === "outro" && (
+                          <Input
+                            className="mt-2"
+                            placeholder="Digite a empresa"
+                            value={employee.customCompany || ""}
+                            onChange={(e) => handleEmployeeChange(employee.id, 'customCompany', e.target.value)}
+                          />
                         )}
                       </div>
+
+                      <div>
+                        <Label>Cargo *</Label>
+                        <Select
+                          value={employee.position}
+                          onValueChange={(value) => handleEmployeeChange(employee.id, 'position', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Aux. Apoio Escolar">Aux. Apoio Escolar</SelectItem>
+                            <SelectItem value="Apoio Administrativo">Apoio Administrativo</SelectItem>
+                            <SelectItem value="Porteiro">Porteiro</SelectItem>
+                            <SelectItem value="Aux. de limpeza">Aux. de limpeza</SelectItem>
+                            <SelectItem value="Agente de Higienização">Agente de Higienização</SelectItem>
+                            <SelectItem value="Apoio Ed. Especial">Apoio Ed. Especial</SelectItem>
+                            <SelectItem value="Outro">Outro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {employee.position === "Outro" && (
+                          <Input
+                            className="mt-2"
+                            placeholder="Digite o cargo"
+                            value={employee.customPosition || ""}
+                            onChange={(e) => handleEmployeeChange(employee.id, 'customPosition', e.target.value)}
+                          />
+                        )}
+                      </div>
+
+                      <div>
+                        <Label>Quantidade *</Label>
+                        <Select
+                          value={employee.quantity.toString()}
+                          onValueChange={(value) => handleEmployeeChange(employee.id, 'quantity', parseInt(value))}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="0" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({length: 21}, (_, i) => (
+                              <SelectItem key={i} value={i.toString()}>{i}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label>Carga Horária *</Label>
+                        <Select
+                          value={employee.workload}
+                          onValueChange={(value) => handleEmployeeChange(employee.id, 'workload', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="40h">40h</SelectItem>
+                            <SelectItem value="44h">44h</SelectItem>
+                            <SelectItem value="12x36h">12x36h</SelectItem>
+                            <SelectItem value="outro">Outro</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {employee.workload === "outro" && (
+                          <Input
+                            className="mt-2"
+                            placeholder="Digite a carga horária"
+                            value={employee.customWorkload || ""}
+                            onChange={(e) => handleEmployeeChange(employee.id, 'customWorkload', e.target.value)}
+                          />
+                        )}
+                      </div>
+
+                      <div>
+                        <Label>Valor Unitário (R$) *</Label>
+                        <Input
+                          type="number"
+                          value={employee.unitValue}
+                          onChange={(e) => handleEmployeeChange(employee.id, 'unitValue', parseFloat(e.target.value) || 0)}
+                          placeholder="0.00"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Valor Total (R$)</Label>
+                        <Input
+                          value={formatCurrency(employee.totalValue)}
+                          disabled
+                          className="bg-muted"
+                        />
+                      </div>
+
+                      <div>
+                        <Label>Situação *</Label>
+                        <Select
+                          value={employee.status}
+                          onValueChange={(value) => handleEmployeeChange(employee.id, 'status', value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Ativo">Ativo</SelectItem>
+                            <SelectItem value="Inativo">Inativo</SelectItem>
+                            <SelectItem value="Vago">Vago</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="md:col-span-3">
+                        <Label>Observações</Label>
+                        <Textarea
+                          value={employee.observations}
+                          onChange={(e) => handleEmployeeChange(employee.id, 'observations', e.target.value)}
+                          placeholder="Observações adicionais..."
+                          rows={2}
+                        />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
 
-      {/* Lista de funcionários cadastrados */}
-      {employees.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Funcionários Cadastrados</CardTitle>
-            <CardDescription>Total de {employees.length} funcionário(s)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {employees.map(employee => (
-                <Card key={employee.id} className="border-cyan-200">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2 flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold">{employee.company}</h3>
-                          <span className="text-xs bg-cyan-100 text-cyan-700 px-2 py-1 rounded">
-                            {employee.role}
-                          </span>
-                        </div>
-                        <div className="text-sm text-muted-foreground space-y-1">
-                          <p>🏫 {employee.workplace}</p>
-                          <p>💼 {employee.positions}</p>
-                          <p>⏰ {employee.workload}</p>
-                          <p className="font-semibold text-foreground">
-                            💰 {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(employee.value)}
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSave}>
+                Salvar Cadastro
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Lista de Funcionários Cadastrados */}
+      {registeredEmployees.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Funcionários Cadastrados</h3>
+          {registeredEmployees.map((record) => (
+            <Card key={record.id}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="h-5 w-5" />
+                  {record.school.name}
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {record.school.address}, {record.school.number} - {record.school.neighborhood}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Telefone: {record.school.phone}
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {record.employees.map((emp: Employee, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <Users className="h-4 w-4" />
+                        <div>
+                          <p className="font-medium">
+                            {emp.company === "outro" ? emp.customCompany : emp.company} - {emp.position === "Outro" ? emp.customPosition : emp.position}
                           </p>
-                          {employee.observations && (
-                            <p className="text-xs italic mt-2">📝 {employee.observations}</p>
-                          )}
+                          <p className="text-sm text-muted-foreground">
+                            Quantidade: {emp.quantity} | Carga: {emp.workload === "outro" ? emp.customWorkload : emp.workload} | Status: {emp.status}
+                          </p>
                         </div>
                       </div>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => deleteEmployee(employee.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="text-right">
+                        <p className="font-bold">{formatCurrency(emp.totalValue)}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {formatCurrency(emp.unitValue)}/unidade
+                        </p>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       )}
 
-      {schools.length === 0 && employees.length === 0 && (
+      {registeredEmployees.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center">
-            <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <CardContent className="text-center py-12">
+            <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <p className="text-muted-foreground">
-              Nenhuma escola ou funcionário cadastrado ainda.
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Comece cadastrando uma escola ou um funcionário.
+              Nenhum funcionário cadastrado ainda. Clique em "Cadastrar Funcionário" para começar.
             </p>
           </CardContent>
         </Card>
