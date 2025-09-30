@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContractsNavigation } from "@/components/contracts/ContractsNavigation";
 import { ContractRegistration } from "@/components/contracts/ContractRegistration";
+import { ContractsCharts } from "@/components/contracts/ContractsCharts";
+import { ContractsReports } from "@/components/contracts/ContractsReports";
 import { DollarSign, TrendingUp, Calendar } from "lucide-react";
 
 export default function ContractsDashboard() {
@@ -209,8 +211,8 @@ export default function ContractsDashboard() {
 
         {currentTab === 'dashboard' && renderDashboard()}
         {currentTab === 'register' && <ContractRegistration />}
-        {currentTab === 'costs' && <div className="text-center p-8">Análise de Custos - Em desenvolvimento</div>}
-        {currentTab === 'reports' && <div className="text-center p-8">Relatórios - Em desenvolvimento</div>}
+        {currentTab === 'costs' && <ContractsCharts />}
+        {currentTab === 'reports' && <ContractsReports />}
         {currentTab === 'settings' && <div className="text-center p-8">Configurações - Em desenvolvimento</div>}
       </div>
     </div>

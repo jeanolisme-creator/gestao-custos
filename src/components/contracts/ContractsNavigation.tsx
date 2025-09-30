@@ -17,7 +17,7 @@ interface ContractsNavigationProps {
 const contractsTabs = [
   { id: 'dashboard', name: 'Dashboard', icon: BarChart3 },
   { id: 'register', name: 'Cadastro de Contratos', icon: FileSignature },
-  { id: 'costs', name: 'Análise de Custos', icon: TrendingUp },
+  { id: 'costs', name: 'Gráficos', icon: TrendingUp },
   { id: 'reports', name: 'Relatórios', icon: FileText },
   { id: 'settings', name: 'Configurações', icon: Settings },
 ];
