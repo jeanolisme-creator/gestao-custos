@@ -81,13 +81,6 @@ const systemManagement = [
     color: "text-fixed-line",
   },
   {
-    name: "Gestão de Celular",
-    href: "/",
-    system: "mobile",
-    icon: Smartphone,
-    color: "text-mobile",
-  },
-  {
     name: "Gestão de RH",
     href: "/hr-dashboard",
     system: "hr",

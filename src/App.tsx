@@ -35,8 +35,7 @@ const App = () => {
     const waterData = generateMockSystemData('water', 50);
     const energyData = generateMockSystemData('energy', 50);
     const fixedLineData = generateMockSystemData('fixed-line', 50);
-    const mobileData = generateMockSystemData('mobile', 50);
-    return [...waterData, ...energyData, ...fixedLineData, ...mobileData];
+    return [...waterData, ...energyData, ...fixedLineData];
   });
 
   const handleDataUpdate = (newData: SchoolData[]) => {

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 
-export type SystemType = 'water' | 'energy' | 'fixed-line' | 'mobile' | 'hr' | 'supplies' | 'school-demand';
+export type SystemType = 'water' | 'energy' | 'fixed-line' | 'hr' | 'supplies' | 'school-demand';
 
 export interface SystemConfig {
   id: SystemType;
@@ -91,29 +91,6 @@ const systemConfigs: Record<SystemType, SystemConfig> = {
       { name: 'macroregiao', label: 'Macrorregião', type: 'select', options: ['HB', 'Vila Toninho', 'Schmidt', 'Represa', 'Bosque', 'Talhado', 'Central', 'Cidade da Criança', 'Pinheirinho', 'Ceu'] },
       { name: 'tipo_escola', label: 'Tipo Escola', type: 'text' },
       { name: 'mes_ano_referencia', label: 'Mês/Ano', type: 'text', required: true },
-      { name: 'valor_gasto', label: 'Valor Gasto', type: 'number' },
-      { name: 'valor_servicos', label: 'Valor Serviços', type: 'number' },
-    ]
-  },
-  mobile: {
-    id: 'mobile',
-    name: 'Gestão de Celulares',
-    icon: 'Smartphone',
-    color: 'purple',
-    unit: 'MB',
-    consumptionLabel: 'Consumo de Dados',
-    fields: [
-      { name: 'cadastro_cliente', label: 'Cadastro Cliente', type: 'text', required: true },
-      { name: 'nome_escola', label: 'Nome da Escola', type: 'text', required: true },
-      { name: 'numero_linha', label: 'Número da Linha', type: 'text' },
-      { name: 'proprietario', label: 'Proprietário', type: 'text' },
-      { name: 'endereco', label: 'Endereço', type: 'text' },
-      { name: 'numero', label: 'Número', type: 'text' },
-      { name: 'bairro', label: 'Bairro', type: 'text' },
-      { name: 'macroregiao', label: 'Macrorregião', type: 'select', options: ['HB', 'Vila Toninho', 'Schmidt', 'Represa', 'Bosque', 'Talhado', 'Central', 'Cidade da Criança', 'Pinheirinho', 'Ceu'] },
-      { name: 'tipo_escola', label: 'Tipo Escola', type: 'text' },
-      { name: 'mes_ano_referencia', label: 'Mês/Ano', type: 'text', required: true },
-      { name: 'consumo_mb', label: 'Consumo (MB)', type: 'number' },
       { name: 'valor_gasto', label: 'Valor Gasto', type: 'number' },
       { name: 'valor_servicos', label: 'Valor Serviços', type: 'number' },
     ]

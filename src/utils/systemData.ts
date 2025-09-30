@@ -114,20 +114,6 @@ export const generateMockSystemData = (systemType: SystemType, count: number = 5
           tipo_escola: tiposEscola[Math.floor(Math.random() * tiposEscola.length)],
         });
         break;
-        
-      case 'mobile':
-        Object.assign(baseRecord, {
-          cadastro_cliente: baseRecord.cadastro,
-          numero_linha: `(11) 9${Math.floor(Math.random() * 8999) + 1000}-${Math.floor(Math.random() * 8999) + 1000}`,
-          proprietario: `Prefeitura Municipal`,
-          endereco: `Rua ${i + 1}`,
-          numero: `${Math.floor(Math.random() * 999) + 1}`,
-          bairro: bairros[Math.floor(Math.random() * bairros.length)],
-          macroregiao: macroregioes[Math.floor(Math.random() * macroregioes.length)],
-          tipo_escola: tiposEscola[Math.floor(Math.random() * tiposEscola.length)],
-          consumo_mb: Math.floor(Math.random() * 10000) + 1000,
-        });
-        break;
     }
 
     data.push(baseRecord);
@@ -155,7 +141,6 @@ export const aggregateSystemData = (data: UnifiedRecord[], month?: string) => {
     totalConsumption: records.reduce((sum, record) => {
       if (record.system_type === 'water') return sum + (record.consumo_m3 || 0);
       if (record.system_type === 'energy') return sum + (record.consumo_kwh || 0);
-      if (record.system_type === 'mobile') return sum + (record.consumo_mb || 0);
       return sum;
     }, 0),
     totalService: records.reduce((sum, record) => sum + record.valor_servicos, 0),
@@ -182,7 +167,6 @@ export const getSystemMonthlyTotals = (data: UnifiedRecord[]) => {
       totalConsumption: monthData.reduce((sum, record) => {
         if (record.system_type === 'water') return sum + (record.consumo_m3 || 0);
         if (record.system_type === 'energy') return sum + (record.consumo_kwh || 0);
-        if (record.system_type === 'mobile') return sum + (record.consumo_mb || 0);
         return sum;
       }, 0),
       totalService: monthData.reduce((sum, record) => sum + record.valor_servicos, 0),
@@ -239,7 +223,6 @@ function getCurrentConsumption(record: UnifiedRecord): number {
   switch (record.system_type) {
     case 'water': return record.consumo_m3 || 0;
     case 'energy': return record.consumo_kwh || 0;
-    case 'mobile': return record.consumo_mb || 0;
     default: return 0;
   }
 }

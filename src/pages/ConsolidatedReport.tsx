@@ -25,7 +25,6 @@ interface ConsolidatedData {
   water: { value: number; consumption: number };
   energy: { value: number; consumption: number };
   fixedLine: { value: number; consumption: number };
-  mobile: { value: number; consumption: number };
   total: number;
   macroregiao?: string;
   tipoEscola?: string;
@@ -57,7 +56,6 @@ export default function ConsolidatedReport() {
     ...generateMockSystemData('water', 30),
     ...generateMockSystemData('energy', 30),
     ...generateMockSystemData('fixed-line', 30),
-    ...generateMockSystemData('mobile', 30),
   ]), []);
 
   const months = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 
@@ -99,7 +97,6 @@ export default function ConsolidatedReport() {
           water: { value: 0, consumption: 0 },
           energy: { value: 0, consumption: 0 },
           fixedLine: { value: 0, consumption: 0 },
-          mobile: { value: 0, consumption: 0 },
           total: 0,
           macroregiao: record.macroregiao,
           tipoEscola: record.tipo_escola,
@@ -121,13 +118,9 @@ export default function ConsolidatedReport() {
         case 'fixed-line':
           school.fixedLine.value += value;
           break;
-        case 'mobile':
-          school.mobile.value += value;
-          school.mobile.consumption += record.consumo_mb || 0;
-          break;
       }
 
-      school.total = school.water.value + school.energy.value + school.fixedLine.value + school.mobile.value;
+      school.total = school.water.value + school.energy.value + school.fixedLine.value;
 
       return acc;
     }, {} as Record<string, ConsolidatedData>);
@@ -167,10 +160,9 @@ export default function ConsolidatedReport() {
     water: consolidatedData.reduce((sum, school) => sum + school.water.value, 0),
     energy: consolidatedData.reduce((sum, school) => sum + school.energy.value, 0),
     fixedLine: consolidatedData.reduce((sum, school) => sum + school.fixedLine.value, 0),
-    mobile: consolidatedData.reduce((sum, school) => sum + school.mobile.value, 0),
   };
 
-  const grandTotal = totals.water + totals.energy + totals.fixedLine + totals.mobile;
+  const grandTotal = totals.water + totals.energy + totals.fixedLine;
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -381,21 +373,6 @@ export default function ConsolidatedReport() {
                 <p className="text-2xl font-bold text-fixed-line">{formatCurrency(totals.fixedLine)}</p>
                 <p className="text-xs text-muted-foreground">
                   {getPercentage(totals.fixedLine).toFixed(1)}% do total
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-mobile/20 bg-mobile/5">
-          <CardContent className="p-6 text-center">
-            <div className="flex flex-col items-center space-y-2">
-              <Smartphone className="h-8 w-8 text-mobile" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Celular</p>
-                <p className="text-2xl font-bold text-mobile">{formatCurrency(totals.mobile)}</p>
-                <p className="text-xs text-muted-foreground">
-                  {getPercentage(totals.mobile).toFixed(1)}% do total
                 </p>
               </div>
             </div>
@@ -625,7 +602,6 @@ export default function ConsolidatedReport() {
                     <th className="border border-border p-3 text-center font-semibold text-water">Água</th>
                     <th className="border border-border p-3 text-center font-semibold text-energy">Energia</th>
                     <th className="border border-border p-3 text-center font-semibold text-fixed-line">Linha Fixa</th>
-                    <th className="border border-border p-3 text-center font-semibold text-mobile">Celular</th>
                     <th className="border border-border p-3 text-center font-semibold text-orange-600">RH</th>
                     <th className="border border-border p-3 text-center font-semibold text-primary">Total</th>
                     <th className="border border-border p-3 text-center font-semibold text-muted-foreground">Distribuição (%)</th>
@@ -660,9 +636,6 @@ export default function ConsolidatedReport() {
                         <td className="border border-border p-3 text-center text-fixed-line font-medium bg-fixed-line/5">
                           {formatCurrency(school.fixedLine.value)}
                         </td>
-                        <td className="border border-border p-3 text-center text-mobile font-medium bg-mobile/5">
-                          {formatCurrency(school.mobile.value)}
-                        </td>
                         <td className="border border-border p-3 text-center font-medium text-orange-600 bg-orange-50">
                           {formatCurrency(hrCost)}
                         </td>
@@ -685,19 +658,14 @@ export default function ConsolidatedReport() {
                                 style={{ width: `${(school.fixedLine.value / totalWithHR) * 100}%` }}
                               />
                               <div 
-                                className="h-3 bg-mobile rounded-sm" 
-                                style={{ width: `${(school.mobile.value / totalWithHR) * 100}%` }}
-                              />
-                              <div 
                                 className="h-3 bg-orange-500 rounded-sm" 
                                 style={{ width: `${(hrCost / totalWithHR) * 100}%` }}
                               />
                             </div>
-                            <div className="text-xs text-muted-foreground grid grid-cols-5 gap-1">
+                            <div className="text-xs text-muted-foreground grid grid-cols-4 gap-1">
                               <span className="text-water">{((school.water.value / totalWithHR) * 100).toFixed(1)}%</span>
                               <span className="text-energy">{((school.energy.value / totalWithHR) * 100).toFixed(1)}%</span>
                               <span className="text-fixed-line">{((school.fixedLine.value / totalWithHR) * 100).toFixed(1)}%</span>
-                              <span className="text-mobile">{((school.mobile.value / totalWithHR) * 100).toFixed(1)}%</span>
                               <span className="text-orange-600">{((hrCost / totalWithHR) * 100).toFixed(1)}%</span>
                             </div>
                           </div>

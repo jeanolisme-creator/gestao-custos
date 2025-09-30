@@ -30,7 +30,6 @@ export function EvolutionChart({
     switch (currentSystem) {
       case 'energy': return 'KWh';
       case 'fixed-line': return 'plano';
-      case 'mobile': return 'dados';
       default: return 'm³';
     }
   };
