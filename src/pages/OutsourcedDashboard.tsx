@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { OutsourcedNavigation } from "@/components/outsourced/OutsourcedNavigation";
+import { EmployeeRegistration } from "@/components/outsourced/EmployeeRegistration";
+import { OutsourcedCharts } from "@/components/outsourced/OutsourcedCharts";
+import { OutsourcedReports } from "@/components/outsourced/OutsourcedReports";
 import { DollarSign, Users, AlertTriangle, TrendingUp, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -215,10 +218,10 @@ export default function OutsourcedDashboard() {
         <OutsourcedNavigation currentTab={currentTab} onTabChange={setCurrentTab} />
 
         {currentTab === 'dashboard' && renderDashboard()}
-        {currentTab === 'employees' && <div className="text-center p-8">Cadastro de Funcionários - Em desenvolvimento</div>}
+        {currentTab === 'employees' && <EmployeeRegistration />}
         {currentTab === 'payroll' && <div className="text-center p-8">Folha de Pagamento - Em desenvolvimento</div>}
-        {currentTab === 'costs' && <div className="text-center p-8">Análise de Custos - Em desenvolvimento</div>}
-        {currentTab === 'reports' && <div className="text-center p-8">Relatórios - Em desenvolvimento</div>}
+        {currentTab === 'costs' && <OutsourcedCharts />}
+        {currentTab === 'reports' && <OutsourcedReports />}
         {currentTab === 'settings' && <div className="text-center p-8">Configurações - Em desenvolvimento</div>}
       </div>
     </div>
