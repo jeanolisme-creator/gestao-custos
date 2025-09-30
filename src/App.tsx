@@ -16,6 +16,8 @@ import SchoolDemandDashboard from "./pages/SchoolDemandDashboard";
 import SchoolDemandRegistration from "./pages/SchoolDemandRegistration";
 import SchoolDemandIntegrations from "./pages/SchoolDemandIntegrations";
 import SchoolDemandImport from "./pages/SchoolDemandImport";
+import OutsourcedDashboard from "./pages/OutsourcedDashboard";
+import ContractsDashboard from "./pages/ContractsDashboard";
 import Charts from "./pages/Charts";
 import Reports from "./pages/Reports";
 import Records from "./pages/Records";
@@ -68,6 +70,8 @@ const App = () => {
                   <Route path="school-demand/cadastro" element={<SchoolDemandRegistration />} />
                   <Route path="school-demand/integracoes" element={<SchoolDemandIntegrations />} />
                   <Route path="school-demand/importar" element={<SchoolDemandImport />} />
+                  <Route path="outsourced-dashboard" element={<OutsourcedDashboard />} />
+                  <Route path="contracts-dashboard" element={<ContractsDashboard />} />
                   <Route path="records" element={<Records />} />
                   <Route path="data-management" element={<DataManagement onDataUpdate={handleDataUpdate} currentDataCount={schoolData.length} />} />
                 </Route>

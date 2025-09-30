@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 
-export type SystemType = 'water' | 'energy' | 'fixed-line' | 'hr' | 'supplies' | 'school-demand';
+export type SystemType = 'water' | 'energy' | 'fixed-line' | 'hr' | 'supplies' | 'school-demand' | 'outsourced' | 'contracts';
 
 export interface SystemConfig {
   id: SystemType;
@@ -156,6 +156,38 @@ const systemConfigs: Record<SystemType, SystemConfig> = {
       { name: 'alunos_fundamental_i', label: 'Alunos Fundamental I (6-10 anos)', type: 'number' },
       { name: 'alunos_fundamental_ii', label: 'Alunos Fundamental II (11-14 anos)', type: 'number' },
       { name: 'alunos_por_turma', label: 'Alunos por Turma', type: 'number' },
+    ]
+  },
+  'outsourced': {
+    id: 'outsourced',
+    name: 'Gestão de Terceirizados',
+    icon: 'UserCog',
+    color: 'cyan',
+    unit: 'funcionários',
+    consumptionLabel: 'Terceirizados',
+    fields: [
+      { name: 'empresa', label: 'Empresa', type: 'select', required: true, options: ['Produserv', 'GF', 'Eficience', 'Assej', 'Outro'] },
+      { name: 'local_trabalho', label: 'Local de Trabalho', type: 'text', required: true },
+      { name: 'cargo', label: 'Cargo', type: 'select', required: true, options: ['Aux. Apoio Escolar', 'Apoio Administrativo', 'Porteiro', 'Auxiliar de Limpeza', 'Agente de Higienização', 'Apoio Ed. Especial', 'Outro'] },
+      { name: 'carga_horaria', label: 'Carga Horária', type: 'select', required: true, options: ['40h', '44h', '12x36h', 'Outro'] },
+      { name: 'valor_posto', label: 'Valor do Posto', type: 'number', required: true },
+    ]
+  },
+  'contracts': {
+    id: 'contracts',
+    name: 'Gestão de Contratos',
+    icon: 'FileText',
+    color: 'violet',
+    unit: 'contratos',
+    consumptionLabel: 'Contratos',
+    fields: [
+      { name: 'numero_contrato', label: 'Número do Contrato', type: 'text', required: true },
+      { name: 'nome_empresa', label: 'Nome da Empresa', type: 'text', required: true },
+      { name: 'cnpj', label: 'CNPJ', type: 'text', required: true },
+      { name: 'numero_empenho', label: 'Número do Empenho', type: 'text' },
+      { name: 'objeto_contrato', label: 'Objeto do Contrato', type: 'text', required: true },
+      { name: 'valor_mensal', label: 'Valor Mensal', type: 'number', required: true },
+      { name: 'valor_anual', label: 'Valor Anual', type: 'number' },
     ]
   }
 };

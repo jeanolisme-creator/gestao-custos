@@ -17,6 +17,8 @@ import {
   Users,
   Package,
   GraduationCap,
+  UserCog,
+  FileSignature,
 } from "lucide-react";
 import { useSystem } from "@/contexts/SystemContext";
 import logoSjrp from "@/assets/logo-sjrp.png";
@@ -100,6 +102,20 @@ const systemManagement = [
     system: "school-demand",
     icon: GraduationCap,
     color: "text-school-demand",
+  },
+  {
+    name: "Gestão de Terceirizados",
+    href: "/outsourced-dashboard",
+    system: "outsourced",
+    icon: UserCog,
+    color: "text-cyan-500",
+  },
+  {
+    name: "Gestão de Contratos",
+    href: "/contracts-dashboard",
+    system: "contracts",
+    icon: FileSignature,
+    color: "text-violet-500",
   },
 ];
 
