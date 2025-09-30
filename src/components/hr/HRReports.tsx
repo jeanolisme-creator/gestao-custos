@@ -1,418 +1,370 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
   FileText, 
   Download, 
   FileSpreadsheet, 
-  Calendar,
+  Calendar as CalendarIcon,
   Users,
   DollarSign,
   TrendingUp,
-  Building2
+  Building2,
+  Filter,
+  FileDown
 } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { toast } from "@/components/ui/sonner";
 
-interface ReportData {
-  folhaPagamento: any[];
-  custosPorEscola: any[];
-  custosPorAluno: any[];
-  servidoresPorCargo: any[];
-  evolucaoCustos: any[];
-  consolidadoServidores: any[];
+interface Employee {
+  id: string;
+  name: string;
+  company: string;
+  position: string;
+  school: string;
+  workload: string;
+  monthlySalary: number;
+  status: string;
 }
 
-const reportTypes = [
-  { id: 'folha', name: 'Folha de Pagamento', icon: FileText },
-  { id: 'custos-escola', name: 'Custos por Escola', icon: Building2 },
-  { id: 'custos-aluno', name: 'Custos por Aluno', icon: Users },
-  { id: 'servidores-cargo', name: 'Servidores por Cargo', icon: Users },
-  { id: 'evolucao-custos', name: 'Evolução de Custos', icon: TrendingUp },
-  { id: 'consolidado', name: 'Consolidado de Servidores', icon: DollarSign }
-];
-
-const mockReportData: ReportData = {
-  folhaPagamento: [
-    { matricula: '2023001', nome: 'Maria Silva Santos', cargo: 'Professor', vencimentos: 4850, descontos: 970, liquido: 3880 },
-    { matricula: '2023002', nome: 'João Oliveira Costa', cargo: 'Diretor', vencimentos: 8500, descontos: 1700, liquido: 6800 }
-  ],
-  custosPorEscola: [
-    { escola: 'EMEF João Silva', custoTotal: 124800, alunos: 450, servidores: 32 },
-    { escola: 'EMEI Maria Santos', custoTotal: 58500, alunos: 180, servidores: 15 }
-  ],
-  custosPorAluno: [
-    { escola: 'EMEF João Silva', custoPorAluno: 277.33, categoria: 'Baixo' },
-    { escola: 'EMEI Maria Santos', custoPorAluno: 325.00, categoria: 'Médio' }
-  ],
-  servidoresPorCargo: [
-    { cargo: 'Professor', quantidade: 724, percentual: 58.1 },
-    { cargo: 'Diretor', quantidade: 122, percentual: 9.8 }
-  ],
-  evolucaoCustos: [
-    { mes: 'Janeiro', custo: 4650000 },
-    { mes: 'Fevereiro', custo: 4720000 }
-  ],
-  consolidadoServidores: [
-    { matricula: '2023001', nome: 'Maria Silva Santos', cargo: 'Professor', escola: 'EMEF João Silva', salario: 4850, situacao: 'Ativo' }
-  ]
-};
-
 export function HRReports() {
-  const [selectedReportType, setSelectedReportType] = useState('folha');
-  const [selectedPeriod, setSelectedPeriod] = useState('2025-12');
-  const [startDate, setStartDate] = useState('2024-01-01');
-  const [endDate, setEndDate] = useState('2024-12-31');
-  const [generatedReports, setGeneratedReports] = useState<string[]>([]);
+  const [filterCompany, setFilterCompany] = useState<string>("all");
+  const [filterPosition, setFilterPosition] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Mock data de funcionários terceirizados
+  const mockEmployees: Employee[] = [
+    {
+      id: "1",
+      name: "João Silva Santos",
+      company: "Assej",
+      position: "Aux. Apoio Escolar",
+      school: "EMEF João Silva",
+      workload: "40h",
+      monthlySalary: 1500,
+      status: "Ativo"
+    },
+    {
+      id: "2",
+      name: "Maria Oliveira Costa",
+      company: "Produserv",
+      position: "Porteiro",
+      school: "EMEI Maria Santos",
+      workload: "44h",
+      monthlySalary: 1400,
+      status: "Ativo"
+    },
+    {
+      id: "3",
+      name: "Carlos Eduardo Lima",
+      company: "GF",
+      position: "Auxiliar de Limpeza",
+      school: "EMEIF Carlos Lima",
+      workload: "12x36h",
+      monthlySalary: 1400,
+      status: "Ativo"
+    },
+    {
+      id: "4",
+      name: "Ana Paula Souza",
+      company: "Eficience",
+      position: "Agente de Higienização",
+      school: "EMEF João Silva",
+      workload: "40h",
+      monthlySalary: 1500,
+      status: "Ativo"
+    },
+    {
+      id: "5",
+      name: "Pedro Henrique Alves",
+      company: "Assej",
+      position: "Apoio Ed. Especial",
+      school: "EMEI Maria Santos",
+      workload: "44h",
+      monthlySalary: 1600,
+      status: "Ativo"
+    },
+  ];
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency: 'BRL'
+      currency: 'BRL',
+      minimumFractionDigits: 2,
     }).format(value);
   };
 
-  const handleGenerateReport = () => {
-    const reportId = `${selectedReportType}-${Date.now()}`;
-    setGeneratedReports(prev => [...prev, reportId]);
-    
-    console.log('Generating report:', {
-      type: selectedReportType,
-      period: selectedPeriod,
-      startDate,
-      endDate
-    });
+  // Filtrar funcionários
+  const filteredEmployees = mockEmployees.filter(employee => {
+    if (filterCompany !== "all" && employee.company !== filterCompany) return false;
+    if (filterPosition !== "all" && employee.position !== filterPosition) return false;
+    if (filterStatus !== "all" && employee.status !== filterStatus) return false;
+    if (searchTerm && !employee.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
+        !employee.school.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    return true;
+  });
+
+  // Exportar para CSV
+  const exportToCSV = () => {
+    const headers = ["Nome", "Empresa", "Cargo", "Escola", "Carga Horária", "Salário Mensal", "Status"];
+    const csvData = filteredEmployees.map(employee => [
+      employee.name,
+      employee.company,
+      employee.position,
+      employee.school,
+      employee.workload,
+      employee.monthlySalary,
+      employee.status
+    ]);
+
+    const csv = [
+      headers.join(","),
+      ...csvData.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `relatorio_terceirizados_${format(new Date(), "yyyy-MM-dd")}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success("Relatório exportado com sucesso!");
   };
 
-  const handleExportPDF = (reportType: string) => {
-    console.log('Exporting to PDF:', reportType);
+  // Exportar para PDF (simulado)
+  const exportToPDF = () => {
+    toast.success("Funcionalidade de exportação para PDF será implementada em breve!");
   };
 
-  const handleExportExcel = (reportType: string) => {
-    console.log('Exporting to Excel:', reportType);
-  };
-
-  const renderReportTable = (reportType: string) => {
-    const data = mockReportData[reportType as keyof ReportData] || [];
-    
-    switch (reportType) {
-      case 'folha':
-        return (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Matrícula</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Cargo</TableHead>
-                <TableHead className="text-right">Vencimentos</TableHead>
-                <TableHead className="text-right">Descontos</TableHead>
-                <TableHead className="text-right">Líquido</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((row: any, index) => (
-                <TableRow key={index}>
-                  <TableCell>{row.matricula}</TableCell>
-                  <TableCell>{row.nome}</TableCell>
-                  <TableCell><Badge variant="outline">{row.cargo}</Badge></TableCell>
-                  <TableCell className="text-right text-green-600">{formatCurrency(row.vencimentos)}</TableCell>
-                  <TableCell className="text-right text-red-600">{formatCurrency(row.descontos)}</TableCell>
-                  <TableCell className="text-right font-semibold">{formatCurrency(row.liquido)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        );
-
-      case 'custos-escola':
-        return (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Escola</TableHead>
-                <TableHead className="text-right">Custo Total</TableHead>
-                <TableHead className="text-center">Nº Alunos</TableHead>
-                <TableHead className="text-center">Nº Servidores</TableHead>
-                <TableHead className="text-right">Custo/Aluno</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((row: any, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{row.escola}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(row.custoTotal)}</TableCell>
-                  <TableCell className="text-center">{row.alunos}</TableCell>
-                  <TableCell className="text-center">{row.servidores}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(row.custoTotal / row.alunos)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        );
-
-      case 'custos-aluno':
-        return (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Escola</TableHead>
-                <TableHead className="text-right">Custo por Aluno</TableHead>
-                <TableHead className="text-center">Categoria</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((row: any, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{row.escola}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(row.custoPorAluno)}</TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant={row.categoria === 'Baixo' ? 'default' : row.categoria === 'Médio' ? 'secondary' : 'destructive'}>
-                      {row.categoria}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        );
-
-      case 'servidores-cargo':
-        return (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Cargo</TableHead>
-                <TableHead className="text-center">Quantidade</TableHead>
-                <TableHead className="text-center">Percentual</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((row: any, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{row.cargo}</TableCell>
-                  <TableCell className="text-center">{row.quantidade}</TableCell>
-                  <TableCell className="text-center">{row.percentual}%</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        );
-
-      case 'evolucao-custos':
-        return (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Mês</TableHead>
-                <TableHead className="text-right">Custo Total</TableHead>
-                <TableHead className="text-center">Variação</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((row: any, index) => {
-                const previousCost = index > 0 ? data[index - 1].custo : row.custo;
-                const variation = index > 0 ? ((row.custo - previousCost) / previousCost * 100) : 0;
-                
-                return (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">{row.mes}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(row.custo)}</TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant={variation > 0 ? 'destructive' : variation < 0 ? 'default' : 'secondary'}>
-                        {variation > 0 ? '+' : ''}{variation.toFixed(1)}%
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        );
-
-      case 'consolidado':
-        return (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Matrícula</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Cargo</TableHead>
-                <TableHead>Escola</TableHead>
-                <TableHead className="text-right">Salário</TableHead>
-                <TableHead className="text-center">Situação</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((row: any, index) => (
-                <TableRow key={index}>
-                  <TableCell>{row.matricula}</TableCell>
-                  <TableCell>{row.nome}</TableCell>
-                  <TableCell><Badge variant="outline">{row.cargo}</Badge></TableCell>
-                  <TableCell>{row.escola}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(row.salario)}</TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant={row.situacao === 'Ativo' ? 'default' : 'secondary'}>
-                      {row.situacao}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        );
-
-      default:
-        return <div className="text-center py-8 text-muted-foreground">Selecione um tipo de relatório</div>;
-    }
+  const clearFilters = () => {
+    setFilterCompany("all");
+    setFilterPosition("all");
+    setFilterStatus("all");
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setSearchTerm("");
+    toast.success("Filtros limpos!");
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Relatórios de RH</h2>
-          <p className="text-muted-foreground">Gere e visualize relatórios detalhados do sistema de RH</p>
-        </div>
+      <div>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Relatórios de Funcionários Terceirizados</h2>
+        <p className="text-muted-foreground">Filtre e exporte relatórios dos funcionários terceirizados</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Report Generation Panel */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>Gerar Relatório</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      {/* Filtros */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Filter className="h-5 w-5 text-violet-500" />
+            Filtro de Relatório
+          </CardTitle>
+          <CardDescription>Configure os filtros para personalizar o relatório</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label>Tipo de Relatório</Label>
-              <Select value={selectedReportType} onValueChange={setSelectedReportType}>
+              <Label>Buscar</Label>
+              <Input
+                placeholder="Nome ou escola..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Empresa</Label>
+              <Select value={filterCompany} onValueChange={setFilterCompany}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
-                  {reportTypes.map(type => (
-                    <SelectItem key={type.id} value={type.id}>
-                      {type.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="Assej">Assej</SelectItem>
+                  <SelectItem value="Produserv">Produserv</SelectItem>
+                  <SelectItem value="GF">GF</SelectItem>
+                  <SelectItem value="Eficience">Eficience</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label>Período</Label>
-              <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+              <Label>Cargo</Label>
+              <Select value={filterPosition} onValueChange={setFilterPosition}>
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="2025-01">Janeiro 2025</SelectItem>
-                  <SelectItem value="2025-02">Fevereiro 2025</SelectItem>
-                  <SelectItem value="2025-03">Março 2025</SelectItem>
-                  <SelectItem value="2025-04">Abril 2025</SelectItem>
-                  <SelectItem value="2025-05">Maio 2025</SelectItem>
-                  <SelectItem value="2025-06">Junho 2025</SelectItem>
-                  <SelectItem value="2025-07">Julho 2025</SelectItem>
-                  <SelectItem value="2025-08">Agosto 2025</SelectItem>
-                  <SelectItem value="2025-09">Setembro 2025</SelectItem>
-                  <SelectItem value="2025-10">Outubro 2025</SelectItem>
-                  <SelectItem value="2025-11">Novembro 2025</SelectItem>
-                  <SelectItem value="2025-12">Dezembro 2025</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="Aux. Apoio Escolar">Aux. Apoio Escolar</SelectItem>
+                  <SelectItem value="Apoio Administrativo">Apoio Administrativo</SelectItem>
+                  <SelectItem value="Porteiro">Porteiro</SelectItem>
+                  <SelectItem value="Auxiliar de Limpeza">Auxiliar de Limpeza</SelectItem>
+                  <SelectItem value="Agente de Higienização">Agente de Higienização</SelectItem>
+                  <SelectItem value="Apoio Ed. Especial">Apoio Ed. Especial</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label>Data Início</Label>
-              <Input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+              <Label>Status</Label>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="Ativo">Ativo</SelectItem>
+                  <SelectItem value="Inativo">Inativo</SelectItem>
+                  <SelectItem value="Vago">Vago</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label>Data Fim</Label>
-              <Input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </div>
-
-            <Button onClick={handleGenerateReport} className="w-full">
-              <FileText className="mr-2 h-4 w-4" />
-              Gerar Relatório
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={clearFilters}>
+              Limpar Filtros
             </Button>
+            <Button onClick={exportToCSV} className="ml-auto">
+              <FileDown className="h-4 w-4 mr-2" />
+              Exportar CSV
+            </Button>
+            <Button onClick={exportToPDF} variant="outline">
+              <FileText className="h-4 w-4 mr-2" />
+              Exportar PDF
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Resumo dos resultados */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader className="pb-3 text-center">
+            <CardTitle className="text-sm font-medium text-blue-600 flex items-center justify-center gap-2">
+              <Users className="h-4 w-4" />
+              Total de Funcionários
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <div className="text-2xl font-bold text-blue-700">{filteredEmployees.length}</div>
           </CardContent>
         </Card>
 
-        {/* Report Display */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>
-                {reportTypes.find(r => r.id === selectedReportType)?.name || 'Relatório'}
-              </CardTitle>
-              <div className="flex space-x-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleExportPDF(selectedReportType)}
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  PDF
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => handleExportExcel(selectedReportType)}
-                >
-                  <FileSpreadsheet className="mr-2 h-4 w-4" />
-                  Excel
-                </Button>
-              </div>
-            </div>
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader className="pb-3 text-center">
+            <CardTitle className="text-sm font-medium text-green-600 flex items-center justify-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              Custo Total Mensal
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              {renderReportTable(selectedReportType)}
+          <CardContent className="text-center">
+            <div className="text-2xl font-bold text-green-700">
+              {formatCurrency(filteredEmployees.reduce((sum, e) => sum + e.monthlySalary, 0))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-purple-200 bg-purple-50">
+          <CardHeader className="pb-3 text-center">
+            <CardTitle className="text-sm font-medium text-purple-600 flex items-center justify-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Custo Total Anual
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <div className="text-2xl font-bold text-purple-700">
+              {formatCurrency(filteredEmployees.reduce((sum, e) => sum + e.monthlySalary * 12, 0))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardHeader className="pb-3 text-center">
+            <CardTitle className="text-sm font-medium text-yellow-600 flex items-center justify-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Empresas Ativas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <div className="text-2xl font-bold text-yellow-700">
+              {Array.from(new Set(filteredEmployees.map(e => e.company))).length}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Generated Reports History */}
-      {generatedReports.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Relatórios Gerados</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {generatedReports.map((reportId, index) => (
-                <div key={reportId} className="flex justify-between items-center p-3 border rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">
-                      {reportTypes.find(r => reportId.includes(r.id))?.name} - {new Date().toLocaleDateString('pt-BR')}
-                    </span>
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm">
-                      <Download className="mr-2 h-4 w-4" />
-                      Download
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Relatório de Funcionários Terceirizados */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Relatório de Funcionários Terceirizados</CardTitle>
+          <CardDescription>
+            {filteredEmployees.length} funcionário(s) encontrado(s)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Empresa</TableHead>
+                  <TableHead>Cargo</TableHead>
+                  <TableHead>Escola</TableHead>
+                  <TableHead className="text-center">Carga Horária</TableHead>
+                  <TableHead className="text-right">Salário Mensal</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredEmployees.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      Nenhum funcionário encontrado com os filtros aplicados
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredEmployees.map((employee) => (
+                    <TableRow key={employee.id}>
+                      <TableCell className="font-medium">{employee.name}</TableCell>
+                      <TableCell>{employee.company}</TableCell>
+                      <TableCell><Badge variant="outline">{employee.position}</Badge></TableCell>
+                      <TableCell className="text-sm">{employee.school}</TableCell>
+                      <TableCell className="text-center">{employee.workload}</TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(employee.monthlySalary)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={employee.status === "Ativo" ? "default" : "secondary"}>
+                          {employee.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

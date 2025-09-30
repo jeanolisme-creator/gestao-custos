@@ -50,134 +50,114 @@ export default function OutsourcedDashboard() {
 
   const renderDashboard = () => (
     <div className="space-y-6">
-      {/* Cards principais mensais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-blue-200 bg-blue-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-blue-600">Valor Mensal Assej</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-700">{formatCurrency(companies.assej.monthly)}</div>
-          </CardContent>
-        </Card>
+      {/* Seção Número de funcionários por empresa */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            Número de Funcionários por Empresa
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="border-blue-200 bg-blue-50">
+              <CardContent className="p-4 text-center">
+                <div className="h-12 w-12 rounded-full bg-blue-500 mx-auto mb-2 flex items-center justify-center">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
+                <p className="text-sm font-medium text-blue-600 mb-1">Assej</p>
+                <p className="text-2xl font-bold text-blue-700 mb-1">45</p>
+                <p className="text-sm font-semibold text-blue-600">{formatCurrency(companies.assej.monthly)}</p>
+              </CardContent>
+            </Card>
 
-        <Card className="border-green-200 bg-green-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-green-600">Valor Mensal Produserv</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-700">{formatCurrency(companies.produserv.monthly)}</div>
-          </CardContent>
-        </Card>
+            <Card className="border-green-200 bg-green-50">
+              <CardContent className="p-4 text-center">
+                <div className="h-12 w-12 rounded-full bg-green-500 mx-auto mb-2 flex items-center justify-center">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
+                <p className="text-sm font-medium text-green-600 mb-1">Produserv</p>
+                <p className="text-2xl font-bold text-green-700 mb-1">60</p>
+                <p className="text-sm font-semibold text-green-600">{formatCurrency(companies.produserv.monthly)}</p>
+              </CardContent>
+            </Card>
 
-        <Card className="border-yellow-200 bg-yellow-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-yellow-600">Valor Mensal GF</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-700">{formatCurrency(companies.gf.monthly)}</div>
-          </CardContent>
-        </Card>
+            <Card className="border-yellow-200 bg-yellow-50">
+              <CardContent className="p-4 text-center">
+                <div className="h-12 w-12 rounded-full bg-yellow-500 mx-auto mb-2 flex items-center justify-center">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
+                <p className="text-sm font-medium text-yellow-600 mb-1">GF</p>
+                <p className="text-2xl font-bold text-yellow-700 mb-1">50</p>
+                <p className="text-sm font-semibold text-yellow-600">{formatCurrency(companies.gf.monthly)}</p>
+              </CardContent>
+            </Card>
 
-        <Card className="border-purple-200 bg-purple-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-purple-600">Valor Mensal Eficience</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-700">{formatCurrency(companies.eficience.monthly)}</div>
-          </CardContent>
-        </Card>
-      </div>
+            <Card className="border-purple-200 bg-purple-50">
+              <CardContent className="p-4 text-center">
+                <div className="h-12 w-12 rounded-full bg-purple-500 mx-auto mb-2 flex items-center justify-center">
+                  <Users className="h-6 w-6 text-white" />
+                </div>
+                <p className="text-sm font-medium text-purple-600 mb-1">Eficience</p>
+                <p className="text-2xl font-bold text-purple-700 mb-1">35</p>
+                <p className="text-sm font-semibold text-purple-600">{formatCurrency(companies.eficience.monthly)}</p>
+              </CardContent>
+            </Card>
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Cards principais anuais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="border-blue-300 bg-blue-100">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-blue-700">Valor Anual Assej</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-800">{formatCurrency(companies.assej.annual)}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-green-300 bg-green-100">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-green-700">Valor Anual Produserv</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-800">{formatCurrency(companies.produserv.annual)}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-yellow-300 bg-yellow-100">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-yellow-700">Valor Anual GF</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-800">{formatCurrency(companies.gf.annual)}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-purple-300 bg-purple-100">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-purple-700">Valor Anual Eficience</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-800">{formatCurrency(companies.eficience.annual)}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Card de totais e alertas */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Cards de Custo Total Mensal e Anual */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="border-cyan-200 bg-cyan-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-cyan-700">
+          <CardHeader className="text-center">
+            <CardTitle className="flex items-center justify-center gap-2 text-cyan-700">
               <DollarSign className="h-5 w-5" />
               Custo Total Mensal
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="text-center">
             <div className="text-3xl font-bold text-cyan-800">{formatCurrency(totalMonthly)}</div>
             <p className="text-sm text-cyan-600 mt-2">Total de funcionários: {totalEmployees}</p>
           </CardContent>
         </Card>
 
         <Card className="border-cyan-300 bg-cyan-100">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-cyan-800">
+          <CardHeader className="text-center">
+            <CardTitle className="flex items-center justify-center gap-2 text-cyan-800">
               <TrendingUp className="h-5 w-5" />
               Custo Total Anual
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="text-center">
             <div className="text-3xl font-bold text-cyan-900">{formatCurrency(totalAnnual)}</div>
             <p className="text-sm text-cyan-700 mt-2">Projeção anual completa</p>
           </CardContent>
         </Card>
-
-        <Card className="border-red-200 bg-red-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-700">
-              <AlertTriangle className="h-5 w-5" />
-              Alertas
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {alerts.map((alert, index) => (
-                <div key={index} className="flex items-start gap-2 p-2 bg-red-100 rounded">
-                  <Building2 className="h-4 w-4 text-red-600 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-red-800">{alert.school}</p>
-                    <p className="text-xs text-red-600">Faltam {alert.missing} - {alert.positions}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
       </div>
+
+      {/* Card de Alertas em linha completa */}
+      <Card className="border-red-200 bg-red-50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-red-700">
+            <AlertTriangle className="h-5 w-5" />
+            Alertas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {alerts.map((alert, index) => (
+              <div key={index} className="flex items-start gap-2 p-3 bg-red-100 rounded-lg">
+                <Building2 className="h-5 w-5 text-red-600 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-red-800">{alert.school}</p>
+                  <p className="text-xs text-red-600">Faltam {alert.missing} - {alert.positions}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Minicards por cargo */}
       <Card>

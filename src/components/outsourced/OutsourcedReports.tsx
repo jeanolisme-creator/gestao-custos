@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileDown, Filter, Search } from "lucide-react";
+import { FileDown, Filter, Search, Users, DollarSign, TrendingUp, Building2 } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
 interface Employee {
@@ -15,7 +15,7 @@ interface Employee {
   role: string;
   workplace: string;
   workload: string;
-  value: number;
+  monthlySalary: number;
   admissionDate: string;
 }
 
@@ -27,14 +27,14 @@ export function OutsourcedReports() {
 
   // Mock data de funcionários
   const mockEmployees: Employee[] = [
-    { id: "1", name: "João Silva", company: "Produserv", role: "Aux. Apoio Escolar", workplace: "EMEF João Silva", workload: "40h", value: 1500, admissionDate: "2023-01-15" },
-    { id: "2", name: "Maria Santos", company: "GF", role: "Auxiliar de Limpeza", workplace: "EMEI Maria Santos", workload: "44h", value: 1400, admissionDate: "2023-02-20" },
-    { id: "3", name: "Pedro Oliveira", company: "Eficience", role: "Porteiro", workplace: "EMEIF Carlos Lima", workload: "12x36h", value: 1600, admissionDate: "2023-03-10" },
-    { id: "4", name: "Ana Costa", company: "Assej", role: "Apoio Administrativo", workplace: "EMEF João Silva", workload: "40h", value: 1750, admissionDate: "2023-04-05" },
-    { id: "5", name: "Carlos Ferreira", company: "Produserv", role: "Agente de Higienização", workplace: "EMEI Maria Santos", workload: "44h", value: 1500, admissionDate: "2023-05-12" },
-    { id: "6", name: "Juliana Alves", company: "GF", role: "Apoio Ed. Especial", workplace: "EMEIF Carlos Lima", workload: "40h", value: 1600, admissionDate: "2023-06-18" },
-    { id: "7", name: "Roberto Lima", company: "Eficience", role: "Auxiliar de Limpeza", workplace: "EMEF João Silva", workload: "44h", value: 1400, admissionDate: "2023-07-22" },
-    { id: "8", name: "Fernanda Souza", company: "Assej", role: "Aux. Apoio Escolar", workplace: "EMEI Maria Santos", workload: "40h", value: 1500, admissionDate: "2023-08-30" },
+    { id: "1", name: "João Silva", company: "Produserv", role: "Aux. Apoio Escolar", workplace: "EMEF João Silva", workload: "40h", monthlySalary: 1500, admissionDate: "2023-01-15" },
+    { id: "2", name: "Maria Santos", company: "GF", role: "Auxiliar de Limpeza", workplace: "EMEI Maria Santos", workload: "44h", monthlySalary: 1400, admissionDate: "2023-02-20" },
+    { id: "3", name: "Pedro Oliveira", company: "Eficience", role: "Porteiro", workplace: "EMEIF Carlos Lima", workload: "12x36h", monthlySalary: 1600, admissionDate: "2023-03-10" },
+    { id: "4", name: "Ana Costa", company: "Assej", role: "Apoio Administrativo", workplace: "EMEF João Silva", workload: "40h", monthlySalary: 1750, admissionDate: "2023-04-05" },
+    { id: "5", name: "Carlos Ferreira", company: "Produserv", role: "Agente de Higienização", workplace: "EMEI Maria Santos", workload: "44h", monthlySalary: 1500, admissionDate: "2023-05-12" },
+    { id: "6", name: "Juliana Alves", company: "GF", role: "Apoio Ed. Especial", workplace: "EMEIF Carlos Lima", workload: "40h", monthlySalary: 1600, admissionDate: "2023-06-18" },
+    { id: "7", name: "Roberto Lima", company: "Eficience", role: "Auxiliar de Limpeza", workplace: "EMEF João Silva", workload: "44h", monthlySalary: 1400, admissionDate: "2023-07-22" },
+    { id: "8", name: "Fernanda Souza", company: "Assej", role: "Aux. Apoio Escolar", workplace: "EMEI Maria Santos", workload: "40h", monthlySalary: 1500, admissionDate: "2023-08-30" },
   ];
 
   const filteredEmployees = mockEmployees.filter(employee => {
@@ -66,14 +66,14 @@ export function OutsourcedReports() {
   };
 
   const exportToCSV = () => {
-    const headers = ["Nome", "Empresa", "Cargo", "Local de Trabalho", "Carga Horária", "Valor", "Data de Admissão"];
+    const headers = ["Nome", "Empresa", "Cargo", "Local de Trabalho", "Carga Horária", "Salário Mensal", "Data de Admissão"];
     const rows = filteredEmployees.map(emp => [
       emp.name,
       emp.company,
       emp.role,
       emp.workplace,
       emp.workload,
-      emp.value.toString(),
+      emp.monthlySalary.toString(),
       emp.admissionDate
     ]);
 
@@ -106,8 +106,6 @@ export function OutsourcedReports() {
     setSearchTerm("");
     toast.success("Filtros limpos");
   };
-
-  const totalValue = filteredEmployees.reduce((sum, emp) => sum + emp.value, 0);
 
   return (
     <div className="space-y-6">
@@ -189,32 +187,59 @@ export function OutsourcedReports() {
         </CardContent>
       </Card>
 
-      {/* Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-cyan-200 bg-cyan-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-cyan-700">Total de Funcionários</CardTitle>
+      {/* Resumo dos resultados */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="border-blue-200 bg-blue-50">
+          <CardHeader className="pb-3 text-center">
+            <CardTitle className="text-sm font-medium text-blue-600 flex items-center justify-center gap-2">
+              <Users className="h-4 w-4" />
+              Total de Funcionários
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-cyan-800">{filteredEmployees.length}</div>
+          <CardContent className="text-center">
+            <div className="text-2xl font-bold text-blue-700">{filteredEmployees.length}</div>
           </CardContent>
         </Card>
 
-        <Card className="border-cyan-200 bg-cyan-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-cyan-700">Valor Total Mensal</CardTitle>
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader className="pb-3 text-center">
+            <CardTitle className="text-sm font-medium text-green-600 flex items-center justify-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              Custo Total Mensal
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-cyan-800">{formatCurrency(totalValue)}</div>
+          <CardContent className="text-center">
+            <div className="text-2xl font-bold text-green-700">
+              {formatCurrency(filteredEmployees.reduce((sum, e) => sum + e.monthlySalary, 0))}
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="border-cyan-200 bg-cyan-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-cyan-700">Valor Total Anual</CardTitle>
+        <Card className="border-purple-200 bg-purple-50">
+          <CardHeader className="pb-3 text-center">
+            <CardTitle className="text-sm font-medium text-purple-600 flex items-center justify-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Custo Total Anual
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-cyan-800">{formatCurrency(totalValue * 12)}</div>
+          <CardContent className="text-center">
+            <div className="text-2xl font-bold text-purple-700">
+              {formatCurrency(filteredEmployees.reduce((sum, e) => sum + e.monthlySalary * 12, 0))}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-yellow-200 bg-yellow-50">
+          <CardHeader className="pb-3 text-center">
+            <CardTitle className="text-sm font-medium text-yellow-600 flex items-center justify-center gap-2">
+              <Building2 className="h-4 w-4" />
+              Empresas Ativas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <div className="text-2xl font-bold text-yellow-700">
+              {Array.from(new Set(filteredEmployees.map(e => e.company))).length}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -251,7 +276,7 @@ export function OutsourcedReports() {
                   <TableHead>Cargo</TableHead>
                   <TableHead>Local de Trabalho</TableHead>
                   <TableHead>Carga Horária</TableHead>
-                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="text-right">Salário Mensal</TableHead>
                   <TableHead>Data Admissão</TableHead>
                 </TableRow>
               </TableHeader>
@@ -271,7 +296,7 @@ export function OutsourcedReports() {
                       <TableCell>{employee.workplace}</TableCell>
                       <TableCell>{employee.workload}</TableCell>
                       <TableCell className="text-right font-semibold">
-                        {formatCurrency(employee.value)}
+                        {formatCurrency(employee.monthlySalary)}
                       </TableCell>
                       <TableCell>{formatDate(employee.admissionDate)}</TableCell>
                     </TableRow>

@@ -60,7 +60,7 @@ export function OutsourcedCharts() {
     <div className="space-y-6">
       {/* Gráficos de valores mensais */}
       <Card>
-        <CardHeader>
+        <CardHeader className="text-center">
           <CardTitle>Valor Total por Empresa - Mensal</CardTitle>
           <CardDescription>Evolução mensal dos valores por empresa terceirizada</CardDescription>
         </CardHeader>
@@ -85,7 +85,7 @@ export function OutsourcedCharts() {
 
       {/* Gráfico de tendência mensal */}
       <Card>
-        <CardHeader>
+        <CardHeader className="text-center">
           <CardTitle>Tendência Mensal por Empresa</CardTitle>
           <CardDescription>Linha do tempo dos gastos mensais</CardDescription>
         </CardHeader>
@@ -110,7 +110,7 @@ export function OutsourcedCharts() {
 
       {/* Gráficos de valores anuais */}
       <Card>
-        <CardHeader>
+        <CardHeader className="text-center">
           <CardTitle>Valor Total por Empresa - Anual</CardTitle>
           <CardDescription>Comparativo anual dos valores por empresa</CardDescription>
         </CardHeader>
@@ -136,7 +136,7 @@ export function OutsourcedCharts() {
       {/* Distribuição de funcionários por empresa */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader>
+          <CardHeader className="text-center">
             <CardTitle>Distribuição de Funcionários por Empresa</CardTitle>
             <CardDescription>Proporção de funcionários por empresa terceirizada</CardDescription>
           </CardHeader>
@@ -166,9 +166,9 @@ export function OutsourcedCharts() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Quantidade de Funcionários</CardTitle>
-            <CardDescription>Total de funcionários por empresa</CardDescription>
+          <CardHeader className="text-center">
+            <CardTitle>Número de Funcionários por Empresa</CardTitle>
+            <CardDescription>Quantidade absoluta por empresa</CardDescription>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[350px] w-full">
@@ -194,10 +194,10 @@ export function OutsourcedCharts() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {employeeDistribution.map((company) => (
           <Card key={company.name} className="border-2" style={{ borderColor: company.color }}>
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-3 text-center">
               <CardTitle className="text-sm font-medium">{company.name}</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="text-center">
               <div className="text-2xl font-bold">{company.value}</div>
               <p className="text-xs text-muted-foreground mt-1">funcionários terceirizados</p>
             </CardContent>

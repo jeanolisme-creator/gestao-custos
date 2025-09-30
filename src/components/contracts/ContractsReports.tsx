@@ -325,13 +325,29 @@ export function ContractsReports() {
         </CardContent>
       </Card>
 
+      {/* Card de resumo dos contratos encontrados */}
+      <div className="flex justify-center">
+        <Card className="border-blue-200 bg-blue-50 w-full max-w-2xl">
+          <CardHeader className="text-center">
+            <CardTitle className="text-3xl font-bold text-blue-700">
+              Contratos Encontrados
+            </CardTitle>
+            <div className="mt-4 space-y-2">
+              <p className="text-5xl font-bold text-blue-800">
+                {filteredContracts.length}
+              </p>
+              <CardDescription className="text-lg font-semibold text-blue-600">
+                Valor Total: {formatCurrency(filteredContracts.reduce((sum, c) => sum + c.annualValue, 0))}
+              </CardDescription>
+            </div>
+          </CardHeader>
+        </Card>
+      </div>
+
       {/* Tabela de resultados */}
       <Card>
         <CardHeader>
-          <CardTitle>Contratos Encontrados ({filteredContracts.length})</CardTitle>
-          <CardDescription>
-            Valor total: {formatCurrency(filteredContracts.reduce((sum, c) => sum + c.annualValue, 0))}
-          </CardDescription>
+          <CardTitle>Detalhamento dos Contratos</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
