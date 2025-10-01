@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { useSchools } from "@/hooks/useSchools";
 
 interface Employee {
   id: string;
@@ -81,6 +82,7 @@ export function EmployeeRegistration() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const { toast } = useToast();
+  const { schools, loading: loadingSchools } = useSchools();
 
   const [formData, setFormData] = useState({
     matricula: '',
@@ -410,17 +412,21 @@ export function EmployeeRegistration() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="localLotacao">Local de Lotação</Label>
-                    <Select value={formData.localLotacao} onValueChange={(value) => handleInputChange('localLotacao', value)}>
+                    <Select 
+                      value={formData.localLotacao} 
+                      onValueChange={(value) => handleInputChange('localLotacao', value)}
+                      disabled={loadingSchools}
+                    >
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione a escola" />
+                        <SelectValue placeholder={loadingSchools ? "Carregando escolas..." : "Selecione a escola"} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="EMEF João Silva">EMEF João Silva</SelectItem>
-                        <SelectItem value="EMEI Maria Santos">EMEI Maria Santos</SelectItem>
-                        <SelectItem value="EMEIF Pedro Costa">EMEIF Pedro Costa</SelectItem>
-                        <SelectItem value="COMP Ana Lima">COMP Ana Lima</SelectItem>
-                        <SelectItem value="PAR Carlos Souza">PAR Carlos Souza</SelectItem>
                         <SelectItem value="SEDE Central">SEDE Central</SelectItem>
+                        {schools.map((school) => (
+                          <SelectItem key={school.id} value={school.nome_escola}>
+                            {school.nome_escola}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>

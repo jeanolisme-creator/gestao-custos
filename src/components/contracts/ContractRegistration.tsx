@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/sonner";
+import { CurrencyInput } from "@/components/ui/currency-input";
 
 interface Addendum {
   id: string;
@@ -80,11 +81,9 @@ export function ContractRegistration() {
     );
   };
 
-  const handleMonthlyValueChange = (value: string) => {
-    setMonthlyValue(value);
-    const numbers = value.replace(/\D/g, "");
-    const amount = parseFloat(numbers) / 100;
-    const annual = amount * 12;
+  const handleMonthlyValueChange = (formatted: string, numericValue: number) => {
+    setMonthlyValue(formatted);
+    const annual = numericValue * 12;
     setAnnualValue(
       new Intl.NumberFormat("pt-BR", {
         style: "currency",
@@ -93,16 +92,14 @@ export function ContractRegistration() {
     );
   };
 
-  const handleAddendumMonthlyChange = (id: string, value: string) => {
+  const handleAddendumMonthlyChange = (id: string, formatted: string, numericValue: number) => {
     setAddendums(
       addendums.map((add) => {
         if (add.id === id) {
-          const numbers = value.replace(/\D/g, "");
-          const amount = parseFloat(numbers) / 100;
-          const final = amount * 12;
+          const final = numericValue * 12;
           return {
             ...add,
-            monthlyValue: value,
+            monthlyValue: formatted,
             finalValue: new Intl.NumberFormat("pt-BR", {
               style: "currency",
               currency: "BRL",
@@ -303,14 +300,11 @@ export function ContractRegistration() {
 
             <div className="space-y-2">
               <Label htmlFor="monthlyValue">Valor Mensal</Label>
-              <Input
+              <CurrencyInput
                 id="monthlyValue"
                 value={monthlyValue}
-                onChange={(e) => handleMonthlyValueChange(e.target.value)}
+                onValueChange={handleMonthlyValueChange}
                 placeholder="R$ 0,00"
-                onBlur={(e) =>
-                  setMonthlyValue(formatCurrency(e.target.value))
-                }
                 required
               />
             </div>
@@ -451,24 +445,12 @@ export function ContractRegistration() {
 
                   <div className="space-y-2">
                     <Label>Valor Mensal do Aditivo</Label>
-                    <Input
+                    <CurrencyInput
                       value={addendum.monthlyValue}
-                      onChange={(e) =>
-                        handleAddendumMonthlyChange(addendum.id, e.target.value)
+                      onValueChange={(formatted, numericValue) =>
+                        handleAddendumMonthlyChange(addendum.id, formatted, numericValue)
                       }
                       placeholder="R$ 0,00"
-                      onBlur={(e) =>
-                        setAddendums(
-                          addendums.map((add) =>
-                            add.id === addendum.id
-                              ? {
-                                  ...add,
-                                  monthlyValue: formatCurrency(e.target.value),
-                                }
-                              : add
-                          )
-                        )
-                      }
                     />
                   </div>
 
