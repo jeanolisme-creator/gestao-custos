@@ -11,34 +11,7 @@ import { Search, Plus, X, Building2, Users, AlertTriangle, CheckCircle, Edit, Sa
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-
-// Mock de escolas cadastradas
-const mockSchools = [
-  {
-    id: '1',
-    name: 'EMEF João Silva',
-    phone: '(17) 3333-4444',
-    address: 'Rua das Flores',
-    number: '100',
-    neighborhood: 'Centro'
-  },
-  {
-    id: '2',
-    name: 'EMEI Maria Santos',
-    phone: '(17) 3333-5555',
-    address: 'Av. Principal',
-    number: '200',
-    neighborhood: 'Jardim Paulista'
-  },
-  {
-    id: '3',
-    name: 'EMEIF Carlos Lima',
-    phone: '(17) 3333-6666',
-    address: 'Rua da Escola',
-    number: '300',
-    neighborhood: 'Vila Nova'
-  }
-];
+import { useSchools } from "@/hooks/useSchools";
 
 interface Employee {
   id: string;
@@ -84,6 +57,7 @@ interface QuotaAlert {
 }
 
 export function EmployeeRegistration() {
+  const { schools, loading } = useSchools();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchSchoolName, setSearchSchoolName] = useState("");
   const [showQuotaSetup, setShowQuotaSetup] = useState(false);
@@ -154,17 +128,17 @@ export function EmployeeRegistration() {
       return;
     }
 
-    const foundSchool = mockSchools.find(school => 
-      school.name.toLowerCase().includes(searchSchoolName.toLowerCase())
+    const foundSchool = schools.find(school => 
+      school.nome_escola.toLowerCase().includes(searchSchoolName.toLowerCase())
     );
 
     if (foundSchool) {
       setSchoolData({
-        name: foundSchool.name,
-        phone: foundSchool.phone,
-        address: foundSchool.address,
-        number: foundSchool.number,
-        neighborhood: foundSchool.neighborhood
+        name: foundSchool.nome_escola,
+        phone: foundSchool.telefone_fixo || foundSchool.telefone_celular || "",
+        address: foundSchool.endereco_completo || "",
+        number: foundSchool.numero || "",
+        neighborhood: foundSchool.bairro || ""
       });
       toast.success("Escola encontrada! Dados preenchidos automaticamente.");
     } else {
