@@ -29,12 +29,15 @@ import logoSecretaria from "@/assets/logo-secretaria.jpg";
 import { WaterNavigation } from "@/components/water/WaterNavigation";
 import { WaterRegistration } from "@/components/water/WaterRegistration";
 import { WaterCharts } from "@/components/water/WaterCharts";
+import { WaterReports } from "@/components/water/WaterReports";
 import { EnergyNavigation } from "@/components/energy/EnergyNavigation";
 import { EnergyRegistration } from "@/components/energy/EnergyRegistration";
 import { EnergyCharts } from "@/components/energy/EnergyCharts";
+import { EnergyReports } from "@/components/energy/EnergyReports";
 import { PhoneNavigation } from "@/components/phone/PhoneNavigation";
 import { PhoneRegistration } from "@/components/phone/PhoneRegistration";
 import { PhoneCharts } from "@/components/phone/PhoneCharts";
+import { PhoneReports } from "@/components/phone/PhoneReports";
 import { useState } from "react";
 
 interface DashboardProps {
@@ -119,6 +122,13 @@ export default function Dashboard({ data }: DashboardProps) {
       );
     }
     if (currentTab === 'reports') {
+      if (currentSystem === 'water') {
+        return <WaterReports />;
+      } else if (currentSystem === 'energy') {
+        return <EnergyReports />;
+      } else if (currentSystem === 'fixed-line') {
+        return <PhoneReports />;
+      }
       return (
         <div className="text-center p-8">
           <p className="text-muted-foreground">Página de Relatórios em desenvolvimento</p>
