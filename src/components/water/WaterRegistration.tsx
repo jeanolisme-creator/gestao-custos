@@ -14,7 +14,13 @@ import { Search } from 'lucide-react';
 
 const macroregiaoOptions = ['HB', 'Vila Toninho', 'Schmidt', 'Represa', 'Bosque', 'Talhado', 'Central', 'Cidade da Criança', 'Pinheirinho', 'Ceu'];
 
-export function WaterRegistration() {
+interface WaterRegistrationProps {
+  onSuccess?: () => void;
+  editData?: any;
+  viewMode?: boolean;
+}
+
+export function WaterRegistration({ onSuccess, editData, viewMode = false }: WaterRegistrationProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { schools } = useSchools();
@@ -41,6 +47,30 @@ export function WaterRegistration() {
   
   const [showSchoolSearch, setShowSchoolSearch] = useState(false);
   const [searchSchoolTerm, setSearchSchoolTerm] = useState('');
+
+  useEffect(() => {
+    if (editData) {
+      setFormData({
+        cadastro: editData.cadastro || '',
+        proprietario: editData.proprietario || '',
+        nome_escola: editData.nome_escola || '',
+        data_leitura_anterior: editData.data_leitura_anterior || '',
+        data_leitura_atual: editData.data_leitura_atual || '',
+        valor_gasto: editData.valor_gasto?.toString() || '',
+        data_vencimento: editData.data_vencimento || '',
+        endereco_completo: editData.endereco_completo || '',
+        numero: editData.numero || '',
+        bairro: editData.bairro || '',
+        consumo_m3: editData.consumo_m3?.toString() || '',
+        numero_dias: editData.numero_dias?.toString() || '',
+        hidrometro: editData.hidrometro || '',
+        descricao_servicos: editData.descricao_servicos || '',
+        valor_servicos: editData.valor_servicos?.toString() || '',
+        macroregiao: editData.macroregiao || '',
+        ocorrencias_pendencias: editData.ocorrencias_pendencias || ''
+      });
+    }
+  }, [editData]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -118,47 +148,63 @@ export function WaterRegistration() {
     // Date fields
     if (formData.data_vencimento) submitData.data_vencimento = formData.data_vencimento;
 
-    const { error } = await supabase
-      .from('school_records')
-      .insert([submitData]);
+    let error;
+    if (editData) {
+      const result = await supabase
+        .from('school_records')
+        .update(submitData)
+        .eq('id', editData.id);
+      error = result.error;
+    } else {
+      const result = await supabase
+        .from('school_records')
+        .insert([submitData]);
+      error = result.error;
+    }
 
     if (error) {
       toast({
         variant: "destructive",
-        title: "Erro ao criar registro",
+        title: editData ? "Erro ao atualizar registro" : "Erro ao criar registro",
         description: error.message
       });
     } else {
       toast({
-        title: "Registro criado com sucesso!",
-        description: "O novo registro de água foi adicionado."
+        title: editData ? "Registro atualizado com sucesso!" : "Registro criado com sucesso!",
+        description: editData ? "O registro foi atualizado." : "O novo registro de água foi adicionado."
       });
       resetForm();
+      onSuccess?.();
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Novo Cadastro - Gestão de Água</CardTitle>
-        <CardDescription>Preencha os dados do registro de água</CardDescription>
+        <CardTitle>
+          {viewMode ? "Visualizar Registro" : editData ? "Editar Registro" : "Novo Cadastro"} - Gestão de Água
+        </CardTitle>
+        <CardDescription>
+          {viewMode ? "Detalhes do registro de água" : "Preencha os dados do registro de água"}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* School Search */}
-          <div className="mb-4 p-4 bg-muted/50 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="font-medium text-foreground">Buscar Escola Cadastrada</h4>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setShowSchoolSearch(!showSchoolSearch)}
-              >
-                <Search className="h-4 w-4 mr-2" />
-                Buscar
-              </Button>
-            </div>
+          {!viewMode && !editData && (
+            <div className="mb-4 p-4 bg-muted/50 rounded-lg">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-medium text-foreground">Buscar Escola Cadastrada</h4>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowSchoolSearch(!showSchoolSearch)}
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  Buscar
+                </Button>
+              </div>
             
             {showSchoolSearch && (
               <div className="space-y-2">
@@ -191,7 +237,8 @@ export function WaterRegistration() {
                 )}
               </div>
             )}
-          </div>
+            </div>
+          )}
 
           {/* Form Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -202,6 +249,7 @@ export function WaterRegistration() {
                 value={formData.cadastro}
                 onChange={(e) => handleInputChange('cadastro', e.target.value)}
                 required
+                disabled={viewMode}
               />
             </div>
 
@@ -365,14 +413,16 @@ export function WaterRegistration() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={resetForm}>
-              Limpar
-            </Button>
-            <Button type="submit">
-              Salvar Registro
-            </Button>
-          </div>
+          {!viewMode && (
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={resetForm}>
+                Limpar
+              </Button>
+              <Button type="submit">
+                {editData ? "Atualizar Registro" : "Salvar Registro"}
+              </Button>
+            </div>
+          )}
         </form>
       </CardContent>
     </Card>
