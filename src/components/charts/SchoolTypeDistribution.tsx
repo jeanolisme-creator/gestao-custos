@@ -1,14 +1,47 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { Card } from "@/components/ui/card";
-import { getSchoolTypeDistribution } from "@/utils/mockData";
 
 interface SchoolTypeDistributionProps {
   data: any[];
   month?: string;
 }
 
+const schoolTypes = ['EMEF', 'EMEI', 'CEMEI', 'CRECHE', 'CEI'];
+
 export function SchoolTypeDistribution({ data, month }: SchoolTypeDistributionProps) {
-  const distribution = getSchoolTypeDistribution(data, month).filter(d => d.count > 0);
+  // Filter by month if provided
+  const filtered = month ? data.filter(d => {
+    const mesAno = d.mes_ano_referencia || d.mes || '';
+    return mesAno.toLowerCase().includes(month.toLowerCase());
+  }) : data;
+
+  // Group by school type
+  const typeGroups = schoolTypes.map(type => {
+    const schoolsOfType = filtered.filter(d => {
+      const tipoEscola = d.tipo_escola || d.tipo || '';
+      return tipoEscola.toUpperCase().includes(type);
+    });
+    
+    const totalValue = schoolsOfType.reduce((sum, s) => {
+      const valor = parseFloat(s.valor_gasto || s.valor || 0);
+      return sum + valor;
+    }, 0);
+    
+    return {
+      type,
+      count: schoolsOfType.length,
+      value: totalValue,
+      percentage: 0
+    };
+  });
+
+  // Calculate percentages
+  const totalValue = typeGroups.reduce((sum, d) => sum + d.value, 0);
+  typeGroups.forEach(d => {
+    d.percentage = totalValue > 0 ? Math.round((d.value / totalValue) * 100) : 0;
+  });
+
+  const distribution = typeGroups.filter(d => d.count > 0);
 
   const COLORS = [
     'hsl(var(--primary))',
