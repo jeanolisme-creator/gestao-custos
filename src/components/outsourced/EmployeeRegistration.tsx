@@ -692,11 +692,13 @@ export function EmployeeRegistration() {
                       <div>
                         <Label>Valor Unitário (R$) *</Label>
                         <Input
-                          type="text"
-                          value={employee.unitValue ? `R$ ${employee.unitValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'R$ 0,00'}
+                          inputMode="numeric"
+                          pattern="\\d*"
+                          value={formatCurrency(employee.unitValue)}
                           onChange={(e) => {
-                            const value = e.target.value.replace(/[^\d,]/g, '').replace(',', '.');
-                            handleEmployeeChange(employee.id, 'unitValue', parseFloat(value) || 0);
+                            const digits = e.target.value.replace(/\D/g, "");
+                            const numeric = Number(digits) / 100;
+                            handleEmployeeChange(employee.id, 'unitValue', isNaN(numeric) ? 0 : numeric);
                           }}
                           placeholder="R$ 0,00"
                         />
