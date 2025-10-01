@@ -24,6 +24,7 @@ import Records from "./pages/Records";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { DataManagement } from "./components/data/DataManagement";
+import UserManagement from "./pages/UserManagement";
 import { useState } from "react";
 import { mockData, SchoolData } from "./utils/mockData";
 import { generateMockSystemData, UnifiedRecord } from "./utils/systemData";
@@ -74,6 +75,7 @@ const App = () => {
                   <Route path="contracts-dashboard" element={<ContractsDashboard />} />
                   <Route path="records" element={<Records />} />
                   <Route path="data-management" element={<DataManagement onDataUpdate={handleDataUpdate} currentDataCount={schoolData.length} />} />
+                  <Route path="user-management" element={<UserManagement />} />
                 </Route>
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

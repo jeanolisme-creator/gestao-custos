@@ -19,6 +19,7 @@ import {
   GraduationCap,
   UserCog,
   FileSignature,
+  UsersRound,
 } from "lucide-react";
 import { useSystem } from "@/contexts/SystemContext";
 import logoSjrp from "@/assets/logo-sjrp.png";
@@ -57,6 +58,11 @@ const navigation = [
     name: "Dados",
     href: "/data-management",
     icon: Database,
+  },
+  {
+    name: "Gerenciar Usuários",
+    href: "/user-management",
+    icon: UsersRound,
   },
 ];
 
