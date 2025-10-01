@@ -61,11 +61,6 @@ const navigation = [
     icon: Plus,
   },
   {
-    name: "Dados",
-    href: "/data-management",
-    icon: Database,
-  },
-  {
     name: "Gerenciar Usuários",
     href: "/user-management",
     icon: UsersRound,

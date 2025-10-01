@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Plus, Edit, Trash2, Save, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { CurrencyInput } from "@/components/ui/currency-input";
 
 interface Employee {
   id: string;
@@ -513,13 +514,11 @@ export function EmployeeRegistration() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="salario">Salário (R$)</Label>
-                    <Input
+                    <CurrencyInput
                       id="salario"
-                      type="number"
-                      step="0.01"
                       value={formData.salario}
-                      onChange={(e) => handleInputChange('salario', e.target.value)}
-                      placeholder="0,00"
+                      onValueChange={(formatted, numeric) => handleInputChange('salario', numeric.toString())}
+                      placeholder="R$ 0,00"
                     />
                   </div>
                   <div className="space-y-2">
