@@ -16,7 +16,8 @@ import {
   Users,
   BarChart3,
   Search,
-  FileCheck
+  FileCheck,
+  Briefcase
 } from 'lucide-react';
 import { useSystem } from '@/contexts/SystemContext';
 import { generateMockSystemData, UnifiedRecord } from '@/utils/systemData';
@@ -319,7 +320,7 @@ export default function ConsolidatedReport() {
       </Card>
 
       {/* Summary Cards - Reordered */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-8 gap-4">
         <Card className="border-orange-200 bg-orange-50">
           <CardContent className="p-6 text-center">
             <div className="flex flex-col items-center space-y-2">
@@ -340,8 +341,23 @@ export default function ConsolidatedReport() {
             <div className="flex flex-col items-center space-y-2">
               <FileCheck className="h-8 w-8 text-violet-600" />
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Terceirizados e Contratos</p>
-                <p className="text-2xl font-bold text-violet-600">{formatCurrency(grandTotal * 0.25)}</p>
+                <p className="text-sm font-medium text-muted-foreground">Contratos</p>
+                <p className="text-2xl font-bold text-violet-600">{formatCurrency(grandTotal * 0.15)}</p>
+                <p className="text-xs text-muted-foreground">
+                  Gestão de contratos
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-pink-200 bg-pink-50">
+          <CardContent className="p-6 text-center">
+            <div className="flex flex-col items-center space-y-2">
+              <Briefcase className="h-8 w-8 text-pink-600" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Terceirizados</p>
+                <p className="text-2xl font-bold text-pink-600">{formatCurrency(grandTotal * 0.10)}</p>
                 <p className="text-xs text-muted-foreground">
                   Serviços terceirizados
                 </p>
