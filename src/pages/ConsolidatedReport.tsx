@@ -15,7 +15,8 @@ import {
   TrendingUp,
   Users,
   BarChart3,
-  Search
+  Search,
+  FileCheck
 } from 'lucide-react';
 import { useSystem } from '@/contexts/SystemContext';
 import { generateMockSystemData, UnifiedRecord } from '@/utils/systemData';
@@ -318,7 +319,7 @@ export default function ConsolidatedReport() {
       </Card>
 
       {/* Summary Cards - Reordered */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
         <Card className="border-orange-200 bg-orange-50">
           <CardContent className="p-6 text-center">
             <div className="flex flex-col items-center space-y-2">
@@ -328,6 +329,21 @@ export default function ConsolidatedReport() {
                 <p className="text-2xl font-bold text-orange-600">{formatCurrency(grandTotal * 0.65)}</p>
                 <p className="text-xs text-muted-foreground">
                   Recursos humanos
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-violet-200 bg-violet-50">
+          <CardContent className="p-6 text-center">
+            <div className="flex flex-col items-center space-y-2">
+              <FileCheck className="h-8 w-8 text-violet-600" />
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Terceirizados e Contratos</p>
+                <p className="text-2xl font-bold text-violet-600">{formatCurrency(grandTotal * 0.25)}</p>
+                <p className="text-xs text-muted-foreground">
+                  Serviços terceirizados
                 </p>
               </div>
             </div>
@@ -528,9 +544,9 @@ export default function ConsolidatedReport() {
                 <thead>
                   <tr className="bg-gradient-to-r from-primary/10 to-primary/5">
                     <th className="border border-border p-3 text-left font-semibold text-primary">Escola</th>
-                    <th className="border border-border p-3 text-center font-semibold text-blue-600">Custo/Dia</th>
-                    <th className="border border-border p-3 text-center font-semibold text-green-600">Custo/Mês</th>
-                    <th className="border border-border p-3 text-center font-semibold text-purple-600">Custo/Ano</th>
+                    <th className="border border-border p-3 text-center font-semibold text-blue-600">Custo escola/dia</th>
+                    <th className="border border-border p-3 text-center font-semibold text-green-600">Custo escola/mês</th>
+                    <th className="border border-border p-3 text-center font-semibold text-purple-600">Custo escola/ano</th>
                     <th className="border border-border p-3 text-center font-semibold text-orange-600">Custo/Aluno Dia</th>
                     <th className="border border-border p-3 text-center font-semibold text-red-600">Custo/Aluno Mês</th>
                     <th className="border border-border p-3 text-center font-semibold text-indigo-600">Custo/Aluno Ano</th>
@@ -603,6 +619,8 @@ export default function ConsolidatedReport() {
                     <th className="border border-border p-3 text-center font-semibold text-energy">Energia</th>
                     <th className="border border-border p-3 text-center font-semibold text-fixed-line">Linha Fixa</th>
                     <th className="border border-border p-3 text-center font-semibold text-orange-600">RH</th>
+                    <th className="border border-border p-3 text-center font-semibold text-violet-600">Contratos</th>
+                    <th className="border border-border p-3 text-center font-semibold text-pink-600">Terceirizados</th>
                     <th className="border border-border p-3 text-center font-semibold text-primary">Total</th>
                     <th className="border border-border p-3 text-center font-semibold text-muted-foreground">Distribuição (%)</th>
                   </tr>
@@ -612,8 +630,10 @@ export default function ConsolidatedReport() {
                     // Mock student count - in real app, this would come from school data
                     const studentCount = getStudentCount(school.schoolName);
                     const hrCost = school.total * 0.65; // 65% para RH
-                    const totalWithHR = school.total + hrCost;
-                    const costPerStudent = totalWithHR / studentCount;
+                    const contractsCost = school.total * 0.15; // 15% para contratos
+                    const outsourcedCost = school.total * 0.10; // 10% para terceirizados
+                    const totalWithAll = school.total + hrCost + contractsCost + outsourcedCost;
+                    const costPerStudent = totalWithAll / studentCount;
 
                     return (
                       <tr key={index} className="hover:bg-muted/50 transition-colors duration-200 border-b border-border/50">
@@ -639,34 +659,50 @@ export default function ConsolidatedReport() {
                         <td className="border border-border p-3 text-center font-medium text-orange-600 bg-orange-50">
                           {formatCurrency(hrCost)}
                         </td>
+                        <td className="border border-border p-3 text-center font-medium text-violet-600 bg-violet-50">
+                          {formatCurrency(contractsCost)}
+                        </td>
+                        <td className="border border-border p-3 text-center font-medium text-pink-600 bg-pink-50">
+                          {formatCurrency(outsourcedCost)}
+                        </td>
                         <td className="border border-border p-3 text-center font-bold text-primary bg-primary/5">
-                          {formatCurrency(totalWithHR)}
+                          {formatCurrency(totalWithAll)}
                         </td>
                         <td className="border border-border p-3 text-center">
                           <div className="space-y-1 min-w-[200px]">
                             <div className="flex gap-1 rounded-lg overflow-hidden">
                               <div 
                                 className="h-3 bg-water rounded-sm" 
-                                style={{ width: `${(school.water.value / totalWithHR) * 100}%` }}
+                                style={{ width: `${(school.water.value / totalWithAll) * 100}%` }}
                               />
                               <div 
                                 className="h-3 bg-energy rounded-sm" 
-                                style={{ width: `${(school.energy.value / totalWithHR) * 100}%` }}
+                                style={{ width: `${(school.energy.value / totalWithAll) * 100}%` }}
                               />
                               <div 
                                 className="h-3 bg-fixed-line rounded-sm" 
-                                style={{ width: `${(school.fixedLine.value / totalWithHR) * 100}%` }}
+                                style={{ width: `${(school.fixedLine.value / totalWithAll) * 100}%` }}
                               />
                               <div 
                                 className="h-3 bg-orange-500 rounded-sm" 
-                                style={{ width: `${(hrCost / totalWithHR) * 100}%` }}
+                                style={{ width: `${(hrCost / totalWithAll) * 100}%` }}
+                              />
+                              <div 
+                                className="h-3 bg-violet-500 rounded-sm" 
+                                style={{ width: `${(contractsCost / totalWithAll) * 100}%` }}
+                              />
+                              <div 
+                                className="h-3 bg-pink-500 rounded-sm" 
+                                style={{ width: `${(outsourcedCost / totalWithAll) * 100}%` }}
                               />
                             </div>
-                            <div className="text-xs text-muted-foreground grid grid-cols-4 gap-1">
-                              <span className="text-water">{((school.water.value / totalWithHR) * 100).toFixed(1)}%</span>
-                              <span className="text-energy">{((school.energy.value / totalWithHR) * 100).toFixed(1)}%</span>
-                              <span className="text-fixed-line">{((school.fixedLine.value / totalWithHR) * 100).toFixed(1)}%</span>
-                              <span className="text-orange-600">{((hrCost / totalWithHR) * 100).toFixed(1)}%</span>
+                            <div className="text-xs text-muted-foreground grid grid-cols-6 gap-1">
+                              <span className="text-water">{((school.water.value / totalWithAll) * 100).toFixed(1)}%</span>
+                              <span className="text-energy">{((school.energy.value / totalWithAll) * 100).toFixed(1)}%</span>
+                              <span className="text-fixed-line">{((school.fixedLine.value / totalWithAll) * 100).toFixed(1)}%</span>
+                              <span className="text-orange-600">{((hrCost / totalWithAll) * 100).toFixed(1)}%</span>
+                              <span className="text-violet-600">{((contractsCost / totalWithAll) * 100).toFixed(1)}%</span>
+                              <span className="text-pink-600">{((outsourcedCost / totalWithAll) * 100).toFixed(1)}%</span>
                             </div>
                           </div>
                         </td>
