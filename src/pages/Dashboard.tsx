@@ -26,6 +26,10 @@ import { SchoolData, aggregateBySchool, getMonthlyTotals, getSchoolTypeDistribut
 import { useSystem } from "@/contexts/SystemContext";
 import { generateMockSystemData, aggregateSystemData, getSystemMonthlyTotals, getSystemAlerts } from "@/utils/systemData";
 import logoSecretaria from "@/assets/logo-secretaria.jpg";
+import { WaterNavigation } from "@/components/water/WaterNavigation";
+import { EnergyNavigation } from "@/components/energy/EnergyNavigation";
+import { PhoneNavigation } from "@/components/phone/PhoneNavigation";
+import { useState } from "react";
 
 interface DashboardProps {
   data: SchoolData[];
@@ -33,6 +37,7 @@ interface DashboardProps {
 
 export default function Dashboard({ data }: DashboardProps) {
   const { currentSystem, systemConfig } = useSystem();
+  const [currentTab, setCurrentTab] = useState('dashboard');
   // Generate system-specific data
   const systemData = generateMockSystemData(currentSystem, 50);
   const currentMonth = 'dezembro';
@@ -67,9 +72,50 @@ export default function Dashboard({ data }: DashboardProps) {
     }).format(value);
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="p-6 space-y-8">
+  const renderNavigation = () => {
+    if (currentSystem === 'water') {
+      return <WaterNavigation currentTab={currentTab} onTabChange={setCurrentTab} />;
+    } else if (currentSystem === 'energy') {
+      return <EnergyNavigation currentTab={currentTab} onTabChange={setCurrentTab} />;
+    } else if (currentSystem === 'fixed-line') {
+      return <PhoneNavigation currentTab={currentTab} onTabChange={setCurrentTab} />;
+    }
+    return null;
+  };
+
+  const renderContent = () => {
+    if (currentTab === 'register') {
+      return (
+        <div className="text-center p-8">
+          <p className="text-muted-foreground">Página de Novo Cadastro em desenvolvimento</p>
+        </div>
+      );
+    }
+    if (currentTab === 'charts') {
+      return (
+        <div className="text-center p-8">
+          <p className="text-muted-foreground">Página de Gráficos em desenvolvimento</p>
+        </div>
+      );
+    }
+    if (currentTab === 'reports') {
+      return (
+        <div className="text-center p-8">
+          <p className="text-muted-foreground">Página de Relatórios em desenvolvimento</p>
+        </div>
+      );
+    }
+    if (currentTab === 'settings') {
+      return (
+        <div className="text-center p-8">
+          <p className="text-muted-foreground">Página de Configurações em desenvolvimento</p>
+        </div>
+      );
+    }
+
+    // Dashboard content
+    return (
+      <>
         {/* Header */}
         <div className="space-y-4">
           <div className="space-y-2">
@@ -186,6 +232,15 @@ export default function Dashboard({ data }: DashboardProps) {
             <SeasonalAnalysis data={systemData} />
           </div>
         </div>
+      </>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="p-6 space-y-8">
+        {renderNavigation()}
+        {renderContent()}
       </div>
     </div>
   );
