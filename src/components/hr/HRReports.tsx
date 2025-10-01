@@ -6,13 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
   FileText, 
-  Download, 
-  FileSpreadsheet, 
-  Calendar as CalendarIcon,
   Users,
   DollarSign,
   TrendingUp,
@@ -21,14 +16,12 @@ import {
   FileDown
 } from "lucide-react";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/sonner";
 
 interface Employee {
   id: string;
   name: string;
-  company: string;
+  workplace: string; // Changed from 'company' to 'workplace'
   position: string;
   school: string;
   workload: string;
@@ -37,64 +30,62 @@ interface Employee {
 }
 
 export function HRReports() {
-  const [filterCompany, setFilterCompany] = useState<string>("all");
+  const [filterWorkplace, setFilterWorkplace] = useState<string>("all");
   const [filterPosition, setFilterPosition] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Mock data de funcionários terceirizados
+  // Mock data de servidores
   const mockEmployees: Employee[] = [
     {
       id: "1",
       name: "João Silva Santos",
-      company: "Assej",
-      position: "Aux. Apoio Escolar",
+      workplace: "EMEF João Silva",
+      position: "Prof. Peb I",
       school: "EMEF João Silva",
       workload: "40h",
-      monthlySalary: 1500,
+      monthlySalary: 4500,
       status: "Ativo"
     },
     {
       id: "2",
       name: "Maria Oliveira Costa",
-      company: "Produserv",
-      position: "Porteiro",
+      workplace: "EMEI Maria Santos",
+      position: "Prof. Peb II",
       school: "EMEI Maria Santos",
-      workload: "44h",
-      monthlySalary: 1400,
+      workload: "40h",
+      monthlySalary: 5200,
       status: "Ativo"
     },
     {
       id: "3",
       name: "Carlos Eduardo Lima",
-      company: "GF",
-      position: "Auxiliar de Limpeza",
+      workplace: "EMEIF Carlos Lima",
+      position: "Aux. serv. Gerais",
       school: "EMEIF Carlos Lima",
-      workload: "12x36h",
-      monthlySalary: 1400,
-      status: "Ativo"
+      workload: "40h",
+      monthlySalary: 2300,
+      status: "Licença"
     },
     {
       id: "4",
       name: "Ana Paula Souza",
-      company: "Eficience",
-      position: "Agente de Higienização",
+      workplace: "EMEF João Silva",
+      position: "Supervisor",
       school: "EMEF João Silva",
       workload: "40h",
-      monthlySalary: 1500,
+      monthlySalary: 6500,
       status: "Ativo"
     },
     {
       id: "5",
       name: "Pedro Henrique Alves",
-      company: "Assej",
-      position: "Apoio Ed. Especial",
+      workplace: "EMEI Maria Santos",
+      position: "Motorista",
       school: "EMEI Maria Santos",
-      workload: "44h",
-      monthlySalary: 1600,
-      status: "Ativo"
+      workload: "40h",
+      monthlySalary: 3200,
+      status: "Aposentado"
     },
   ];
 
@@ -106,9 +97,9 @@ export function HRReports() {
     }).format(value);
   };
 
-  // Filtrar funcionários
+  // Filtrar servidores
   const filteredEmployees = mockEmployees.filter(employee => {
-    if (filterCompany !== "all" && employee.company !== filterCompany) return false;
+    if (filterWorkplace !== "all" && employee.workplace !== filterWorkplace) return false;
     if (filterPosition !== "all" && employee.position !== filterPosition) return false;
     if (filterStatus !== "all" && employee.status !== filterStatus) return false;
     if (searchTerm && !employee.name.toLowerCase().includes(searchTerm.toLowerCase()) && 
@@ -118,10 +109,10 @@ export function HRReports() {
 
   // Exportar para CSV
   const exportToCSV = () => {
-    const headers = ["Nome", "Empresa", "Cargo", "Escola", "Carga Horária", "Salário Mensal", "Status"];
+    const headers = ["Nome", "Local de Trabalho", "Cargo", "Escola", "Carga Horária", "Salário Mensal", "Status"];
     const csvData = filteredEmployees.map(employee => [
       employee.name,
-      employee.company,
+      employee.workplace,
       employee.position,
       employee.school,
       employee.workload,
@@ -138,7 +129,7 @@ export function HRReports() {
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `relatorio_terceirizados_${format(new Date(), "yyyy-MM-dd")}.csv`);
+    link.setAttribute("download", `relatorio_servidores_${format(new Date(), "yyyy-MM-dd")}.csv`);
     link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
@@ -153,11 +144,9 @@ export function HRReports() {
   };
 
   const clearFilters = () => {
-    setFilterCompany("all");
+    setFilterWorkplace("all");
     setFilterPosition("all");
     setFilterStatus("all");
-    setStartDate(undefined);
-    setEndDate(undefined);
     setSearchTerm("");
     toast.success("Filtros limpos!");
   };
@@ -165,8 +154,8 @@ export function HRReports() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">Relatórios de Funcionários Terceirizados</h2>
-        <p className="text-muted-foreground">Filtre e exporte relatórios dos funcionários terceirizados</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Relatórios de Servidores</h2>
+        <p className="text-muted-foreground">Filtre e exporte relatórios dos servidores municipais</p>
       </div>
 
       {/* Filtros */}
@@ -190,17 +179,18 @@ export function HRReports() {
             </div>
 
             <div className="space-y-2">
-              <Label>Empresa</Label>
-              <Select value={filterCompany} onValueChange={setFilterCompany}>
+              <Label>Local de Trabalho</Label>
+              <Select value={filterWorkplace} onValueChange={setFilterWorkplace}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Todas" />
+                  <SelectValue placeholder="Todas as Escolas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todas</SelectItem>
-                  <SelectItem value="Assej">Assej</SelectItem>
-                  <SelectItem value="Produserv">Produserv</SelectItem>
-                  <SelectItem value="GF">GF</SelectItem>
-                  <SelectItem value="Eficience">Eficience</SelectItem>
+                  <SelectItem value="all">Todas as Escolas</SelectItem>
+                  <SelectItem value="EMEF João Silva">EMEF João Silva</SelectItem>
+                  <SelectItem value="EMEI Maria Santos">EMEI Maria Santos</SelectItem>
+                  <SelectItem value="EMEIF Carlos Lima">EMEIF Carlos Lima</SelectItem>
+                  <SelectItem value="EMEF São José">EMEF São José</SelectItem>
+                  <SelectItem value="EMEI Pequeno Príncipe">EMEI Pequeno Príncipe</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -209,16 +199,24 @@ export function HRReports() {
               <Label>Cargo</Label>
               <Select value={filterPosition} onValueChange={setFilterPosition}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Todos" />
+                  <SelectValue placeholder="Todos os Cargos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="Aux. Apoio Escolar">Aux. Apoio Escolar</SelectItem>
-                  <SelectItem value="Apoio Administrativo">Apoio Administrativo</SelectItem>
-                  <SelectItem value="Porteiro">Porteiro</SelectItem>
-                  <SelectItem value="Auxiliar de Limpeza">Auxiliar de Limpeza</SelectItem>
-                  <SelectItem value="Agente de Higienização">Agente de Higienização</SelectItem>
-                  <SelectItem value="Apoio Ed. Especial">Apoio Ed. Especial</SelectItem>
+                  <SelectItem value="all">Todos os Cargos</SelectItem>
+                  <SelectItem value="Prof. Peb I">Prof. Peb I</SelectItem>
+                  <SelectItem value="Prof. Peb II">Prof. Peb II</SelectItem>
+                  <SelectItem value="Peb I temp.">Peb I temp.</SelectItem>
+                  <SelectItem value="Peb II temp.">Peb II temp.</SelectItem>
+                  <SelectItem value="Tec. Contabilidade">Tec. Contabilidade</SelectItem>
+                  <SelectItem value="Assessor">Assessor</SelectItem>
+                  <SelectItem value="Assistente de direção">Assistente de direção</SelectItem>
+                  <SelectItem value="Supervisor">Supervisor</SelectItem>
+                  <SelectItem value="Aux. serv. Gerais">Aux. serv. Gerais</SelectItem>
+                  <SelectItem value="Motorista">Motorista</SelectItem>
+                  <SelectItem value="Estagiário">Estagiário</SelectItem>
+                  <SelectItem value="Digitador">Digitador</SelectItem>
+                  <SelectItem value="Atendente">Atendente</SelectItem>
+                  <SelectItem value="Total de professores">Total de professores</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -227,13 +225,14 @@ export function HRReports() {
               <Label>Status</Label>
               <Select value={filterStatus} onValueChange={setFilterStatus}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Todos" />
+                  <SelectValue placeholder="Todos os Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="all">Todos os Status</SelectItem>
                   <SelectItem value="Ativo">Ativo</SelectItem>
                   <SelectItem value="Inativo">Inativo</SelectItem>
-                  <SelectItem value="Vago">Vago</SelectItem>
+                  <SelectItem value="Licença">Licença</SelectItem>
+                  <SelectItem value="Aposentado">Aposentado</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -261,7 +260,7 @@ export function HRReports() {
           <CardHeader className="pb-3 text-center">
             <CardTitle className="text-sm font-medium text-blue-600 flex items-center justify-center gap-2">
               <Users className="h-4 w-4" />
-              Total de Funcionários
+              Total de Servidores
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
@@ -301,23 +300,23 @@ export function HRReports() {
           <CardHeader className="pb-3 text-center">
             <CardTitle className="text-sm font-medium text-yellow-600 flex items-center justify-center gap-2">
               <Building2 className="h-4 w-4" />
-              Empresas Ativas
+              Locais de Trabalho
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
             <div className="text-2xl font-bold text-yellow-700">
-              {Array.from(new Set(filteredEmployees.map(e => e.company))).length}
+              {Array.from(new Set(filteredEmployees.map(e => e.workplace))).length}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Relatório de Funcionários Terceirizados */}
+      {/* Relatório de Servidores */}
       <Card>
         <CardHeader>
-          <CardTitle>Relatório de Funcionários Terceirizados</CardTitle>
+          <CardTitle>Relatório de Servidores</CardTitle>
           <CardDescription>
-            {filteredEmployees.length} funcionário(s) encontrado(s)
+            {filteredEmployees.length} servidor(es) encontrado(s)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -326,7 +325,7 @@ export function HRReports() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
-                  <TableHead>Empresa</TableHead>
+                  <TableHead>Local de Trabalho</TableHead>
                   <TableHead>Cargo</TableHead>
                   <TableHead>Escola</TableHead>
                   <TableHead className="text-center">Carga Horária</TableHead>
@@ -338,14 +337,14 @@ export function HRReports() {
                 {filteredEmployees.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      Nenhum funcionário encontrado com os filtros aplicados
+                      Nenhum servidor encontrado com os filtros aplicados
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredEmployees.map((employee) => (
                     <TableRow key={employee.id}>
                       <TableCell className="font-medium">{employee.name}</TableCell>
-                      <TableCell>{employee.company}</TableCell>
+                      <TableCell>{employee.workplace}</TableCell>
                       <TableCell><Badge variant="outline">{employee.position}</Badge></TableCell>
                       <TableCell className="text-sm">{employee.school}</TableCell>
                       <TableCell className="text-center">{employee.workload}</TableCell>
@@ -353,7 +352,19 @@ export function HRReports() {
                         {formatCurrency(employee.monthlySalary)}
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant={employee.status === "Ativo" ? "default" : "secondary"}>
+                        <Badge 
+                          variant={
+                            employee.status === "Ativo" ? "default" : 
+                            employee.status === "Licença" ? "secondary" :
+                            employee.status === "Aposentado" ? "outline" :
+                            "destructive"
+                          }
+                          className={
+                            employee.status === "Licença" ? "bg-yellow-500 text-white" :
+                            employee.status === "Aposentado" ? "bg-gray-400 text-white" :
+                            ""
+                          }
+                        >
                           {employee.status}
                         </Badge>
                       </TableCell>

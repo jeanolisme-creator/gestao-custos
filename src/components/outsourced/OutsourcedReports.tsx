@@ -10,7 +10,7 @@ import { toast } from "@/components/ui/sonner";
 
 interface Employee {
   id: string;
-  name: string;
+  workPosition: string; // Changed from 'name' to 'workPosition'
   company: string;
   role: string;
   workplace: string;
@@ -25,16 +25,16 @@ export function OutsourcedReports() {
   const [filterWorkplace, setFilterWorkplace] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
 
-  // Mock data de funcionários
+  // Mock data de postos de trabalho
   const mockEmployees: Employee[] = [
-    { id: "1", name: "João Silva", company: "Produserv", role: "Aux. Apoio Escolar", workplace: "EMEF João Silva", workload: "40h", monthlySalary: 1500, admissionDate: "2023-01-15" },
-    { id: "2", name: "Maria Santos", company: "GF", role: "Auxiliar de Limpeza", workplace: "EMEI Maria Santos", workload: "44h", monthlySalary: 1400, admissionDate: "2023-02-20" },
-    { id: "3", name: "Pedro Oliveira", company: "Eficience", role: "Porteiro", workplace: "EMEIF Carlos Lima", workload: "12x36h", monthlySalary: 1600, admissionDate: "2023-03-10" },
-    { id: "4", name: "Ana Costa", company: "Assej", role: "Apoio Administrativo", workplace: "EMEF João Silva", workload: "40h", monthlySalary: 1750, admissionDate: "2023-04-05" },
-    { id: "5", name: "Carlos Ferreira", company: "Produserv", role: "Agente de Higienização", workplace: "EMEI Maria Santos", workload: "44h", monthlySalary: 1500, admissionDate: "2023-05-12" },
-    { id: "6", name: "Juliana Alves", company: "GF", role: "Apoio Ed. Especial", workplace: "EMEIF Carlos Lima", workload: "40h", monthlySalary: 1600, admissionDate: "2023-06-18" },
-    { id: "7", name: "Roberto Lima", company: "Eficience", role: "Auxiliar de Limpeza", workplace: "EMEF João Silva", workload: "44h", monthlySalary: 1400, admissionDate: "2023-07-22" },
-    { id: "8", name: "Fernanda Souza", company: "Assej", role: "Aux. Apoio Escolar", workplace: "EMEI Maria Santos", workload: "40h", monthlySalary: 1500, admissionDate: "2023-08-30" },
+    { id: "1", workPosition: "Posto de Portaria 1", company: "Produserv", role: "Porteiro", workplace: "EMEF João Silva", workload: "40h", monthlySalary: 1500, admissionDate: "2023-01-15" },
+    { id: "2", workPosition: "Posto de Apoio Escolar 1", company: "GF", role: "Aux. Apoio Escolar", workplace: "EMEI Maria Santos", workload: "44h", monthlySalary: 1400, admissionDate: "2023-02-20" },
+    { id: "3", workPosition: "Posto de Portaria 2", company: "Eficience", role: "Porteiro", workplace: "EMEIF Carlos Lima", workload: "12x36h", monthlySalary: 1600, admissionDate: "2023-03-10" },
+    { id: "4", workPosition: "Posto Administrativo 1", company: "Assej", role: "Apoio Administrativo", workplace: "EMEF João Silva", workload: "40h", monthlySalary: 1750, admissionDate: "2023-04-05" },
+    { id: "5", workPosition: "Posto de Higienização 1", company: "Produserv", role: "Agente de Higienização", workplace: "EMEI Maria Santos", workload: "44h", monthlySalary: 1500, admissionDate: "2023-05-12" },
+    { id: "6", workPosition: "Posto Ed. Especial 1", company: "GF", role: "Apoio Ed. Especial", workplace: "EMEIF Carlos Lima", workload: "40h", monthlySalary: 1600, admissionDate: "2023-06-18" },
+    { id: "7", workPosition: "Posto de Limpeza 1", company: "Eficience", role: "Aux. de limpeza", workplace: "EMEF João Silva", workload: "44h", monthlySalary: 1400, admissionDate: "2023-07-22" },
+    { id: "8", workPosition: "Posto de Apoio Escolar 2", company: "Assej", role: "Aux. Apoio Escolar", workplace: "EMEI Maria Santos", workload: "40h", monthlySalary: 1500, admissionDate: "2023-08-30" },
   ];
 
   const filteredEmployees = mockEmployees.filter(employee => {
@@ -42,7 +42,7 @@ export function OutsourcedReports() {
     const matchesRole = !filterRole || employee.role === filterRole;
     const matchesWorkplace = !filterWorkplace || employee.workplace === filterWorkplace;
     const matchesSearch = !searchTerm || 
-      employee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee.workPosition.toLowerCase().includes(searchTerm.toLowerCase()) ||
       employee.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
       employee.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
       employee.workplace.toLowerCase().includes(searchTerm.toLowerCase());
@@ -66,9 +66,9 @@ export function OutsourcedReports() {
   };
 
   const exportToCSV = () => {
-    const headers = ["Nome", "Empresa", "Cargo", "Local de Trabalho", "Carga Horária", "Salário Mensal", "Data de Admissão"];
+    const headers = ["Posto de Trabalho", "Empresa", "Cargo", "Local de Trabalho", "Carga Horária", "Salário Mensal", "Data de Admissão"];
     const rows = filteredEmployees.map(emp => [
-      emp.name,
+      emp.workPosition,
       emp.company,
       emp.role,
       emp.workplace,
@@ -125,7 +125,7 @@ export function OutsourcedReports() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Nome, empresa, cargo..."
+                  placeholder="Posto, empresa, cargo..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -193,7 +193,7 @@ export function OutsourcedReports() {
           <CardHeader className="pb-3 text-center">
             <CardTitle className="text-sm font-medium text-blue-600 flex items-center justify-center gap-2">
               <Users className="h-4 w-4" />
-              Total de Funcionários
+              Total de Postos
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
@@ -251,7 +251,7 @@ export function OutsourcedReports() {
             <div>
               <CardTitle>Relatório de Funcionários Terceirizados</CardTitle>
               <CardDescription>
-                Exibindo {filteredEmployees.length} de {mockEmployees.length} funcionário(s)
+                Exibindo {filteredEmployees.length} de {mockEmployees.length} posto(s) de trabalho
               </CardDescription>
             </div>
             <div className="flex gap-2">
@@ -270,35 +270,38 @@ export function OutsourcedReports() {
           <div className="rounded-md border">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Empresa</TableHead>
-                  <TableHead>Cargo</TableHead>
-                  <TableHead>Local de Trabalho</TableHead>
-                  <TableHead>Carga Horária</TableHead>
-                  <TableHead className="text-right">Salário Mensal</TableHead>
-                  <TableHead>Data Admissão</TableHead>
+                <TableRow className="bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950">
+                  <TableHead className="font-bold text-foreground">Posto de Trabalho</TableHead>
+                  <TableHead className="font-bold text-foreground">Empresa</TableHead>
+                  <TableHead className="font-bold text-foreground">Cargo</TableHead>
+                  <TableHead className="font-bold text-foreground">Local de Trabalho</TableHead>
+                  <TableHead className="font-bold text-foreground">Carga Horária</TableHead>
+                  <TableHead className="text-right font-bold text-foreground">Salário Mensal</TableHead>
+                  <TableHead className="font-bold text-foreground">Data Admissão</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredEmployees.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                      Nenhum funcionário encontrado com os filtros aplicados
+                      Nenhum posto de trabalho encontrado com os filtros aplicados
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredEmployees.map((employee) => (
-                    <TableRow key={employee.id}>
-                      <TableCell className="font-medium">{employee.name}</TableCell>
-                      <TableCell>{employee.company}</TableCell>
-                      <TableCell>{employee.role}</TableCell>
-                      <TableCell>{employee.workplace}</TableCell>
-                      <TableCell>{employee.workload}</TableCell>
-                      <TableCell className="text-right font-semibold">
+                  filteredEmployees.map((employee, idx) => (
+                    <TableRow 
+                      key={employee.id}
+                      className={idx % 2 === 0 ? "bg-blue-50/30 dark:bg-blue-950/20" : "bg-purple-50/30 dark:bg-purple-950/20 hover:bg-purple-100/50 dark:hover:bg-purple-900/30"}
+                    >
+                      <TableCell className="font-semibold text-blue-700 dark:text-blue-400">{employee.workPosition}</TableCell>
+                      <TableCell className="text-foreground">{employee.company}</TableCell>
+                      <TableCell className="font-medium text-purple-700 dark:text-purple-400">{employee.role}</TableCell>
+                      <TableCell className="text-foreground">{employee.workplace}</TableCell>
+                      <TableCell className="text-center font-medium">{employee.workload}</TableCell>
+                      <TableCell className="text-right font-bold text-green-700 dark:text-green-400">
                         {formatCurrency(employee.monthlySalary)}
                       </TableCell>
-                      <TableCell>{formatDate(employee.admissionDate)}</TableCell>
+                      <TableCell className="text-muted-foreground">{formatDate(employee.admissionDate)}</TableCell>
                     </TableRow>
                   ))
                 )}

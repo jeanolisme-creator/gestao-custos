@@ -145,34 +145,71 @@ export default function OutsourcedDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {quotaAlerts.map((alert, index) => (
-              <div 
-                key={index} 
-                className={`flex items-start gap-2 p-3 rounded-lg ${
-                  alert.type === 'excess' ? 'bg-red-100' : 'bg-amber-100'
-                }`}
-              >
-                <AlertTriangle className={`h-5 w-5 mt-0.5 ${
-                  alert.type === 'excess' ? 'text-red-600' : 'text-amber-600'
-                }`} />
-                <div className="flex-1">
-                  <p className={`text-sm font-medium ${
-                    alert.type === 'excess' ? 'text-red-800' : 'text-amber-800'
-                  }`}>
-                    {alert.school}
-                  </p>
-                  <p className={`text-xs ${
+          <div className="max-h-[500px] overflow-y-auto pr-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {quotaAlerts.slice(0, 9).map((alert, index) => (
+                <div 
+                  key={index} 
+                  className={`flex items-start gap-2 p-3 rounded-lg ${
+                    alert.type === 'excess' ? 'bg-red-100' : 'bg-amber-100'
+                  }`}
+                >
+                  <AlertTriangle className={`h-5 w-5 mt-0.5 ${
                     alert.type === 'excess' ? 'text-red-600' : 'text-amber-600'
-                  }`}>
-                    {alert.type === 'excess' 
-                      ? `ATENÇÃO: ${alert.position} excedeu o limite. Ocupadas: ${alert.occupied} / Limite: ${alert.total}`
-                      : `INFORMAÇÃO: ${alert.position} possui ${alert.available} vaga(s) disponível(eis)`
-                    }
-                  </p>
+                  }`} />
+                  <div className="flex-1">
+                    <p className={`text-sm font-medium ${
+                      alert.type === 'excess' ? 'text-red-800' : 'text-amber-800'
+                    }`}>
+                      {alert.school}
+                    </p>
+                    <p className={`text-xs ${
+                      alert.type === 'excess' ? 'text-red-600' : 'text-amber-600'
+                    }`}>
+                      {alert.type === 'excess' 
+                        ? `ATENÇÃO: ${alert.position} excedeu o limite. Ocupadas: ${alert.occupied} / Limite: ${alert.total}`
+                        : `INFORMAÇÃO: ${alert.position} possui ${alert.available} vaga(s) disponível(eis)`
+                      }
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {quotaAlerts.length > 9 && (
+              <div className="mt-3 border-t pt-3">
+                <p className="text-sm font-medium text-red-700 mb-2">Mais Alertas:</p>
+                <div className="space-y-2">
+                  {quotaAlerts.slice(9).map((alert, index) => (
+                    <div 
+                      key={index + 9} 
+                      className={`flex items-start gap-2 p-2 rounded-lg ${
+                        alert.type === 'excess' ? 'bg-red-100' : 'bg-amber-100'
+                      }`}
+                    >
+                      <AlertTriangle className={`h-4 w-4 mt-0.5 ${
+                        alert.type === 'excess' ? 'text-red-600' : 'text-amber-600'
+                      }`} />
+                      <div className="flex-1">
+                        <p className={`text-xs font-medium ${
+                          alert.type === 'excess' ? 'text-red-800' : 'text-amber-800'
+                        }`}>
+                          {alert.school}
+                        </p>
+                        <p className={`text-xs ${
+                          alert.type === 'excess' ? 'text-red-600' : 'text-amber-600'
+                        }`}>
+                          {alert.type === 'excess' 
+                            ? `${alert.position} excedeu (${alert.occupied}/${alert.total})`
+                            : `${alert.position}: ${alert.available} vaga(s)`
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
+            )}
           </div>
         </CardContent>
       </Card>
