@@ -29,12 +29,12 @@ export default function OutsourcedDashboard() {
     { name: 'Outro', quantity: 15, monthly: 22500, color: 'bg-gray-500' },
   ];
 
-  // Escolas com falta de funcionários
-  const alerts = [
-    { school: 'EMEF João Silva', missing: 3, positions: 'Auxiliar de Limpeza' },
-    { school: 'EMEI Maria Santos', missing: 2, positions: 'Porteiro' },
-    { school: 'EMEIF Carlos Lima', missing: 1, positions: 'Aux. Apoio Escolar' },
-  ];
+  // Alertas de quadro de vagas
+  const [quotaAlerts, setQuotaAlerts] = useState<any[]>([
+    { type: 'excess', school: 'EMEF João Silva', position: 'Auxiliar de Limpeza', occupied: 3, total: 2 },
+    { type: 'vacancy', school: 'EMEI Maria Santos', position: 'Porteiro', occupied: 1, total: 2, available: 1 },
+    { type: 'vacancy', school: 'EMEIF Carlos Lima', position: 'Aux. Apoio Escolar', occupied: 2, total: 3, available: 1 },
+  ]);
 
   const totalMonthly = Object.values(companies).reduce((sum, c) => sum + c.monthly, 0);
   const totalAnnual = Object.values(companies).reduce((sum, c) => sum + c.annual, 0);
@@ -141,17 +141,35 @@ export default function OutsourcedDashboard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-red-700">
             <AlertTriangle className="h-5 w-5" />
-            Alertas
+            Alertas do Quadro de Vagas
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {alerts.map((alert, index) => (
-              <div key={index} className="flex items-start gap-2 p-3 bg-red-100 rounded-lg">
-                <Building2 className="h-5 w-5 text-red-600 mt-0.5" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {quotaAlerts.map((alert, index) => (
+              <div 
+                key={index} 
+                className={`flex items-start gap-2 p-3 rounded-lg ${
+                  alert.type === 'excess' ? 'bg-red-100' : 'bg-amber-100'
+                }`}
+              >
+                <AlertTriangle className={`h-5 w-5 mt-0.5 ${
+                  alert.type === 'excess' ? 'text-red-600' : 'text-amber-600'
+                }`} />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-red-800">{alert.school}</p>
-                  <p className="text-xs text-red-600">Faltam {alert.missing} - {alert.positions}</p>
+                  <p className={`text-sm font-medium ${
+                    alert.type === 'excess' ? 'text-red-800' : 'text-amber-800'
+                  }`}>
+                    {alert.school}
+                  </p>
+                  <p className={`text-xs ${
+                    alert.type === 'excess' ? 'text-red-600' : 'text-amber-600'
+                  }`}>
+                    {alert.type === 'excess' 
+                      ? `ATENÇÃO: ${alert.position} excedeu o limite. Ocupadas: ${alert.occupied} / Limite: ${alert.total}`
+                      : `INFORMAÇÃO: ${alert.position} possui ${alert.available} vaga(s) disponível(eis)`
+                    }
+                  </p>
                 </div>
               </div>
             ))}
