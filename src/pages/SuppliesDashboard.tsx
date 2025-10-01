@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { Card } from "@/components/ui/card";
+import { SuppliesNavigation } from "@/components/supplies/SuppliesNavigation";
 import {
   Table,
   TableBody,
@@ -75,6 +76,8 @@ const suppliesData = {
 };
 
 export default function SuppliesDashboard() {
+  const [currentTab, setCurrentTab] = useState('dashboard');
+  
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -86,9 +89,42 @@ export default function SuppliesDashboard() {
 
   const costVariation = ((suppliesData.monthlyEvolution[5].cost - suppliesData.monthlyEvolution[4].cost) / suppliesData.monthlyEvolution[4].cost) * 100;
 
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="p-6 space-y-8">
+  const renderContent = () => {
+    if (currentTab === 'register') {
+      return (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Formulário de cadastro de suprimentos em desenvolvimento</p>
+        </div>
+      );
+    }
+
+    if (currentTab === 'charts') {
+      return (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Gráficos detalhados em desenvolvimento</p>
+        </div>
+      );
+    }
+
+    if (currentTab === 'reports') {
+      return (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Relatórios em desenvolvimento</p>
+        </div>
+      );
+    }
+
+    if (currentTab === 'settings') {
+      return (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Configurações em desenvolvimento</p>
+        </div>
+      );
+    }
+
+    // Dashboard content
+    return (
+      <>
         {/* Header */}
         <div className="space-y-4">
           <div className="space-y-2">
@@ -359,6 +395,15 @@ export default function SuppliesDashboard() {
             </div>
           </Card>
         </div>
+      </>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="p-6 space-y-8">
+        <SuppliesNavigation currentTab={currentTab} onTabChange={setCurrentTab} />
+        {renderContent()}
       </div>
     </div>
   );

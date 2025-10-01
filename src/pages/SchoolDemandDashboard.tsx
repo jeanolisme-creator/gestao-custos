@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { SchoolDemandNavigation } from "@/components/school-demand/SchoolDemandNavigation";
 
 interface SchoolDemandRecord {
   id: string;
@@ -38,6 +39,7 @@ interface SchoolDemandRecord {
 }
 
 export default function SchoolDemandDashboard() {
+  const [currentTab, setCurrentTab] = useState('dashboard');
   const [schools, setSchools] = useState<SchoolDemandRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -95,9 +97,42 @@ export default function SchoolDemandDashboard() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="p-6 space-y-8">
+  const renderContent = () => {
+    if (currentTab === 'register') {
+      return (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Formulário de cadastro de demanda escolar em desenvolvimento</p>
+        </div>
+      );
+    }
+
+    if (currentTab === 'charts') {
+      return (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Gráficos detalhados em desenvolvimento</p>
+        </div>
+      );
+    }
+
+    if (currentTab === 'reports') {
+      return (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Relatórios em desenvolvimento</p>
+        </div>
+      );
+    }
+
+    if (currentTab === 'settings') {
+      return (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">Configurações em desenvolvimento</p>
+        </div>
+      );
+    }
+
+    // Dashboard content
+    return (
+      <>
         {/* Header */}
         <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -302,6 +337,15 @@ export default function SchoolDemandDashboard() {
             )}
           </CardContent>
         </Card>
+      </>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="p-6 space-y-8">
+        <SchoolDemandNavigation currentTab={currentTab} onTabChange={setCurrentTab} />
+        {renderContent()}
       </div>
     </div>
   );
