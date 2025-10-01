@@ -29,7 +29,9 @@ import logoSecretaria from "@/assets/logo-secretaria.jpg";
 import { WaterNavigation } from "@/components/water/WaterNavigation";
 import { WaterRegistration } from "@/components/water/WaterRegistration";
 import { EnergyNavigation } from "@/components/energy/EnergyNavigation";
+import { EnergyRegistration } from "@/components/energy/EnergyRegistration";
 import { PhoneNavigation } from "@/components/phone/PhoneNavigation";
+import { PhoneRegistration } from "@/components/phone/PhoneRegistration";
 import { useState } from "react";
 
 interface DashboardProps {
@@ -88,6 +90,10 @@ export default function Dashboard({ data }: DashboardProps) {
     if (currentTab === 'register') {
       if (currentSystem === 'water') {
         return <WaterRegistration />;
+      } else if (currentSystem === 'energy') {
+        return <EnergyRegistration />;
+      } else if (currentSystem === 'fixed-line') {
+        return <PhoneRegistration />;
       }
       return (
         <div className="text-center p-8">
