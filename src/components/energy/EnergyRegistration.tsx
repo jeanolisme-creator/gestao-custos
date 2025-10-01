@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,7 +14,13 @@ import { Search } from 'lucide-react';
 
 const macroregiaoOptions = ['HB', 'Vila Toninho', 'Schmidt', 'Represa', 'Bosque', 'Talhado', 'Central', 'Cidade da Criança', 'Pinheirinho', 'Ceu'];
 
-export function EnergyRegistration() {
+interface EnergyRegistrationProps {
+  onSuccess?: () => void;
+  editData?: any;
+  viewMode?: boolean;
+}
+
+export function EnergyRegistration({ onSuccess, editData, viewMode = false }: EnergyRegistrationProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { schools } = useSchools();
@@ -43,6 +49,32 @@ export function EnergyRegistration() {
   
   const [showSchoolSearch, setShowSchoolSearch] = useState(false);
   const [searchSchoolTerm, setSearchSchoolTerm] = useState('');
+
+  useEffect(() => {
+    if (editData) {
+      setFormData({
+        cadastro_cliente: editData.cadastro_cliente || '',
+        proprietario: editData.proprietario || '',
+        nome_escola: editData.nome_escola || '',
+        data_leitura_anterior: editData.data_leitura_anterior || '',
+        data_leitura_atual: editData.data_leitura_atual || '',
+        valor_gasto: editData.valor_gasto?.toString() || '',
+        data_vencimento: editData.data_vencimento || '',
+        endereco: editData.endereco || '',
+        numero: editData.numero || '',
+        bairro: editData.bairro || '',
+        consumo_kwh: editData.consumo_kwh?.toString() || '',
+        numero_dias: editData.numero_dias?.toString() || '',
+        tipo_instalacao: editData.tipo_instalacao || '',
+        relogio: editData.relogio || '',
+        demanda_kwh: editData.demanda_kwh?.toString() || '',
+        utilizado: editData.utilizado || '',
+        mes_ano_referencia: editData.mes_ano_referencia || '',
+        macroregiao: editData.macroregiao || '',
+        ocorrencias_pendencias: editData.ocorrencias_pendencias || ''
+      });
+    }
+  }, [editData]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -115,7 +147,10 @@ export function EnergyRegistration() {
     };
     
     // Convert numeric fields
-    if (formData.valor_gasto) submitData.valor_gasto = parseFloat(formData.valor_gasto);
+    if (formData.valor_gasto) {
+      const numericValue = parseFloat(formData.valor_gasto.replace(/[R$\s.]/g, '').replace(',', '.'));
+      submitData.valor_gasto = numericValue;
+    }
     if (formData.consumo_kwh) submitData.consumo_kwh = parseFloat(formData.consumo_kwh);
     if (formData.demanda_kwh) submitData.demanda_kwh = parseFloat(formData.demanda_kwh);
     if (formData.numero_dias) submitData.numero_dias = parseInt(formData.numero_dias);
@@ -123,35 +158,51 @@ export function EnergyRegistration() {
     // Date fields
     if (formData.data_vencimento) submitData.data_vencimento = formData.data_vencimento;
 
-    const { error } = await supabase
-      .from('energy_records')
-      .insert([submitData]);
+    let error;
+    if (editData) {
+      const result = await supabase
+        .from('energy_records')
+        .update(submitData)
+        .eq('id', editData.id);
+      error = result.error;
+    } else {
+      const result = await supabase
+        .from('energy_records')
+        .insert([submitData]);
+      error = result.error;
+    }
 
     if (error) {
       toast({
         variant: "destructive",
-        title: "Erro ao criar registro",
+        title: editData ? "Erro ao atualizar registro" : "Erro ao criar registro",
         description: error.message
       });
     } else {
       toast({
-        title: "Registro criado com sucesso!",
-        description: "O novo registro de energia foi adicionado."
+        title: editData ? "Registro atualizado com sucesso!" : "Registro criado com sucesso!",
+        description: editData ? "O registro foi atualizado." : "O novo registro de energia foi adicionado."
       });
       resetForm();
+      onSuccess?.();
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Novo Cadastro - Gestão de Energia</CardTitle>
-        <CardDescription>Preencha os dados do registro de energia</CardDescription>
+        <CardTitle>
+          {viewMode ? "Visualizar Registro" : editData ? "Editar Registro" : "Novo Cadastro"} - Gestão de Energia
+        </CardTitle>
+        <CardDescription>
+          {viewMode ? "Detalhes do registro de energia" : "Preencha os dados do registro de energia"}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* School Search */}
-          <div className="mb-4 p-4 bg-muted/50 rounded-lg">
+          {!viewMode && !editData && (
+            <div className="mb-4 p-4 bg-muted/50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
               <h4 className="font-medium text-foreground">Buscar Escola Cadastrada</h4>
               <Button
@@ -196,7 +247,8 @@ export function EnergyRegistration() {
                 )}
               </div>
             )}
-          </div>
+            </div>
+          )}
 
           {/* Form Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -207,6 +259,7 @@ export function EnergyRegistration() {
                 value={formData.cadastro_cliente}
                 onChange={(e) => handleInputChange('cadastro_cliente', e.target.value)}
                 required
+                disabled={viewMode}
               />
             </div>
 
@@ -216,6 +269,7 @@ export function EnergyRegistration() {
                 id="proprietario"
                 value={formData.proprietario}
                 onChange={(e) => handleInputChange('proprietario', e.target.value)}
+                disabled={viewMode}
               />
             </div>
 
@@ -226,6 +280,7 @@ export function EnergyRegistration() {
                 value={formData.nome_escola}
                 onChange={(e) => handleInputChange('nome_escola', e.target.value)}
                 required
+                disabled={viewMode}
               />
             </div>
 
@@ -357,7 +412,9 @@ export function EnergyRegistration() {
               <CurrencyInput
                 id="valor_gasto"
                 value={formData.valor_gasto}
-                onValueChange={(formatted, numeric) => handleInputChange('valor_gasto', numeric.toString())}
+                onValueChange={(formatted, numeric) => handleInputChange('valor_gasto', formatted)}
+                placeholder="R$ 0,00"
+                disabled={viewMode}
               />
             </div>
 
@@ -391,14 +448,16 @@ export function EnergyRegistration() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={resetForm}>
-              Limpar
-            </Button>
-            <Button type="submit">
-              Salvar Registro
-            </Button>
-          </div>
+          {!viewMode && (
+            <div className="flex justify-end gap-2 pt-4">
+              <Button type="button" variant="outline" onClick={resetForm}>
+                Limpar
+              </Button>
+              <Button type="submit">
+                {editData ? "Atualizar Registro" : "Salvar Registro"}
+              </Button>
+            </div>
+          )}
         </form>
       </CardContent>
     </Card>

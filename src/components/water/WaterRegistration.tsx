@@ -140,8 +140,14 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     };
     
     // Convert numeric fields
-    if (formData.valor_gasto) submitData.valor_gasto = parseFloat(formData.valor_gasto);
-    if (formData.valor_servicos) submitData.valor_servicos = parseFloat(formData.valor_servicos);
+    if (formData.valor_gasto) {
+      const numericValue = parseFloat(formData.valor_gasto.replace(/[R$\s.]/g, '').replace(',', '.'));
+      submitData.valor_gasto = numericValue;
+    }
+    if (formData.valor_servicos) {
+      const numericValue = parseFloat(formData.valor_servicos.replace(/[R$\s.]/g, '').replace(',', '.'));
+      submitData.valor_servicos = numericValue;
+    }
     if (formData.consumo_m3) submitData.consumo_m3 = parseFloat(formData.consumo_m3);
     if (formData.numero_dias) submitData.numero_dias = parseInt(formData.numero_dias);
     
@@ -371,7 +377,9 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
               <CurrencyInput
                 id="valor_gasto"
                 value={formData.valor_gasto}
-                onValueChange={(formatted, numeric) => handleInputChange('valor_gasto', numeric.toString())}
+                onValueChange={(formatted, numeric) => handleInputChange('valor_gasto', formatted)}
+                placeholder="R$ 0,00"
+                disabled={viewMode}
               />
             </div>
 
@@ -380,7 +388,9 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
               <CurrencyInput
                 id="valor_servicos"
                 value={formData.valor_servicos}
-                onValueChange={(formatted, numeric) => handleInputChange('valor_servicos', numeric.toString())}
+                onValueChange={(formatted, numeric) => handleInputChange('valor_servicos', formatted)}
+                placeholder="R$ 0,00"
+                disabled={viewMode}
               />
             </div>
 
