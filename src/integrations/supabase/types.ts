@@ -389,6 +389,51 @@ export type Database = {
         }
         Relationships: []
       }
+      schools: {
+        Row: {
+          bairro: string | null
+          created_at: string
+          endereco_completo: string | null
+          id: string
+          macroregiao: string | null
+          nome_escola: string
+          numero: string | null
+          proprietario: string | null
+          telefone_celular: string | null
+          telefone_fixo: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bairro?: string | null
+          created_at?: string
+          endereco_completo?: string | null
+          id?: string
+          macroregiao?: string | null
+          nome_escola: string
+          numero?: string | null
+          proprietario?: string | null
+          telefone_celular?: string | null
+          telefone_fixo?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bairro?: string | null
+          created_at?: string
+          endereco_completo?: string | null
+          id?: string
+          macroregiao?: string | null
+          nome_escola?: string
+          numero?: string | null
+          proprietario?: string | null
+          telefone_celular?: string | null
+          telefone_fixo?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -691,14 +692,10 @@ export function EmployeeRegistration() {
 
                       <div>
                         <Label>Valor Unitário (R$) *</Label>
-                        <Input
-                          inputMode="numeric"
-                          pattern="\\d*"
-                          value={formatCurrency(employee.unitValue)}
-                          onChange={(e) => {
-                            const digits = e.target.value.replace(/\D/g, "");
-                            const numeric = Number(digits) / 100;
-                            handleEmployeeChange(employee.id, 'unitValue', isNaN(numeric) ? 0 : numeric);
+                        <CurrencyInput
+                          value={employee.unitValue}
+                          onValueChange={(formatted, numeric) => {
+                            handleEmployeeChange(employee.id, 'unitValue', numeric);
                           }}
                           placeholder="R$ 0,00"
                         />
@@ -706,8 +703,8 @@ export function EmployeeRegistration() {
 
                       <div>
                         <Label>Valor Total (R$)</Label>
-                        <Input
-                          value={formatCurrency(employee.totalValue)}
+                        <CurrencyInput
+                          value={employee.totalValue}
                           disabled
                           className="bg-muted"
                         />

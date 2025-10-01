@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { CurrencyInput } from '@/components/ui/currency-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -13,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useSchools } from '@/hooks/useSchools';
 
 type SystemType = 'water' | 'energy' | 'fixed-line' | 'mobile';
 
@@ -86,34 +88,6 @@ const fieldLabels: Record<string, string> = {
 
 const macroregiaoOptions = ['HB', 'Vila Toninho', 'Schmidt', 'Represa', 'Bosque', 'Talhado', 'Central', 'Cidade da Criança', 'Pinheirinho', 'Ceu'];
 
-// Mock school data for search
-const mockSchools = [
-  {
-    name: 'EMEF João Silva',
-    cadastro: 'WATER-1001',
-    proprietario: 'Prefeitura Municipal',
-    endereco: 'Rua das Flores, 123',
-    numero: '123',
-    bairro: 'Centro'
-  },
-  {
-    name: 'EMEI Maria Santos',
-    cadastro: 'WATER-1002', 
-    proprietario: 'Prefeitura Municipal',
-    endereco: 'Av. Brasil, 456',
-    numero: '456',
-    bairro: 'Jardim das Rosas'
-  },
-  {
-    name: 'EMEIF Pedro Costa',
-    cadastro: 'WATER-1003',
-    proprietario: 'Prefeitura Municipal',
-    endereco: 'Rua da Escola, 789',
-    numero: '789', 
-    bairro: 'Vila Nova'
-  }
-];
-
 export default function Records() {
   const location = useLocation();
   const urlParams = new URLSearchParams(location.search);
@@ -130,6 +104,7 @@ export default function Records() {
   
   const { user } = useAuth();
   const { toast } = useToast();
+  const { schools } = useSchools();
 
   const handleCSVImport = async () => {
     const input = document.createElement('input');
@@ -332,23 +307,22 @@ export default function Records() {
   const handleSchoolSelect = (school: any) => {
     const newFormData = { ...formData };
     
-    // Auto-fill common fields
-    newFormData['cadastro'] = school.cadastro;
-    newFormData['cadastro_cliente'] = school.cadastro;
-    newFormData['proprietario'] = school.proprietario;
-    newFormData['nome_escola'] = school.name;
-    newFormData['endereco'] = school.endereco;
-    newFormData['endereco_completo'] = school.endereco;
-    newFormData['numero'] = school.numero;
-    newFormData['bairro'] = school.bairro;
+    // Auto-fill common fields from schools table
+    newFormData['proprietario'] = school.proprietario || '';
+    newFormData['nome_escola'] = school.nome_escola;
+    newFormData['endereco'] = school.endereco_completo || '';
+    newFormData['endereco_completo'] = school.endereco_completo || '';
+    newFormData['numero'] = school.numero || '';
+    newFormData['bairro'] = school.bairro || '';
+    newFormData['macroregiao'] = school.macroregiao || '';
     
     setFormData(newFormData);
     setShowSchoolSearch(false);
     setSearchSchoolTerm('');
   };
 
-  const filteredSchools = mockSchools.filter(school =>
-    school.name.toLowerCase().includes(searchSchoolTerm.toLowerCase())
+  const filteredSchools = schools.filter(school =>
+    school.nome_escola.toLowerCase().includes(searchSchoolTerm.toLowerCase())
   );
 
   const handleInputChange = (field: string, value: string) => {
@@ -472,17 +446,26 @@ export default function Records() {
                     />
                     {searchSchoolTerm && (
                       <div className="max-h-32 overflow-y-auto border rounded-md">
-                        {filteredSchools.map((school, index) => (
+                        {filteredSchools.map((school) => (
                           <button
-                            key={index}
+                            key={school.id}
                             type="button"
                             className="w-full text-left px-3 py-2 hover:bg-muted/80 border-b last:border-b-0"
                             onClick={() => handleSchoolSelect(school)}
                           >
-                            <p className="font-medium">{school.name}</p>
-                            <p className="text-sm text-muted-foreground">{school.endereco}</p>
+                            <p className="font-medium">{school.nome_escola}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {school.endereco_completo}
+                              {school.numero && `, ${school.numero}`}
+                              {school.bairro && ` - ${school.bairro}`}
+                            </p>
                           </button>
                         ))}
+                        {filteredSchools.length === 0 && (
+                          <div className="px-3 py-2 text-sm text-muted-foreground">
+                            Nenhuma escola encontrada
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -493,7 +476,8 @@ export default function Records() {
                 {config.fields.map(field => {
                   const isTextarea = field.includes('servicos') || field.includes('ocorrencias');
                   const isDate = field.includes('data_') || field === 'data_vencimento';
-                  const isNumber = field.includes('valor') || field.includes('consumo') || field.includes('demanda') || field === 'numero_dias';
+                  const isNumber = field.includes('consumo') || field.includes('demanda') || field === 'numero_dias';
+                  const isCurrency = field.includes('valor');
                   const isRequired = ['cadastro', 'cadastro_cliente', 'nome_escola'].includes(field);
                   const isMacroregiao = field === 'macroregiao';
                   const colSpan = isTextarea ? 'col-span-2' : '';
@@ -523,11 +507,18 @@ export default function Records() {
                             ))}
                           </SelectContent>
                         </Select>
+                      ) : isCurrency ? (
+                        <CurrencyInput
+                          id={field}
+                          value={formData[field] || ''}
+                          onValueChange={(formatted, numeric) => handleInputChange(field, numeric.toString())}
+                          required={isRequired}
+                        />
                       ) : (
                         <Input
                           id={field}
                           type={isDate ? 'date' : isNumber ? 'number' : 'text'}
-                          step={isNumber && field.includes('valor') ? '0.01' : undefined}
+                          step={isNumber ? '0.01' : undefined}
                           value={formData[field] || ''}
                           onChange={(e) => handleInputChange(field, e.target.value)}
                           required={isRequired}

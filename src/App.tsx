@@ -16,6 +16,7 @@ import SchoolDemandDashboard from "./pages/SchoolDemandDashboard";
 import SchoolDemandRegistration from "./pages/SchoolDemandRegistration";
 import SchoolDemandIntegrations from "./pages/SchoolDemandIntegrations";
 import SchoolDemandImport from "./pages/SchoolDemandImport";
+import SchoolsRegistration from "./pages/SchoolsRegistration";
 import OutsourcedDashboard from "./pages/OutsourcedDashboard";
 import ContractsDashboard from "./pages/ContractsDashboard";
 import Charts from "./pages/Charts";
@@ -76,6 +77,7 @@ const App = () => {
                   <Route path="records" element={<Records />} />
                   <Route path="data-management" element={<DataManagement onDataUpdate={handleDataUpdate} currentDataCount={schoolData.length} />} />
                   <Route path="user-management" element={<UserManagement />} />
+                  <Route path="schools-registration" element={<SchoolsRegistration />} />
                 </Route>
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />

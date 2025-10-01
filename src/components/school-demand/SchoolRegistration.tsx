@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Save, Calculator, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useSchools } from "@/hooks/useSchools";
 
 interface SchoolData {
   nome_escola: string;
@@ -55,78 +56,27 @@ export function SchoolRegistration() {
   });
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [existingSchools, setExistingSchools] = useState<SchoolData[]>([]);
   const [filteredSchools, setFilteredSchools] = useState<SchoolData[]>([]);
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
-
-  useEffect(() => {
-    fetchExistingSchools();
-  }, []);
+  const { schools, loading } = useSchools();
 
   useEffect(() => {
     if (searchTerm) {
-      const filtered = existingSchools.filter(school =>
+      const filtered = schools.filter(school =>
         school.nome_escola.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setFilteredSchools(filtered);
+      setFilteredSchools(filtered.map(school => ({
+        nome_escola: school.nome_escola,
+        endereco_completo: school.endereco_completo || undefined,
+        numero: school.numero || undefined,
+        bairro: school.bairro || undefined,
+        macroregiao: school.macroregiao || undefined,
+      })));
     } else {
       setFilteredSchools([]);
     }
-  }, [searchTerm, existingSchools]);
-
-  const fetchExistingSchools = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch from all existing school tables
-      const [waterData, energyData, fixedLineData, mobileData] = await Promise.all([
-        supabase.from('school_records').select('nome_escola, endereco_completo').limit(100),
-        supabase.from('energy_records').select('nome_escola, endereco, numero, bairro, macroregiao').limit(100),
-        supabase.from('fixed_line_records').select('nome_escola, endereco, numero, bairro, macroregiao').limit(100),
-        supabase.from('mobile_records').select('nome_escola, endereco, numero, bairro, macroregiao').limit(100)
-      ]);
-
-      // Combine and deduplicate schools
-      const allSchools: SchoolData[] = [];
-      
-      // Process water records
-      if (waterData.data) {
-        waterData.data.forEach(record => {
-          if (record.nome_escola && !allSchools.find(s => s.nome_escola === record.nome_escola)) {
-            allSchools.push({
-              nome_escola: record.nome_escola,
-              endereco_completo: record.endereco_completo || undefined,
-            });
-          }
-        });
-      }
-
-      // Process energy, fixed line, and mobile records
-      [energyData.data, fixedLineData.data, mobileData.data].forEach(data => {
-        if (data) {
-          data.forEach(record => {
-            if (record.nome_escola && !allSchools.find(s => s.nome_escola === record.nome_escola)) {
-              allSchools.push({
-                nome_escola: record.nome_escola,
-                endereco_completo: record.endereco || undefined,
-                numero: record.numero || undefined,
-                bairro: record.bairro || undefined,
-                macroregiao: record.macroregiao || undefined,
-              });
-            }
-          });
-        }
-      });
-
-      setExistingSchools(allSchools);
-    } catch (error: any) {
-      console.error('Error fetching existing schools:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [searchTerm, schools]);
 
   const handleInputChange = (field: keyof FormData, value: string | number) => {
     setFormData(prev => ({

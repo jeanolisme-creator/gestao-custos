@@ -20,6 +20,7 @@ import {
   UserCog,
   FileSignature,
   UsersRound,
+  Building2,
 } from "lucide-react";
 import { useSystem } from "@/contexts/SystemContext";
 import logoSjrp from "@/assets/logo-sjrp.png";
@@ -33,6 +34,11 @@ const navigation = [
     name: "Dashboard",
     href: "/",
     icon: BarChart3,
+  },
+  {
+    name: "Cadastro de Escolas",
+    href: "/schools-registration",
+    icon: Building2,
   },
   {
     name: "Gráficos",
