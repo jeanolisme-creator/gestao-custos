@@ -97,7 +97,10 @@ export function PhoneRegistration() {
     };
     
     // Convert numeric fields
-    if (formData.valor_gasto) submitData.valor_gasto = parseFloat(formData.valor_gasto);
+    if (formData.valor_gasto)
+      submitData.valor_gasto = parseFloat(
+        formData.valor_gasto.replace(/[R$\s.]/g, "").replace(",", ".")
+      );
     
     // Date fields
     if (formData.data_vencimento) submitData.data_vencimento = formData.data_vencimento;
@@ -266,7 +269,8 @@ export function PhoneRegistration() {
               <CurrencyInput
                 id="valor_gasto"
                 value={formData.valor_gasto}
-                onValueChange={(formatted, numeric) => handleInputChange('valor_gasto', numeric.toString())}
+                onValueChange={(formatted) => handleInputChange('valor_gasto', formatted)}
+                placeholder="R$ 0,00"
               />
             </div>
 
