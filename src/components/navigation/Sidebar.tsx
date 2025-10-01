@@ -31,34 +31,14 @@ import { useAuth } from "@/hooks/useAuth";
 
 const navigation = [
   {
-    name: "Dashboard",
-    href: "/",
-    icon: BarChart3,
-  },
-  {
     name: "Cadastro de Escolas",
     href: "/schools-registration",
     icon: Building2,
   },
   {
-    name: "Gráficos",
-    href: "/charts",
-    icon: PieChart,
-  },
-  {
-    name: "Relatórios",
-    href: "/reports",
-    icon: FileText,
-  },
-  {
     name: "Relatório Consolidado",
     href: "/consolidated-report",
     icon: FileText,
-  },
-  {
-    name: "Registros",
-    href: "/records",
-    icon: Plus,
   },
   {
     name: "Gerenciar Usuários",
