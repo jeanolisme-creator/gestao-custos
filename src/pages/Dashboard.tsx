@@ -28,10 +28,13 @@ import { generateMockSystemData, aggregateSystemData, getSystemMonthlyTotals, ge
 import logoSecretaria from "@/assets/logo-secretaria.jpg";
 import { WaterNavigation } from "@/components/water/WaterNavigation";
 import { WaterRegistration } from "@/components/water/WaterRegistration";
+import { WaterCharts } from "@/components/water/WaterCharts";
 import { EnergyNavigation } from "@/components/energy/EnergyNavigation";
 import { EnergyRegistration } from "@/components/energy/EnergyRegistration";
+import { EnergyCharts } from "@/components/energy/EnergyCharts";
 import { PhoneNavigation } from "@/components/phone/PhoneNavigation";
 import { PhoneRegistration } from "@/components/phone/PhoneRegistration";
+import { PhoneCharts } from "@/components/phone/PhoneCharts";
 import { useState } from "react";
 
 interface DashboardProps {
@@ -102,6 +105,13 @@ export default function Dashboard({ data }: DashboardProps) {
       );
     }
     if (currentTab === 'charts') {
+      if (currentSystem === 'water') {
+        return <WaterCharts />;
+      } else if (currentSystem === 'energy') {
+        return <EnergyCharts />;
+      } else if (currentSystem === 'fixed-line') {
+        return <PhoneCharts />;
+      }
       return (
         <div className="text-center p-8">
           <p className="text-muted-foreground">Página de Gráficos em desenvolvimento</p>
