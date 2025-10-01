@@ -27,6 +27,7 @@ import { useSystem } from "@/contexts/SystemContext";
 import { generateMockSystemData, aggregateSystemData, getSystemMonthlyTotals, getSystemAlerts } from "@/utils/systemData";
 import logoSecretaria from "@/assets/logo-secretaria.jpg";
 import { WaterNavigation } from "@/components/water/WaterNavigation";
+import { WaterRegistration } from "@/components/water/WaterRegistration";
 import { EnergyNavigation } from "@/components/energy/EnergyNavigation";
 import { PhoneNavigation } from "@/components/phone/PhoneNavigation";
 import { useState } from "react";
@@ -85,6 +86,9 @@ export default function Dashboard({ data }: DashboardProps) {
 
   const renderContent = () => {
     if (currentTab === 'register') {
+      if (currentSystem === 'water') {
+        return <WaterRegistration />;
+      }
       return (
         <div className="text-center p-8">
           <p className="text-muted-foreground">Página de Novo Cadastro em desenvolvimento</p>
