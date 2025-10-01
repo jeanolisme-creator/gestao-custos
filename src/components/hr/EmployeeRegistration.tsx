@@ -131,6 +131,13 @@ export function EmployeeRegistration() {
       return;
     }
 
+    // Parse do salário formatado em BRL para número
+    const parseSalary = (salaryString: string): number => {
+      if (!salaryString) return 0;
+      const numbers = salaryString.replace(/[R$\s.]/g, "").replace(",", ".");
+      return parseFloat(numbers) || 0;
+    };
+
     const newEmployee: Employee = {
       id: editingEmployee?.id || Date.now().toString(),
       matricula: formData.matricula,
@@ -148,7 +155,7 @@ export function EmployeeRegistration() {
       tipoEscola: formData.tipoEscola,
       cargoEfetivo: formData.cargoEfetivo,
       cargoAtual: formData.cargoAtual,
-      salario: parseFloat(formData.salario) || 0,
+      salario: parseSalary(formData.salario),
       situacao: formData.situacao
     };
 
@@ -194,6 +201,15 @@ export function EmployeeRegistration() {
 
   const handleEdit = (employee: Employee) => {
     setEditingEmployee(employee);
+    
+    // Formata o salário para exibição
+    const formatSalaryForDisplay = (value: number): string => {
+      return value.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      });
+    };
+    
     setFormData({
       matricula: employee.matricula,
       nome: employee.nome,
@@ -209,7 +225,7 @@ export function EmployeeRegistration() {
       tipoEscola: employee.tipoEscola,
       cargoEfetivo: employee.cargoEfetivo,
       cargoAtual: employee.cargoAtual,
-      salario: employee.salario.toString(),
+      salario: formatSalaryForDisplay(employee.salario),
       situacao: employee.situacao
     });
     setDialogOpen(true);
@@ -523,7 +539,12 @@ export function EmployeeRegistration() {
                     <CurrencyInput
                       id="salario"
                       value={formData.salario}
-                      onValueChange={(formatted, numeric) => handleInputChange('salario', numeric.toString())}
+                      onValueChange={(formatted, numeric) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          salario: formatted
+                        }));
+                      }}
                       placeholder="R$ 0,00"
                     />
                   </div>
