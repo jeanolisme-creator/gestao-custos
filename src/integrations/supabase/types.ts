@@ -27,6 +27,7 @@ export type Database = {
           end_date: string
           id: string
           monthly_value: number
+          signing_date: string | null
           start_date: string
           status: string
           updated_at: string
@@ -44,6 +45,7 @@ export type Database = {
           end_date: string
           id?: string
           monthly_value: number
+          signing_date?: string | null
           start_date: string
           status?: string
           updated_at?: string
@@ -61,6 +63,7 @@ export type Database = {
           end_date?: string
           id?: string
           monthly_value?: number
+          signing_date?: string | null
           start_date?: string
           status?: string
           updated_at?: string

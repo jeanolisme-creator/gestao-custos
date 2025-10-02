@@ -37,6 +37,7 @@ export function ContractRegistration({ editData, onSuccess }: ContractRegistrati
   const [cnpj, setCnpj] = useState("");
   const [commitmentNumber, setCommitmentNumber] = useState("");
   const [contractObject, setContractObject] = useState("");
+  const [signingDate, setSigningDate] = useState<Date>();
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [monthlyValue, setMonthlyValue] = useState("");
@@ -54,6 +55,10 @@ export function ContractRegistration({ editData, onSuccess }: ContractRegistrati
       setCnpj(editData.cnpj || "");
       setCommitmentNumber(editData.commitment_number || "");
       setContractObject(editData.contract_object || "");
+      
+      if (editData.signing_date) {
+        setSigningDate(new Date(editData.signing_date));
+      }
       
       if (editData.start_date) {
         setStartDate(new Date(editData.start_date));
@@ -242,6 +247,7 @@ export function ContractRegistration({ editData, onSuccess }: ContractRegistrati
         cnpj,
         commitment_number: commitmentNumber,
         contract_object: contractObject,
+        signing_date: signingDate ? format(signingDate, 'yyyy-MM-dd') : null,
         start_date: format(startDate, 'yyyy-MM-dd'),
         end_date: format(endDate, 'yyyy-MM-dd'),
         monthly_value: monthlyValueNumeric,
@@ -280,6 +286,7 @@ export function ContractRegistration({ editData, onSuccess }: ContractRegistrati
       setCnpj("");
       setCommitmentNumber("");
       setContractObject("");
+      setSigningDate(undefined);
       setStartDate(undefined);
       setEndDate(undefined);
       setMonthlyValue("");
@@ -393,6 +400,51 @@ export function ContractRegistration({ editData, onSuccess }: ContractRegistrati
               rows={4}
               required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Data de Assinatura</Label>
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                placeholder="DD/MM/AAAA"
+                value={signingDate ? format(signingDate, "dd/MM/yyyy") : ""}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "");
+                  if (value.length === 8) {
+                    const day = parseInt(value.slice(0, 2));
+                    const month = parseInt(value.slice(2, 4)) - 1;
+                    const year = parseInt(value.slice(4, 8));
+                    const date = new Date(year, month, day);
+                    if (!isNaN(date.getTime())) {
+                      setSigningDate(date);
+                    }
+                  }
+                }}
+                maxLength={10}
+                className="flex-1"
+              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                  >
+                    <CalendarIcon className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={signingDate}
+                    onSelect={setSigningDate}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

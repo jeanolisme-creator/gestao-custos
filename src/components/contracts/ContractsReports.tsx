@@ -27,6 +27,8 @@ interface Contract {
   monthlyValue: number;
   annualValue: number;
   status: 'Ativo' | 'Vencido' | 'Próximo ao Vencimento';
+  addendums?: any[];
+  addendumType?: string;
 }
 
 interface ContractsReportsProps {
@@ -64,19 +66,41 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
 
       if (error) throw error;
 
-      const formattedContracts: Contract[] = (data || []).map(contract => ({
-        id: contract.id,
-        number: contract.contract_number,
-        company: contract.company_name,
-        cnpj: contract.cnpj,
-        empenho: contract.commitment_number,
-        object: contract.contract_object,
-        startDate: contract.start_date,
-        endDate: contract.end_date,
-        monthlyValue: Number(contract.monthly_value),
-        annualValue: Number(contract.annual_value),
-        status: calculateStatus(contract.end_date),
-      }));
+      const formattedContracts: Contract[] = (data || []).map(contract => {
+        const addendums = Array.isArray(contract.addendums) ? contract.addendums : [];
+        let addendumType = '';
+        
+        if (addendums.length > 0) {
+          const addendumCount = addendums.length;
+          if (addendumCount === 1) addendumType = '1º Aditivo de renovação';
+          else if (addendumCount === 2) addendumType = '2º Aditivo de renovação';
+          else if (addendumCount === 3) addendumType = '3º Aditivo de renovação';
+          else if (addendumCount === 4) addendumType = '4º Aditivo de renovação';
+          else if (addendumCount === 5) addendumType = '5º Aditivo de renovação';
+          else if (addendumCount === 6) addendumType = '6º Aditivo de renovação';
+          else if (addendumCount === 7) addendumType = '7º Aditivo de renovação';
+          else if (addendumCount === 8) addendumType = '8º Aditivo de renovação';
+          else if (addendumCount === 9) addendumType = '9º Aditivo de renovação';
+          else if (addendumCount === 10) addendumType = '10º Aditivo de renovação';
+          else if (addendumCount > 10) addendumType = `${addendumCount}º Aditivo de renovação`;
+        }
+        
+        return {
+          id: contract.id,
+          number: contract.contract_number,
+          company: contract.company_name,
+          cnpj: contract.cnpj,
+          empenho: contract.commitment_number,
+          object: contract.contract_object,
+          startDate: contract.start_date,
+          endDate: contract.end_date,
+          monthlyValue: Number(contract.monthly_value),
+          annualValue: Number(contract.annual_value),
+          status: calculateStatus(contract.end_date),
+          addendums,
+          addendumType,
+        };
+      });
 
       setContracts(formattedContracts);
     } catch (error) {
@@ -125,7 +149,7 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
 
   // Exportar para CSV
   const exportToCSV = () => {
-    const headers = ["Número", "Empresa", "CNPJ", "Empenho", "Objeto", "Data Inicial", "Data Final", "Valor Mensal", "Valor Anual", "Status"];
+    const headers = ["Número", "Empresa", "CNPJ", "Empenho", "Objeto", "Data Inicial", "Data Final", "Valor Mensal", "Valor Anual", "Status", "Aditivos"];
     const csvData = filteredContracts.map(contract => [
       contract.number,
       contract.company,
@@ -136,7 +160,8 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
       formatDate(contract.endDate),
       contract.monthlyValue,
       contract.annualValue,
-      contract.status
+      contract.status,
+      contract.addendumType || 'Sem aditivos'
     ]);
 
     const csv = [
@@ -395,13 +420,14 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
                   <TableHead className="text-right">Valor Mensal</TableHead>
                   <TableHead className="text-right">Valor Anual</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Aditivos</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredContracts.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={10} className="text-center py-8 text-muted-foreground">
                       Nenhum contrato encontrado com os filtros aplicados
                     </TableCell>
                   </TableRow>
@@ -425,6 +451,15 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
                         <span className={cn("px-2 py-1 rounded-md text-xs font-medium border", getStatusColor(contract.status))}>
                           {contract.status}
                         </span>
+                      </TableCell>
+                      <TableCell>
+                        {contract.addendumType ? (
+                          <span className="text-sm font-medium text-blue-600">
+                            {contract.addendumType}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">-</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex gap-2 justify-end">
