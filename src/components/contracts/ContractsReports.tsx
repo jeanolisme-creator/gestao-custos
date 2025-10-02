@@ -85,7 +85,7 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
     const daysUntilEnd = differenceInDays(effective, new Date());
 
     if (daysUntilEnd < 0) return 'Vencido';
-    if (daysUntilEnd <= 30) return 'Próximo ao Vencimento';
+    if (daysUntilEnd <= 90) return 'Próximo ao Vencimento';
     return 'Ativo';
   };
 
@@ -380,53 +380,22 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
             <div className="space-y-2">
               <Label>Período de Vigência</Label>
               <div className="flex gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={cn(
-                        "flex-1 justify-start text-left font-normal",
-                        !startDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, "dd/MM/yy") : "Início"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={startDate}
-                      onSelect={setStartDate}
-                      locale={ptBR}
-                    />
-                  </PopoverContent>
-                </Popover>
-
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={cn(
-                        "flex-1 justify-start text-left font-normal",
-                        !endDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {endDate ? format(endDate, "dd/MM/yy") : "Fim"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={setEndDate}
-                      locale={ptBR}
-                    />
-                  </PopoverContent>
-                </Popover>
+                <div className="flex-1">
+                  <Input
+                    type="date"
+                    value={startDate ? format(startDate, "yyyy-MM-dd") : ""}
+                    onChange={(e) => setStartDate(e.target.value ? new Date(e.target.value) : undefined)}
+                    placeholder="Data inicial"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Input
+                    type="date"
+                    value={endDate ? format(endDate, "yyyy-MM-dd") : ""}
+                    onChange={(e) => setEndDate(e.target.value ? new Date(e.target.value) : undefined)}
+                    placeholder="Data final"
+                  />
+                </div>
               </div>
             </div>
           </div>
