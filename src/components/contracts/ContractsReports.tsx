@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { parseCurrency } from "@/utils/currencyMask";
 
 interface Contract {
   id: string;
@@ -49,20 +50,40 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const calculateStatus = (endDateStr: string, addendums?: any[]): 'Ativo' | 'Vencido' | 'Próximo ao Vencimento' => {
-    let effectiveEndDate = new Date(endDateStr);
-    
-    // Se houver aditivos com data de renovação, usar a data da última renovação
-    if (addendums && addendums.length > 0) {
-      const lastAddendum = addendums[addendums.length - 1];
-      if (lastAddendum && typeof lastAddendum === 'object' && 'renewalDate' in lastAddendum && lastAddendum.renewalDate) {
-        effectiveEndDate = new Date(lastAddendum.renewalDate as string);
+  type AddendumLike = any;
+
+  const getLatestAddendumEndDate = (addendums?: AddendumLike[]): Date | undefined => {
+    if (!addendums || addendums.length === 0) return undefined;
+    const dates: Date[] = [];
+    for (const a of addendums) {
+      if (a && typeof a === 'object') {
+        const candidates = [
+          (a as any).endDate,
+          (a as any).end_date,
+          (a as any).renewalDate,
+          (a as any).renewal_date,
+          (a as any).finalDate,
+          (a as any).final_date,
+        ].filter(Boolean) as (string | Date)[];
+        for (const c of candidates) {
+          const d = c instanceof Date ? c : new Date(c);
+          if (!isNaN(d.getTime())) dates.push(d);
+        }
       }
     }
-    
-    const today = new Date();
-    const daysUntilEnd = differenceInDays(effectiveEndDate, today);
-    
+    if (dates.length === 0) return undefined;
+    return new Date(Math.max(...dates.map((d) => d.getTime())));
+  };
+
+  const calculateStatus = (
+    endDateStr: string,
+    addendums?: AddendumLike[],
+  ): 'Ativo' | 'Vencido' | 'Próximo ao Vencimento' => {
+    const base = new Date(endDateStr);
+    const latest = getLatestAddendumEndDate(addendums);
+    const effective = latest && latest > base ? latest : base;
+    const daysUntilEnd = differenceInDays(effective, new Date());
+
     if (daysUntilEnd < 0) return 'Vencido';
     if (daysUntilEnd <= 30) return 'Próximo ao Vencimento';
     return 'Ativo';
@@ -100,15 +121,29 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
           
           // Calcular valor total com aditivos
           addendums.forEach((addendum: any) => {
-            if (addendum && typeof addendum === 'object' && 'value' in addendum && addendum.value) {
-              totalValueWithAddendums += Number(addendum.value);
+            if (addendum && typeof addendum === 'object') {
+              if ('finalValue' in addendum && addendum.finalValue) {
+                totalValueWithAddendums += parseCurrency(String(addendum.finalValue));
+              } else if ('monthlyValue' in addendum && addendum.monthlyValue) {
+                totalValueWithAddendums += parseCurrency(String(addendum.monthlyValue)) * 12;
+              } else if ('annualValue' in addendum && addendum.annualValue) {
+                totalValueWithAddendums += Number(addendum.annualValue);
+              }
             }
           });
           
-          // Pegar a data da última renovação
-          const lastAddendum = addendums[addendums.length - 1];
-          if (lastAddendum && typeof lastAddendum === 'object' && 'renewalDate' in lastAddendum && lastAddendum.renewalDate) {
-            lastRenewalDate = lastAddendum.renewalDate as string;
+          // Pegar a data da última renovação (preferir data final do aditivo)
+          const lastAddendum = addendums[addendums.length - 1] as any;
+          if (lastAddendum && typeof lastAddendum === 'object') {
+            const possibleDates = [
+              lastAddendum.endDate,
+              lastAddendum.end_date,
+              lastAddendum.renewalDate,
+              lastAddendum.renewal_date,
+            ].filter(Boolean) as string[];
+            if (possibleDates.length > 0) {
+              lastRenewalDate = possibleDates[0];
+            }
           }
         }
         
@@ -459,20 +494,15 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
             <CardContent className="p-0 mt-4">
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {filteredContracts
-                  .filter(c => {
-                    const endDate = c.lastRenewalDate ? new Date(c.lastRenewalDate) : new Date(c.endDate);
-                    const daysUntil = differenceInDays(endDate, new Date());
-                    return daysUntil >= 0 && daysUntil <= 60;
-                  })
                   .sort((a, b) => {
-                    const dateA = a.lastRenewalDate ? new Date(a.lastRenewalDate) : new Date(a.endDate);
-                    const dateB = b.lastRenewalDate ? new Date(b.lastRenewalDate) : new Date(b.endDate);
+                    const dateA = new Date(a.lastRenewalDate ?? a.endDate);
+                    const dateB = new Date(b.lastRenewalDate ?? b.endDate);
                     return dateA.getTime() - dateB.getTime();
                   })
-                  .slice(0, 5)
                   .map(contract => {
-                    const endDate = contract.lastRenewalDate ? new Date(contract.lastRenewalDate) : new Date(contract.endDate);
+                    const endDate = new Date(contract.lastRenewalDate ?? contract.endDate);
                     const daysUntil = differenceInDays(endDate, new Date());
+                    const badgeText = daysUntil >= 0 ? `${daysUntil} dias` : `vencido há ${Math.abs(daysUntil)} dias`;
                     return (
                       <div key={contract.id} className="flex items-center justify-between p-2 bg-white rounded-md border border-orange-200">
                         <div className="flex-1 min-w-0">
@@ -480,18 +510,14 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
                           <p className="text-xs text-orange-600">{formatDate(endDate.toISOString())}</p>
                         </div>
                         <Badge variant="outline" className="ml-2 bg-orange-100 text-orange-700 border-orange-300">
-                          {daysUntil} dias
+                          {badgeText}
                         </Badge>
                       </div>
                     );
                   })}
-                {filteredContracts.filter(c => {
-                  const endDate = c.lastRenewalDate ? new Date(c.lastRenewalDate) : new Date(c.endDate);
-                  const daysUntil = differenceInDays(endDate, new Date());
-                  return daysUntil >= 0 && daysUntil <= 60;
-                }).length === 0 && (
+                {filteredContracts.length === 0 && (
                   <p className="text-sm text-orange-600 text-center py-4">
-                    Nenhum vencimento próximo
+                    Nenhum contrato encontrado
                   </p>
                 )}
               </div>
