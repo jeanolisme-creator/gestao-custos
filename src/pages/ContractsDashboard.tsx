@@ -108,11 +108,19 @@ export default function ContractsDashboard() {
           .sort((x: any, y: any) => x.date.getTime() - y.date.getTime());
 
         // Totais por empresa usam o último aditivo, se houver
+        let effectiveMonthly = monthly;
         if (processedAdd.length > 0) {
           const last = processedAdd[processedAdd.length - 1];
-          monthly = last.monthly;
-          annual = monthly * 12;
+          effectiveMonthly = last.monthly;
+        } else if (addendums.length > 0) {
+          const lastRaw = addendums[addendums.length - 1];
+          const candidate = (lastRaw?.monthlyValue ? parseAny(lastRaw.monthlyValue) : 0)
+            || (lastRaw?.finalValue ? parseAny(lastRaw.finalValue) / 12 : 0)
+            || (lastRaw?.annualValue ? parseAny(lastRaw.annualValue) / 12 : 0);
+          if (candidate > 0) effectiveMonthly = candidate;
         }
+        monthly = effectiveMonthly;
+        annual = monthly * 12;
 
         totals[key].annual += annual;
         totals[key].monthly += monthly;
@@ -154,6 +162,15 @@ export default function ContractsDashboard() {
           monthlyValues[m] = 0;
         }
       }
+
+      // Fallback: se tudo ficou 0, preencher meses até o mês atual com o total mensal agregado
+      const sumAll = monthlyValues.reduce((a:number, b:number) => a + b, 0);
+      if (sumAll === 0) {
+        const aggMonthly = (Object.values(totals) as Array<{monthly:number; annual:number}>).reduce((s, v) => s + v.monthly, 0);
+        for (let m = 0; m <= Math.max(currentMonthIndex, 0); m++) monthlyValues[m] = aggMonthly;
+      }
+
+      console.log('[ContractsDashboard] monthlyValues 2025:', monthlyValues, 'companyTotals:', totals);
 
       setMonthlyTotals(monthlyValues);
     };
