@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,12 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon, Plus, Trash2 } from "lucide-react";
+import { CalendarIcon, Plus, Trash2, FileUp, FileSpreadsheet } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/sonner";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import * as XLSX from 'xlsx';
 
 interface Addendum {
   id: string;
@@ -34,6 +35,8 @@ export function ContractRegistration() {
   const [monthlyValue, setMonthlyValue] = useState("");
   const [annualValue, setAnnualValue] = useState("0");
   const [addendums, setAddendums] = useState<Addendum[]>([]);
+  const csvInputRef = useRef<HTMLInputElement>(null);
+  const xlsxInputRef = useRef<HTMLInputElement>(null);
 
   const formatCurrency = (value: string) => {
     const numbers = value.replace(/\D/g, "");
@@ -127,6 +130,40 @@ export function ContractRegistration() {
     setAddendums(addendums.filter((add) => add.id !== id));
   };
 
+  const handleCSVImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split('\n');
+      
+      // Processar CSV aqui
+      toast.success(`Arquivo CSV carregado: ${file.name}`);
+      console.log('CSV Data:', lines);
+    };
+    reader.readAsText(file);
+  };
+
+  const handleXLSXImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const data = event.target?.result;
+      const workbook = XLSX.read(data, { type: 'binary' });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet);
+      
+      toast.success(`Arquivo XLSX carregado: ${file.name}`);
+      console.log('XLSX Data:', jsonData);
+    };
+    reader.readAsBinaryString(file);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -173,10 +210,48 @@ export function ContractRegistration() {
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Dados Gerais do Contrato</CardTitle>
-          <CardDescription>
-            Preencha as informações básicas do contrato
-          </CardDescription>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <CardTitle>Dados Gerais do Contrato</CardTitle>
+              <CardDescription>
+                Preencha as informações básicas do contrato
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="file"
+                ref={csvInputRef}
+                onChange={handleCSVImport}
+                accept=".csv"
+                className="hidden"
+              />
+              <input
+                type="file"
+                ref={xlsxInputRef}
+                onChange={handleXLSXImport}
+                accept=".xlsx,.xls"
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => csvInputRef.current?.click()}
+              >
+                <FileUp className="mr-2 h-4 w-4" />
+                Importar CSV
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => xlsxInputRef.current?.click()}
+              >
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Importar XLSX
+              </Button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
