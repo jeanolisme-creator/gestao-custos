@@ -68,17 +68,25 @@ export default function ContractsDashboard() {
         if (!key) return;
         
         const addendums = Array.isArray(c.addendums) ? c.addendums : [];
-        let annual = Number(c.annual_value) || 0;
         
-        // Se houver aditivos, usar apenas o último
+        // Determinar valores anual e mensal com base no último aditivo quando existir
+        let annual = Number(c.annual_value) || 0;
+        let monthly = (Number(c.monthly_value) || 0) || (annual / 12);
+        
         if (addendums.length > 0) {
           const lastAddendum = addendums[addendums.length - 1];
-          if (lastAddendum.finalValue) annual = parseCurrency(String(lastAddendum.finalValue));
-          else if (lastAddendum.monthlyValue) annual = parseCurrency(String(lastAddendum.monthlyValue)) * 12;
-          else if (lastAddendum.annualValue) annual = Number(lastAddendum.annualValue) || 0;
+          if (lastAddendum.monthlyValue) {
+            monthly = parseCurrency(String(lastAddendum.monthlyValue));
+            annual = monthly * 12;
+          } else if (lastAddendum.finalValue) {
+            annual = parseCurrency(String(lastAddendum.finalValue));
+            monthly = annual / 12;
+          } else if (lastAddendum.annualValue) {
+            annual = Number(lastAddendum.annualValue) || 0;
+            monthly = annual / 12;
+          }
         }
         
-        const monthly = annual / 12;
         totals[key].annual += annual;
         totals[key].monthly += monthly;
 
@@ -87,14 +95,13 @@ export default function ContractsDashboard() {
         const endDate = c.end_date ? new Date(c.end_date) : null;
 
         for (let month = 0; month < 12; month++) {
-          const monthDate = new Date(currentYear, month, 1);
-          
-          // Verificar se o contrato está ativo neste mês
-          const isActive = 
-            (!startDate || monthDate >= startDate || monthDate.getFullYear() > startDate.getFullYear() || 
-             (monthDate.getFullYear() === startDate.getFullYear() && monthDate.getMonth() >= startDate.getMonth())) &&
-            (!endDate || monthDate <= endDate || monthDate.getFullYear() < endDate.getFullYear() ||
-             (monthDate.getFullYear() === endDate.getFullYear() && monthDate.getMonth() <= endDate.getMonth()));
+          const monthStart = new Date(currentYear, month, 1);
+          const monthEnd = new Date(currentYear, month + 1, 0);
+
+          // Contrato ativo no mês se houver sobreposição entre [start_date, end_date] e [monthStart, monthEnd]
+          const startsBeforeOrInMonth = !startDate || startDate <= monthEnd;
+          const endsAfterOrInMonth = !endDate || endDate >= monthStart;
+          const isActive = startsBeforeOrInMonth && endsAfterOrInMonth;
 
           if (isActive) {
             monthlyValues[month] += monthly;
@@ -103,6 +110,16 @@ export default function ContractsDashboard() {
       });
 
       setCompanyTotals(totals);
+
+      // Zerar meses futuros (após o mês atual)
+      const now = new Date();
+      const currentMonthIndex = now.getFullYear() === currentYear ? now.getMonth() : (now.getFullYear() < currentYear ? -1 : 11);
+      if (currentMonthIndex >= 0 && currentMonthIndex < 11) {
+        for (let m = currentMonthIndex + 1; m < 12; m++) {
+          monthlyValues[m] = 0;
+        }
+      }
+
       setMonthlyTotals(monthlyValues);
     };
 
