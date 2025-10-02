@@ -122,21 +122,64 @@ export default function ContractsDashboard() {
         monthly = effectiveMonthly;
         annual = monthly * 12;
 
-        totals[key].annual += annual;
-        totals[key].monthly += monthly;
+        // Determinar período efetivo considerando aditivos
+        const rawStart = c.start_date ? new Date(c.start_date) : null;
+        const rawEnd = c.end_date ? new Date(c.end_date) : null;
+
+        let effectiveStart: Date | null = rawStart;
+        let effectiveEnd: Date | null = rawEnd;
+
+        const addDatePairs = (Array.isArray(addendums) ? addendums : [])
+          .map((a: any) => {
+            const s = a?.startDate || a?.effectiveDate || a?.date || a?.data || a?.vigenciaInicio;
+            const e = a?.endDate || a?.vigenciaFim;
+            const sd = s ? new Date(s) : null;
+            const ed = e ? new Date(e) : null;
+            return { sd, ed };
+          })
+          .filter((d: any) => (d.sd && !isNaN(d.sd.getTime())) || (d.ed && !isNaN(d.ed.getTime())));
+
+        if (addDatePairs.length > 0) {
+          const startTimes = addDatePairs.map((d: any) => d.sd?.getTime()).filter(Boolean) as number[];
+          const endTimes = addDatePairs.map((d: any) => d.ed?.getTime()).filter(Boolean) as number[];
+          if (startTimes.length > 0) {
+            const minStart = Math.min(...startTimes);
+            effectiveStart = effectiveStart ? new Date(Math.min(effectiveStart.getTime(), minStart)) : new Date(minStart);
+          }
+          if (endTimes.length > 0) {
+            const maxEnd = Math.max(...endTimes);
+            effectiveEnd = effectiveEnd ? new Date(Math.max(effectiveEnd.getTime(), maxEnd)) : new Date(maxEnd);
+          }
+        }
+
+        // Totais por empresa consideram APENAS contratos ativos no mês atual
+        const currentMonthStart = new Date(currentYear, now.getMonth(), 1);
+        const currentMonthEnd = new Date(currentYear, now.getMonth() + 1, 0);
+        const activeNow = (!effectiveStart || effectiveStart <= currentMonthEnd) &&
+                          (!effectiveEnd || effectiveEnd >= currentMonthStart);
+
+        let monthlyForCurrent = monthly;
+        if (processedAdd.length > 0) {
+          for (let i = processedAdd.length - 1; i >= 0; i--) {
+            if (processedAdd[i].date <= currentMonthEnd) {
+              monthlyForCurrent = processedAdd[i].monthly;
+              break;
+            }
+          }
+        }
+        if (activeNow) {
+          totals[key].annual += monthlyForCurrent * 12;
+          totals[key].monthly += monthlyForCurrent;
+        }
 
         // Calcular para cada mês se o contrato estava ativo
-        const startDate = c.start_date ? new Date(c.start_date) : null;
-        const endDate = c.end_date ? new Date(c.end_date) : null;
-
         for (let month = 0; month < 12; month++) {
           const monthStart = new Date(currentYear, month, 1);
           const monthEnd = new Date(currentYear, month + 1, 0);
 
-          // Contrato ativo no mês se houver sobreposição entre [start_date, end_date] e [monthStart, monthEnd]
-          const startsBeforeOrInMonth = !startDate || startDate <= monthEnd;
-          const endsAfterOrInMonth = !endDate || endDate >= monthStart;
-          const isActive = startsBeforeOrInMonth && endsAfterOrInMonth;
+          // Contrato ativo no mês se houver sobreposição entre [effectiveStart, effectiveEnd] e [monthStart, monthEnd]
+          const isActive = (!effectiveStart || effectiveStart <= monthEnd) &&
+                           (!effectiveEnd || effectiveEnd >= monthStart);
 
           if (isActive) {
             let monthlyForMonth = monthly;
