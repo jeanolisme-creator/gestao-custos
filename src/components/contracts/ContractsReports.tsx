@@ -246,9 +246,60 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
     toast.success("Relatório exportado com sucesso!");
   };
 
-  // Exportar para PDF (simulado)
-  const exportToPDF = () => {
-    toast.success("Funcionalidade de exportação para PDF será implementada em breve!");
+  // Exportar para PDF
+  const exportToPDF = async () => {
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      await import('jspdf-autotable');
+      
+      const doc = new jsPDF();
+      
+      // Título
+      doc.setFontSize(16);
+      doc.text('Relatório de Contratos', 14, 15);
+      doc.setFontSize(10);
+      doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`, 14, 22);
+      
+      // Preparar dados para a tabela
+      const tableData = filteredContracts.map(contract => [
+        contract.number,
+        contract.company,
+        contract.cnpj,
+        formatDate(contract.startDate),
+        formatDate(contract.endDate),
+        formatCurrency(contract.monthlyValue),
+        formatCurrency(contract.annualValue),
+        contract.status,
+        contract.addendumType || 'Sem aditivos'
+      ]);
+      
+      // Adicionar tabela
+      (doc as any).autoTable({
+        startY: 30,
+        head: [['Número', 'Empresa', 'CNPJ', 'Início', 'Fim', 'Valor Mensal', 'Valor Anual', 'Status', 'Aditivos']],
+        body: tableData,
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [139, 92, 246] },
+        columnStyles: {
+          0: { cellWidth: 20 },
+          1: { cellWidth: 35 },
+          2: { cellWidth: 25 },
+          3: { cellWidth: 20 },
+          4: { cellWidth: 20 },
+          5: { cellWidth: 25 },
+          6: { cellWidth: 25 },
+          7: { cellWidth: 20 },
+          8: { cellWidth: 30 }
+        }
+      });
+      
+      // Salvar PDF
+      doc.save(`relatorio_contratos_${format(new Date(), "yyyy-MM-dd")}.pdf`);
+      toast.success("PDF exportado com sucesso!");
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error("Erro ao gerar PDF");
+    }
   };
 
   const clearFilters = () => {
@@ -430,7 +481,7 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
                 {filteredContracts.length}
               </p>
               <CardDescription className="text-lg font-semibold text-blue-600">
-                Valor Total: {formatCurrency(filteredContracts.reduce((sum, c) => sum + c.annualValue, 0))}
+                Valor Total: {formatCurrency(filteredContracts.reduce((sum, c) => sum + c.totalValueWithAddendums, 0))}
               </CardDescription>
             </div>
           </CardHeader>
