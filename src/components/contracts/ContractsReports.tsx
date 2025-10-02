@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { FileDown, Filter, Calendar as CalendarIcon, FileText, Pencil, Trash2, AlertCircle, TrendingUp } from "lucide-react";
+import { FileDown, Filter, Calendar as CalendarIcon, FileText, Pencil, Trash2, AlertCircle, TrendingUp, FileBarChart, DollarSign } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -193,7 +193,7 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
 
   // Filtrar contratos
   const filteredContracts = contracts.filter(contract => {
-    if (filterCompany !== "all" && contract.company !== filterCompany) return false;
+    if (filterCompany !== "all" && !contract.company.toLowerCase().includes(filterCompany.toLowerCase())) return false;
     if (filterStatus !== "all" && contract.status !== filterStatus) return false;
     if (searchTerm && !contract.number.toLowerCase().includes(searchTerm.toLowerCase()) && 
         !contract.company.toLowerCase().includes(searchTerm.toLowerCase())) return false;
@@ -452,7 +452,8 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
         {/* Card de contratos encontrados */}
         <Card className="border-blue-200 bg-blue-50">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-blue-700">
+            <CardTitle className="text-2xl font-bold text-blue-700 flex items-center justify-center gap-2">
+              <FileBarChart className="h-6 w-6" />
               Contratos Encontrados
             </CardTitle>
             <div className="mt-4 space-y-2">
@@ -466,16 +467,16 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
           </CardHeader>
         </Card>
 
-        {/* Card de valor total com aditivos */}
+        {/* Card de valor mensal com aditivos */}
         <Card className="border-green-200 bg-green-50">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold text-green-700 flex items-center justify-center gap-2">
-              <TrendingUp className="h-6 w-6" />
-              Valor com Aditivos
+              <DollarSign className="h-6 w-6" />
+              Valor Mensal (com Aditivos)
             </CardTitle>
             <div className="mt-4 space-y-2">
               <p className="text-4xl font-bold text-green-800">
-                {formatCurrency(filteredContracts.reduce((sum, c) => sum + c.totalValueWithAddendums, 0))}
+                {formatCurrency(filteredContracts.reduce((sum, c) => sum + c.totalValueWithAddendums / 12, 0))}
               </p>
               <CardDescription className="text-sm font-semibold text-green-600">
                 {filteredContracts.filter(c => c.addendums && c.addendums.length > 0).length} contratos com aditivos
@@ -484,47 +485,65 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
           </CardHeader>
         </Card>
 
-        {/* Card de alerta de próximos vencimentos */}
-        <Card className="border-orange-200 bg-orange-50">
-          <CardHeader>
-            <CardTitle className="text-xl font-bold text-orange-700 flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" />
-              Próximos Vencimentos
+        {/* Card de valor anual com aditivos */}
+        <Card className="border-purple-200 bg-purple-50">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold text-purple-700 flex items-center justify-center gap-2">
+              <TrendingUp className="h-6 w-6" />
+              Valor Anual (com Aditivos)
             </CardTitle>
-            <CardContent className="p-0 mt-4">
-              <div className="space-y-2 max-h-40 overflow-y-auto">
-                {filteredContracts
-                  .sort((a, b) => {
-                    const dateA = new Date(a.lastRenewalDate ?? a.endDate);
-                    const dateB = new Date(b.lastRenewalDate ?? b.endDate);
-                    return dateA.getTime() - dateB.getTime();
-                  })
-                  .map(contract => {
-                    const endDate = new Date(contract.lastRenewalDate ?? contract.endDate);
-                    const daysUntil = differenceInDays(endDate, new Date());
-                    const badgeText = daysUntil >= 0 ? `${daysUntil} dias` : `vencido há ${Math.abs(daysUntil)} dias`;
-                    return (
-                      <div key={contract.id} className="flex items-center justify-between p-2 bg-white rounded-md border border-orange-200">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-orange-900 truncate">{contract.company}</p>
-                          <p className="text-xs text-orange-600">{formatDate(endDate.toISOString())}</p>
-                        </div>
-                        <Badge variant="outline" className="ml-2 bg-orange-100 text-orange-700 border-orange-300">
-                          {badgeText}
-                        </Badge>
-                      </div>
-                    );
-                  })}
-                {filteredContracts.length === 0 && (
-                  <p className="text-sm text-orange-600 text-center py-4">
-                    Nenhum contrato encontrado
-                  </p>
-                )}
-              </div>
-            </CardContent>
+            <div className="mt-4 space-y-2">
+              <p className="text-4xl font-bold text-purple-800">
+                {formatCurrency(filteredContracts.reduce((sum, c) => sum + c.totalValueWithAddendums, 0))}
+              </p>
+              <CardDescription className="text-sm font-semibold text-purple-600">
+                Total incluindo todos os aditivos
+              </CardDescription>
+            </div>
           </CardHeader>
         </Card>
       </div>
+
+      {/* Card de alerta de próximos vencimentos - Largura completa */}
+      <Card className="border-orange-200 bg-orange-50">
+        <CardHeader>
+          <CardTitle className="text-xl font-bold text-orange-700 flex items-center gap-2">
+            <AlertCircle className="h-5 w-5" />
+            Próximos Vencimentos
+          </CardTitle>
+          <CardContent className="p-0 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
+              {filteredContracts
+                .sort((a, b) => {
+                  const dateA = new Date(a.lastRenewalDate ?? a.endDate);
+                  const dateB = new Date(b.lastRenewalDate ?? b.endDate);
+                  return dateA.getTime() - dateB.getTime();
+                })
+                .map(contract => {
+                  const endDate = new Date(contract.lastRenewalDate ?? contract.endDate);
+                  const daysUntil = differenceInDays(endDate, new Date());
+                  const badgeText = daysUntil >= 0 ? `${daysUntil} dias` : `vencido há ${Math.abs(daysUntil)} dias`;
+                  return (
+                    <div key={contract.id} className="flex items-center justify-between p-3 bg-white rounded-md border border-orange-200">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-orange-900 truncate">{contract.company}</p>
+                        <p className="text-xs text-orange-600">{formatDate(endDate.toISOString())}</p>
+                      </div>
+                      <Badge variant="outline" className="ml-2 bg-orange-100 text-orange-700 border-orange-300 whitespace-nowrap">
+                        {badgeText}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              {filteredContracts.length === 0 && (
+                <p className="text-sm text-orange-600 text-center py-4 col-span-full">
+                  Nenhum contrato encontrado
+                </p>
+              )}
+            </div>
+          </CardContent>
+        </CardHeader>
+      </Card>
 
       {/* Tabela de resultados */}
       <Card>
@@ -561,7 +580,7 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
                       <TableCell className="font-medium">{contract.number}</TableCell>
                       <TableCell>{contract.company}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">{contract.cnpj}</TableCell>
-                      <TableCell className="max-w-xs truncate">{contract.object}</TableCell>
+                      <TableCell className="max-w-xs whitespace-normal break-words">{contract.object}</TableCell>
                       <TableCell className="text-sm">
                         {formatDate(contract.startDate)} - {formatDate(contract.endDate)}
                       </TableCell>
