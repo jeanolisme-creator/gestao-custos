@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/sonner";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import * as XLSX from 'xlsx';
+import { supabase } from "@/integrations/supabase/client";
 
 interface Addendum {
   id: string;
@@ -164,7 +165,7 @@ export function ContractRegistration() {
     reader.readAsBinaryString(file);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!validateCNPJ(cnpj)) {
@@ -177,33 +178,53 @@ export function ContractRegistration() {
       return;
     }
 
-    // Aqui você salvaria os dados no banco
-    console.log({
-      contractNumber,
-      companyName,
-      cnpj,
-      commitmentNumber,
-      contractObject,
-      startDate,
-      endDate,
-      monthlyValue,
-      annualValue,
-      addendums,
-    });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Você precisa estar logado para cadastrar contratos");
+        return;
+      }
 
-    toast.success("Contrato cadastrado com sucesso!");
-    
-    // Limpar formulário
-    setContractNumber("");
-    setCompanyName("");
-    setCnpj("");
-    setCommitmentNumber("");
-    setContractObject("");
-    setStartDate(undefined);
-    setEndDate(undefined);
-    setMonthlyValue("");
-    setAnnualValue("0");
-    setAddendums([]);
+      // Parse currency values
+      const monthlyValueNumeric = parseFloat(monthlyValue.replace(/[^\d,]/g, '').replace(',', '.'));
+      const annualValueNumeric = parseFloat(annualValue.replace(/[^\d,]/g, '').replace(',', '.'));
+
+      const { error } = await supabase
+        .from('contracts')
+        .insert({
+          user_id: user.id,
+          contract_number: contractNumber,
+          company_name: companyName,
+          cnpj,
+          commitment_number: commitmentNumber,
+          contract_object: contractObject,
+          start_date: format(startDate, 'yyyy-MM-dd'),
+          end_date: format(endDate, 'yyyy-MM-dd'),
+          monthly_value: monthlyValueNumeric,
+          annual_value: annualValueNumeric,
+          addendums: addendums.length > 0 ? addendums : null,
+        } as any);
+
+      if (error) throw error;
+
+      toast.success("Contrato cadastrado com sucesso!");
+      
+      // Limpar formulário
+      setContractNumber("");
+      setCompanyName("");
+      setCnpj("");
+      setCommitmentNumber("");
+      setContractObject("");
+      setStartDate(undefined);
+      setEndDate(undefined);
+      setMonthlyValue("");
+      setAnnualValue("0");
+      setAddendums([]);
+    } catch (error) {
+      console.error('Error saving contract:', error);
+      toast.error("Erro ao cadastrar contrato");
+    }
   };
 
   return (

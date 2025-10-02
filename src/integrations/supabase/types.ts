@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      contracts: {
+        Row: {
+          addendums: Json | null
+          annual_value: number
+          cnpj: string
+          commitment_number: string
+          company_name: string
+          contract_number: string
+          contract_object: string
+          created_at: string
+          end_date: string
+          id: string
+          monthly_value: number
+          start_date: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          addendums?: Json | null
+          annual_value: number
+          cnpj: string
+          commitment_number: string
+          company_name: string
+          contract_number: string
+          contract_object: string
+          created_at?: string
+          end_date: string
+          id?: string
+          monthly_value: number
+          start_date: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          addendums?: Json | null
+          annual_value?: number
+          cnpj?: string
+          commitment_number?: string
+          company_name?: string
+          contract_number?: string
+          contract_object?: string
+          created_at?: string
+          end_date?: string
+          id?: string
+          monthly_value?: number
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       energy_records: {
         Row: {
           bairro: string | null

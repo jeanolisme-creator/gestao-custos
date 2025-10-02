@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { FileDown, Filter, Calendar as CalendarIcon, FileText, Pencil, Trash2 } from "lucide-react";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "@/components/ui/sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Contract {
   id: string;
@@ -36,75 +37,55 @@ export function ContractsReports() {
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [contractToDelete, setContractToDelete] = useState<string | null>(null);
+  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data de contratos
-  const mockContracts: Contract[] = [
-    {
-      id: "1",
-      number: "001/2024",
-      company: "Adrimak",
-      cnpj: "12.345.678/0001-90",
-      empenho: "EMP-2024-001",
-      object: "Serviços de manutenção predial",
-      startDate: "2024-01-01",
-      endDate: "2024-12-31",
-      monthlyValue: 25000,
-      annualValue: 300000,
-      status: "Ativo"
-    },
-    {
-      id: "2",
-      number: "002/2024",
-      company: "Empro",
-      cnpj: "23.456.789/0001-01",
-      empenho: "EMP-2024-002",
-      object: "Serviços de limpeza e conservação",
-      startDate: "2024-01-01",
-      endDate: "2024-12-31",
-      monthlyValue: 18000,
-      annualValue: 216000,
-      status: "Ativo"
-    },
-    {
-      id: "3",
-      number: "003/2024",
-      company: "Licenças",
-      cnpj: "34.567.890/0001-12",
-      empenho: "EMP-2024-003",
-      object: "Licenças de software",
-      startDate: "2024-01-01",
-      endDate: "2025-11-30",
-      monthlyValue: 35000,
-      annualValue: 420000,
-      status: "Próximo ao Vencimento"
-    },
-    {
-      id: "4",
-      number: "004/2024",
-      company: "Sinal BR",
-      cnpj: "45.678.901/0001-23",
-      empenho: "EMP-2024-004",
-      object: "Serviços de internet",
-      startDate: "2024-01-01",
-      endDate: "2024-12-31",
-      monthlyValue: 12000,
-      annualValue: 144000,
-      status: "Ativo"
-    },
-    {
-      id: "5",
-      number: "005/2024",
-      company: "TIM",
-      cnpj: "56.789.012/0001-34",
-      empenho: "EMP-2024-005",
-      object: "Serviços de telefonia móvel",
-      startDate: "2024-01-01",
-      endDate: "2024-12-31",
-      monthlyValue: 22000,
-      annualValue: 264000,
-      status: "Ativo"
-    },
-  ];
+  const calculateStatus = (endDateStr: string): 'Ativo' | 'Vencido' | 'Próximo ao Vencimento' => {
+    const end = new Date(endDateStr);
+    const today = new Date();
+    const daysUntilEnd = differenceInDays(end, today);
+    
+    if (daysUntilEnd < 0) return 'Vencido';
+    if (daysUntilEnd <= 30) return 'Próximo ao Vencimento';
+    return 'Ativo';
+  };
+
+  const fetchContracts = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('contracts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedContracts: Contract[] = (data || []).map(contract => ({
+        id: contract.id,
+        number: contract.contract_number,
+        company: contract.company_name,
+        cnpj: contract.cnpj,
+        empenho: contract.commitment_number,
+        object: contract.contract_object,
+        startDate: contract.start_date,
+        endDate: contract.end_date,
+        monthlyValue: Number(contract.monthly_value),
+        annualValue: Number(contract.annual_value),
+        status: calculateStatus(contract.end_date),
+      }));
+
+      setContracts(formattedContracts);
+    } catch (error) {
+      console.error('Error fetching contracts:', error);
+      toast.error("Erro ao carregar contratos");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchContracts();
+  }, []);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -119,7 +100,7 @@ export function ContractsReports() {
   };
 
   // Filtrar contratos
-  const filteredContracts = mockContracts.filter(contract => {
+  const filteredContracts = contracts.filter(contract => {
     if (filterCompany !== "all" && contract.company !== filterCompany) return false;
     if (filterStatus !== "all" && contract.status !== filterStatus) return false;
     if (searchTerm && !contract.number.toLowerCase().includes(searchTerm.toLowerCase()) && 
@@ -209,10 +190,22 @@ export function ContractsReports() {
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
+  const handleDeleteConfirm = async () => {
     if (contractToDelete) {
-      // Implementar exclusão
-      toast.success("Contrato excluído com sucesso!");
+      try {
+        const { error } = await supabase
+          .from('contracts')
+          .delete()
+          .eq('id', contractToDelete);
+
+        if (error) throw error;
+
+        toast.success("Contrato excluído com sucesso!");
+        fetchContracts(); // Refresh list
+      } catch (error) {
+        console.error('Error deleting contract:', error);
+        toast.error("Erro ao excluir contrato");
+      }
       setContractToDelete(null);
     }
     setDeleteDialogOpen(false);
