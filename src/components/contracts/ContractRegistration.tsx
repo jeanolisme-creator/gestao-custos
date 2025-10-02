@@ -38,6 +38,7 @@ export function ContractRegistration({ editData, onSuccess }: ContractRegistrati
   const [commitmentNumber, setCommitmentNumber] = useState("");
   const [contractObject, setContractObject] = useState("");
   const [signingDate, setSigningDate] = useState<Date>();
+  const [signingDateInput, setSigningDateInput] = useState("");
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [monthlyValue, setMonthlyValue] = useState("");
@@ -57,7 +58,9 @@ export function ContractRegistration({ editData, onSuccess }: ContractRegistrati
       setContractObject(editData.contract_object || "");
       
       if (editData.signing_date) {
-        setSigningDate(new Date(editData.signing_date));
+        const date = new Date(editData.signing_date);
+        setSigningDate(date);
+        setSigningDateInput(format(date, "dd/MM/yyyy"));
       }
       
       if (editData.start_date) {
@@ -287,6 +290,7 @@ export function ContractRegistration({ editData, onSuccess }: ContractRegistrati
       setCommitmentNumber("");
       setContractObject("");
       setSigningDate(undefined);
+      setSigningDateInput("");
       setStartDate(undefined);
       setEndDate(undefined);
       setMonthlyValue("");
@@ -408,13 +412,26 @@ export function ContractRegistration({ editData, onSuccess }: ContractRegistrati
               <Input
                 type="text"
                 placeholder="DD/MM/AAAA"
-                value={signingDate ? format(signingDate, "dd/MM/yyyy") : ""}
+                value={signingDateInput}
                 onChange={(e) => {
-                  const value = e.target.value.replace(/\D/g, "");
-                  if (value.length === 8) {
-                    const day = parseInt(value.slice(0, 2));
-                    const month = parseInt(value.slice(2, 4)) - 1;
-                    const year = parseInt(value.slice(4, 8));
+                  let value = e.target.value.replace(/\D/g, "");
+                  
+                  // Formatar enquanto digita
+                  if (value.length >= 2) {
+                    value = value.slice(0, 2) + '/' + value.slice(2);
+                  }
+                  if (value.length >= 5) {
+                    value = value.slice(0, 5) + '/' + value.slice(5, 9);
+                  }
+                  
+                  setSigningDateInput(value);
+                  
+                  // Tentar criar a data quando tiver formato completo
+                  const numbers = value.replace(/\D/g, "");
+                  if (numbers.length === 8) {
+                    const day = parseInt(numbers.slice(0, 2));
+                    const month = parseInt(numbers.slice(2, 4)) - 1;
+                    const year = parseInt(numbers.slice(4, 8));
                     const date = new Date(year, month, day);
                     if (!isNaN(date.getTime())) {
                       setSigningDate(date);
@@ -438,7 +455,12 @@ export function ContractRegistration({ editData, onSuccess }: ContractRegistrati
                   <Calendar
                     mode="single"
                     selected={signingDate}
-                    onSelect={setSigningDate}
+                    onSelect={(date) => {
+                      setSigningDate(date);
+                      if (date) {
+                        setSigningDateInput(format(date, "dd/MM/yyyy"));
+                      }
+                    }}
                     initialFocus
                     className="pointer-events-auto"
                   />
