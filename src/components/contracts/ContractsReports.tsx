@@ -253,7 +253,7 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
       const jsPDFCtor = jspdfMod.jsPDF || jspdfMod.default; // compat: named or default export
       const autoTable = (await import('jspdf-autotable')).default;
 
-      const doc = new jsPDFCtor();
+      const doc = new jsPDFCtor({ orientation: 'landscape' });
 
       // Título
       doc.setFontSize(16);

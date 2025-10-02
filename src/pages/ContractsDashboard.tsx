@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContractsNavigation } from "@/components/contracts/ContractsNavigation";
 import { ContractRegistration } from "@/components/contracts/ContractRegistration";
 import { ContractsCharts } from "@/components/contracts/ContractsCharts";
 import { ContractsReports } from "@/components/contracts/ContractsReports";
 import { DollarSign, TrendingUp, Calendar, Building2, FileText, Wifi, Phone } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { parseCurrency } from "@/utils/currencyMask";
 
 export default function ContractsDashboard() {
   const [currentTab, setCurrentTab] = useState('dashboard');
@@ -20,14 +22,63 @@ export default function ContractsDashboard() {
     setCurrentTab('reports');
   };
 
-  // Mock data para contratos
-  const contracts = {
-    adrimak: { monthly: 25000, annual: 300000 },
-    empro: { monthly: 18000, annual: 216000 },
-    licencas: { monthly: 35000, annual: 420000 },
-    sinalBR: { monthly: 12000, annual: 144000 },
-    tim: { monthly: 22000, annual: 264000 },
-  };
+  // Totais por empresa (calculados do banco)
+  const [companyTotals, setCompanyTotals] = useState({
+    adrimak: { monthly: 0, annual: 0 },
+    empro: { monthly: 0, annual: 0 },
+    licencas: { monthly: 0, annual: 0 },
+    sinalBR: { monthly: 0, annual: 0 },
+    tim: { monthly: 0, annual: 0 },
+  });
+
+  useEffect(() => {
+    const fetchTotals = async () => {
+      const { data, error } = await supabase
+        .from('contracts')
+        .select('company_name, annual_value, monthly_value, addendums');
+      if (error) {
+        console.error('Erro ao carregar contratos:', error);
+        return;
+      }
+      const totals = {
+        adrimak: { monthly: 0, annual: 0 },
+        empro: { monthly: 0, annual: 0 },
+        licencas: { monthly: 0, annual: 0 },
+        sinalBR: { monthly: 0, annual: 0 },
+        tim: { monthly: 0, annual: 0 },
+      } as { adrimak: { monthly: number; annual: number }; empro: { monthly: number; annual: number }; licencas: { monthly: number; annual: number }; sinalBR: { monthly: number; annual: number }; tim: { monthly: number; annual: number } };
+
+      const getKey = (name: string) => {
+        const n = (name || '').toLowerCase();
+        if (n.includes('adrimak')) return 'adrimak';
+        if (n.includes('empro')) return 'empro';
+        if (n.includes('sinal br') || n.includes('sinalbr') || n.includes('sinal')) return 'sinalBR';
+        if (n.includes('tim')) return 'tim';
+        if (n.includes('licen')) return 'licencas';
+        return null;
+      };
+
+      data?.forEach((c: any) => {
+        const key = getKey(c.company_name);
+        if (!key) return;
+        const addendums = Array.isArray(c.addendums) ? c.addendums : [];
+        let annual = Number(c.annual_value) || 0;
+        addendums.forEach((a: any) => {
+          if (!a) return;
+          if (a.finalValue) annual += parseCurrency(String(a.finalValue));
+          else if (a.monthlyValue) annual += parseCurrency(String(a.monthlyValue)) * 12;
+          else if (a.annualValue) annual += Number(a.annualValue) || 0;
+        });
+        const monthly = annual / 12;
+        totals[key].annual += annual;
+        totals[key].monthly += monthly;
+      });
+
+      setCompanyTotals(totals);
+    };
+
+    fetchTotals();
+  }, []);
 
   // Mock data mensal
   const monthlyData = [
@@ -45,8 +96,8 @@ export default function ContractsDashboard() {
     { month: 'Dezembro', total: 112000 },
   ];
 
-  const totalMonthly = Object.values(contracts).reduce((sum, c) => sum + c.monthly, 0);
-  const totalAnnual = Object.values(contracts).reduce((sum, c) => sum + c.annual, 0);
+  const totalMonthly = (Object.values(companyTotals) as Array<{monthly:number; annual:number}>).reduce((sum, c) => sum + c.monthly, 0);
+  const totalAnnual = (Object.values(companyTotals) as Array<{monthly:number; annual:number}>).reduce((sum, c) => sum + c.annual, 0);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -68,7 +119,7 @@ export default function ContractsDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <div className="text-2xl font-bold text-blue-700">{formatCurrency(contracts.adrimak.monthly)}</div>
+            <div className="text-2xl font-bold text-blue-700">{formatCurrency(companyTotals.adrimak.monthly)}</div>
           </CardContent>
         </Card>
 
@@ -80,7 +131,7 @@ export default function ContractsDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <div className="text-2xl font-bold text-green-700">{formatCurrency(contracts.empro.monthly)}</div>
+            <div className="text-2xl font-bold text-green-700">{formatCurrency(companyTotals.empro.monthly)}</div>
           </CardContent>
         </Card>
 
@@ -92,7 +143,7 @@ export default function ContractsDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <div className="text-2xl font-bold text-yellow-700">{formatCurrency(contracts.licencas.monthly)}</div>
+            <div className="text-2xl font-bold text-yellow-700">{formatCurrency(companyTotals.licencas.monthly)}</div>
           </CardContent>
         </Card>
 
@@ -104,7 +155,7 @@ export default function ContractsDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <div className="text-2xl font-bold text-purple-700">{formatCurrency(contracts.sinalBR.monthly)}</div>
+            <div className="text-2xl font-bold text-purple-700">{formatCurrency(companyTotals.sinalBR.monthly)}</div>
           </CardContent>
         </Card>
 
@@ -116,7 +167,7 @@ export default function ContractsDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <div className="text-2xl font-bold text-pink-700">{formatCurrency(contracts.tim.monthly)}</div>
+            <div className="text-2xl font-bold text-pink-700">{formatCurrency(companyTotals.tim.monthly)}</div>
           </CardContent>
         </Card>
       </div>
@@ -131,7 +182,7 @@ export default function ContractsDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <div className="text-2xl font-bold text-blue-800">{formatCurrency(contracts.adrimak.annual)}</div>
+            <div className="text-2xl font-bold text-blue-800">{formatCurrency(companyTotals.adrimak.annual)}</div>
           </CardContent>
         </Card>
 
@@ -143,7 +194,7 @@ export default function ContractsDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <div className="text-2xl font-bold text-green-800">{formatCurrency(contracts.empro.annual)}</div>
+            <div className="text-2xl font-bold text-green-800">{formatCurrency(companyTotals.empro.annual)}</div>
           </CardContent>
         </Card>
 
@@ -155,7 +206,7 @@ export default function ContractsDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <div className="text-2xl font-bold text-yellow-800">{formatCurrency(contracts.licencas.annual)}</div>
+            <div className="text-2xl font-bold text-yellow-800">{formatCurrency(companyTotals.licencas.annual)}</div>
           </CardContent>
         </Card>
 
@@ -167,7 +218,7 @@ export default function ContractsDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <div className="text-2xl font-bold text-purple-800">{formatCurrency(contracts.sinalBR.annual)}</div>
+            <div className="text-2xl font-bold text-purple-800">{formatCurrency(companyTotals.sinalBR.annual)}</div>
           </CardContent>
         </Card>
 
@@ -179,7 +230,7 @@ export default function ContractsDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <div className="text-2xl font-bold text-pink-800">{formatCurrency(contracts.tim.annual)}</div>
+            <div className="text-2xl font-bold text-pink-800">{formatCurrency(companyTotals.tim.annual)}</div>
           </CardContent>
         </Card>
       </div>
