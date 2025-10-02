@@ -80,24 +80,24 @@ export default function ContractsDashboard() {
     fetchTotals();
   }, []);
 
-  // Mock data mensal
-  const monthlyData = [
-    { month: 'Janeiro', total: 112000 },
-    { month: 'Fevereiro', total: 112000 },
-    { month: 'Março', total: 112000 },
-    { month: 'Abril', total: 112000 },
-    { month: 'Maio', total: 112000 },
-    { month: 'Junho', total: 112000 },
-    { month: 'Julho', total: 112000 },
-    { month: 'Agosto', total: 112000 },
-    { month: 'Setembro', total: 112000 },
-    { month: 'Outubro', total: 112000 },
-    { month: 'Novembro', total: 112000 },
-    { month: 'Dezembro', total: 112000 },
-  ];
-
   const totalMonthly = (Object.values(companyTotals) as Array<{monthly:number; annual:number}>).reduce((sum, c) => sum + c.monthly, 0);
   const totalAnnual = (Object.values(companyTotals) as Array<{monthly:number; annual:number}>).reduce((sum, c) => sum + c.annual, 0);
+
+  // Valores mensais calculados dinamicamente
+  const monthlyData = [
+    { month: 'Janeiro', total: totalMonthly },
+    { month: 'Fevereiro', total: totalMonthly },
+    { month: 'Março', total: totalMonthly },
+    { month: 'Abril', total: totalMonthly },
+    { month: 'Maio', total: totalMonthly },
+    { month: 'Junho', total: totalMonthly },
+    { month: 'Julho', total: totalMonthly },
+    { month: 'Agosto', total: totalMonthly },
+    { month: 'Setembro', total: totalMonthly },
+    { month: 'Outubro', total: totalMonthly },
+    { month: 'Novembro', total: totalMonthly },
+    { month: 'Dezembro', total: totalMonthly },
+  ];
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
