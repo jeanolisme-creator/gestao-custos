@@ -63,6 +63,17 @@ export default function ContractsDashboard() {
       const monthlyValues = Array(12).fill(0);
       const currentYear = 2025;
 
+      const parseAny = (val: any): number => {
+        if (val === null || val === undefined) return 0;
+        if (typeof val === 'number') return val;
+        const s = String(val).trim();
+        if (/[,]/.test(s) && /\d,\d{2}$/.test(s)) {
+          return parseFloat(s.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+        }
+        const n = Number(s);
+        return isFinite(n) ? n : 0;
+      };
+
       data?.forEach((c: any) => {
         const key = getKey(c.company_name);
         if (!key) return;
@@ -70,19 +81,19 @@ export default function ContractsDashboard() {
         const addendums = Array.isArray(c.addendums) ? c.addendums : [];
         
         // Determinar valores anual e mensal com base no último aditivo quando existir
-        let annual = Number(c.annual_value) || 0;
-        let monthly = (Number(c.monthly_value) || 0) || (annual / 12);
+        let annual = parseAny(c.annual_value);
+        let monthly = parseAny(c.monthly_value) || (annual / 12);
         
         if (addendums.length > 0) {
           const lastAddendum = addendums[addendums.length - 1];
           if (lastAddendum.monthlyValue) {
-            monthly = parseCurrency(String(lastAddendum.monthlyValue));
+            monthly = parseAny(lastAddendum.monthlyValue);
             annual = monthly * 12;
           } else if (lastAddendum.finalValue) {
-            annual = parseCurrency(String(lastAddendum.finalValue));
+            annual = parseAny(lastAddendum.finalValue);
             monthly = annual / 12;
           } else if (lastAddendum.annualValue) {
-            annual = Number(lastAddendum.annualValue) || 0;
+            annual = parseAny(lastAddendum.annualValue) || 0;
             monthly = annual / 12;
           }
         }
