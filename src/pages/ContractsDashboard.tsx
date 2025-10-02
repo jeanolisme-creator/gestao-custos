@@ -8,6 +8,17 @@ import { DollarSign, TrendingUp, Calendar, Building2, FileText, Wifi, Phone } fr
 
 export default function ContractsDashboard() {
   const [currentTab, setCurrentTab] = useState('dashboard');
+  const [editingContract, setEditingContract] = useState<any>(null);
+
+  const handleEditContract = (contractData: any) => {
+    setEditingContract(contractData);
+    setCurrentTab('register');
+  };
+
+  const handleContractSuccess = () => {
+    setEditingContract(null);
+    setCurrentTab('reports');
+  };
 
   // Mock data para contratos
   const contracts = {
@@ -240,9 +251,14 @@ export default function ContractsDashboard() {
         <ContractsNavigation currentTab={currentTab} onTabChange={setCurrentTab} />
 
         {currentTab === 'dashboard' && renderDashboard()}
-        {currentTab === 'register' && <ContractRegistration />}
+        {currentTab === 'register' && (
+          <ContractRegistration 
+            editData={editingContract} 
+            onSuccess={handleContractSuccess}
+          />
+        )}
         {currentTab === 'costs' && <ContractsCharts />}
-        {currentTab === 'reports' && <ContractsReports />}
+        {currentTab === 'reports' && <ContractsReports onEditContract={handleEditContract} />}
         {currentTab === 'settings' && <div className="text-center p-8">Configurações - Em desenvolvimento</div>}
       </div>
     </div>

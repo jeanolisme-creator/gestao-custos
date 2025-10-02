@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +25,13 @@ interface Addendum {
   finalValue: string;
 }
 
-export function ContractRegistration() {
+interface ContractRegistrationProps {
+  editData?: any;
+  onSuccess?: () => void;
+}
+
+export function ContractRegistration({ editData, onSuccess }: ContractRegistrationProps) {
+  const [contractId, setContractId] = useState<string | undefined>(editData?.id);
   const [contractNumber, setContractNumber] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [cnpj, setCnpj] = useState("");
@@ -38,6 +44,45 @@ export function ContractRegistration() {
   const [addendums, setAddendums] = useState<Addendum[]>([]);
   const csvInputRef = useRef<HTMLInputElement>(null);
   const xlsxInputRef = useRef<HTMLInputElement>(null);
+
+  // Load edit data when provided
+  useEffect(() => {
+    if (editData) {
+      setContractId(editData.id);
+      setContractNumber(editData.contract_number || "");
+      setCompanyName(editData.company_name || "");
+      setCnpj(editData.cnpj || "");
+      setCommitmentNumber(editData.commitment_number || "");
+      setContractObject(editData.contract_object || "");
+      
+      if (editData.start_date) {
+        setStartDate(new Date(editData.start_date));
+      }
+      if (editData.end_date) {
+        setEndDate(new Date(editData.end_date));
+      }
+      
+      if (editData.monthly_value) {
+        const formatted = new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }).format(editData.monthly_value);
+        setMonthlyValue(formatted);
+      }
+      
+      if (editData.annual_value) {
+        const formatted = new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }).format(editData.annual_value);
+        setAnnualValue(formatted);
+      }
+      
+      if (editData.addendums) {
+        setAddendums(editData.addendums);
+      }
+    }
+  }, [editData]);
 
   const formatCurrency = (value: string) => {
     const numbers = value.replace(/\D/g, "");
@@ -190,25 +235,44 @@ export function ContractRegistration() {
       const monthlyValueNumeric = parseFloat(monthlyValue.replace(/[^\d,]/g, '').replace(',', '.'));
       const annualValueNumeric = parseFloat(annualValue.replace(/[^\d,]/g, '').replace(',', '.'));
 
-      const { error } = await supabase
-        .from('contracts')
-        .insert({
-          user_id: user.id,
-          contract_number: contractNumber,
-          company_name: companyName,
-          cnpj,
-          commitment_number: commitmentNumber,
-          contract_object: contractObject,
-          start_date: format(startDate, 'yyyy-MM-dd'),
-          end_date: format(endDate, 'yyyy-MM-dd'),
-          monthly_value: monthlyValueNumeric,
-          annual_value: annualValueNumeric,
-          addendums: addendums.length > 0 ? addendums : null,
-        } as any);
+      const contractData = {
+        user_id: user.id,
+        contract_number: contractNumber,
+        company_name: companyName,
+        cnpj,
+        commitment_number: commitmentNumber,
+        contract_object: contractObject,
+        start_date: format(startDate, 'yyyy-MM-dd'),
+        end_date: format(endDate, 'yyyy-MM-dd'),
+        monthly_value: monthlyValueNumeric,
+        annual_value: annualValueNumeric,
+        addendums: addendums.length > 0 ? addendums : null,
+      };
+
+      let error;
+      
+      if (contractId) {
+        // Update existing contract
+        const result = await supabase
+          .from('contracts')
+          .update(contractData as any)
+          .eq('id', contractId);
+        error = result.error;
+      } else {
+        // Insert new contract
+        const result = await supabase
+          .from('contracts')
+          .insert(contractData as any);
+        error = result.error;
+      }
 
       if (error) throw error;
 
-      toast.success("Contrato cadastrado com sucesso!");
+      toast.success(contractId ? "Contrato atualizado com sucesso!" : "Contrato cadastrado com sucesso!");
+      
+      if (onSuccess) {
+        onSuccess();
+      }
       
       // Limpar formulário
       setContractNumber("");
@@ -233,9 +297,9 @@ export function ContractRegistration() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <CardTitle>Dados Gerais do Contrato</CardTitle>
+              <CardTitle>{contractId ? 'Editar Contrato' : 'Dados Gerais do Contrato'}</CardTitle>
               <CardDescription>
-                Preencha as informações básicas do contrato
+                {contractId ? 'Atualize as informações do contrato' : 'Preencha as informações básicas do contrato'}
               </CardDescription>
             </div>
             <div className="flex gap-2">

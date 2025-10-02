@@ -29,7 +29,11 @@ interface Contract {
   status: 'Ativo' | 'Vencido' | 'Próximo ao Vencimento';
 }
 
-export function ContractsReports() {
+interface ContractsReportsProps {
+  onEditContract?: (contractData: any) => void;
+}
+
+export function ContractsReports({ onEditContract }: ContractsReportsProps) {
   const [filterCompany, setFilterCompany] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [startDate, setStartDate] = useState<Date>();
@@ -180,9 +184,23 @@ export function ContractsReports() {
     }
   };
 
-  const handleEdit = (contractId: string) => {
-    // Implementar edição
-    toast.success(`Editando contrato ${contractId}`);
+  const handleEdit = async (contractId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('contracts')
+        .select('*')
+        .eq('id', contractId)
+        .single();
+
+      if (error) throw error;
+
+      if (onEditContract && data) {
+        onEditContract(data);
+      }
+    } catch (error) {
+      console.error('Error fetching contract:', error);
+      toast.error("Erro ao carregar dados do contrato");
+    }
   };
 
   const handleDeleteClick = (contractId: string) => {
