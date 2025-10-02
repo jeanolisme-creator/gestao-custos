@@ -62,13 +62,17 @@ export default function ContractsDashboard() {
         const key = getKey(c.company_name);
         if (!key) return;
         const addendums = Array.isArray(c.addendums) ? c.addendums : [];
+        
         let annual = Number(c.annual_value) || 0;
-        addendums.forEach((a: any) => {
-          if (!a) return;
-          if (a.finalValue) annual += parseCurrency(String(a.finalValue));
-          else if (a.monthlyValue) annual += parseCurrency(String(a.monthlyValue)) * 12;
-          else if (a.annualValue) annual += Number(a.annualValue) || 0;
-        });
+        
+        // Se houver aditivos, usar apenas o último
+        if (addendums.length > 0) {
+          const lastAddendum = addendums[addendums.length - 1];
+          if (lastAddendum.finalValue) annual = parseCurrency(String(lastAddendum.finalValue));
+          else if (lastAddendum.monthlyValue) annual = parseCurrency(String(lastAddendum.monthlyValue)) * 12;
+          else if (lastAddendum.annualValue) annual = Number(lastAddendum.annualValue) || 0;
+        }
+        
         const monthly = annual / 12;
         totals[key].annual += annual;
         totals[key].monthly += monthly;
