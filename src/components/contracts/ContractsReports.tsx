@@ -249,17 +249,18 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
   // Exportar para PDF
   const exportToPDF = async () => {
     try {
-      const { default: jsPDF } = await import('jspdf');
-      await import('jspdf-autotable');
-      
-      const doc = new jsPDF();
-      
+      const jspdfMod: any = await import('jspdf');
+      const jsPDFCtor = jspdfMod.jsPDF || jspdfMod.default; // compat: named or default export
+      const autoTable = (await import('jspdf-autotable')).default;
+
+      const doc = new jsPDFCtor();
+
       // Título
       doc.setFontSize(16);
       doc.text('Relatório de Contratos', 14, 15);
       doc.setFontSize(10);
       doc.text(`Gerado em: ${format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}`, 14, 22);
-      
+
       // Preparar dados para a tabela
       const tableData = filteredContracts.map(contract => [
         contract.number,
@@ -272,9 +273,9 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
         contract.status,
         contract.addendumType || 'Sem aditivos'
       ]);
-      
-      // Adicionar tabela
-      (doc as any).autoTable({
+
+      // Adicionar tabela usando plugin (evita depender do prototype)
+      autoTable(doc, {
         startY: 30,
         head: [['Número', 'Empresa', 'CNPJ', 'Início', 'Fim', 'Valor Mensal', 'Valor Anual', 'Status', 'Aditivos']],
         body: tableData,
@@ -292,7 +293,7 @@ export function ContractsReports({ onEditContract }: ContractsReportsProps) {
           8: { cellWidth: 30 }
         }
       });
-      
+
       // Salvar PDF
       doc.save(`relatorio_contratos_${format(new Date(), "yyyy-MM-dd")}.pdf`);
       toast.success("PDF exportado com sucesso!");
