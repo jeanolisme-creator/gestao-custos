@@ -313,64 +313,92 @@ export function ContractRegistration() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Data Inicial da Vigência</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !startDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? (
-                      format(startDate, "PPP", { locale: ptBR })
-                    ) : (
-                      <span>Selecione a data</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={setStartDate}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="DD/MM/AAAA"
+                  value={startDate ? format(startDate, "dd/MM/yyyy") : ""}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, "");
+                    if (value.length === 8) {
+                      const day = parseInt(value.slice(0, 2));
+                      const month = parseInt(value.slice(2, 4)) - 1;
+                      const year = parseInt(value.slice(4, 8));
+                      const date = new Date(year, month, day);
+                      if (!isNaN(date.getTime())) {
+                        setStartDate(date);
+                      }
+                    }
+                  }}
+                  maxLength={10}
+                  className="flex-1"
+                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                    >
+                      <CalendarIcon className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label>Data Final da Vigência</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !endDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? (
-                      format(endDate, "PPP", { locale: ptBR })
-                    ) : (
-                      <span>Selecione a data</span>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={setEndDate}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="DD/MM/AAAA"
+                  value={endDate ? format(endDate, "dd/MM/yyyy") : ""}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, "");
+                    if (value.length === 8) {
+                      const day = parseInt(value.slice(0, 2));
+                      const month = parseInt(value.slice(2, 4)) - 1;
+                      const year = parseInt(value.slice(4, 8));
+                      const date = new Date(year, month, day);
+                      if (!isNaN(date.getTime())) {
+                        setEndDate(date);
+                      }
+                    }
+                  }}
+                  maxLength={10}
+                  className="flex-1"
+                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                    >
+                      <CalendarIcon className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -442,80 +470,120 @@ export function ContractRegistration() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Data Inicial do Aditivo</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !addendum.startDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {addendum.startDate ? (
-                            format(addendum.startDate, "PPP", { locale: ptBR })
-                          ) : (
-                            <span>Selecione a data</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={addendum.startDate}
-                          onSelect={(date) =>
-                            setAddendums(
-                              addendums.map((add) =>
-                                add.id === addendum.id
-                                  ? { ...add, startDate: date }
-                                  : add
-                              )
-                            )
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="DD/MM/AAAA"
+                        value={addendum.startDate ? format(addendum.startDate, "dd/MM/yyyy") : ""}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, "");
+                          if (value.length === 8) {
+                            const day = parseInt(value.slice(0, 2));
+                            const month = parseInt(value.slice(2, 4)) - 1;
+                            const year = parseInt(value.slice(4, 8));
+                            const date = new Date(year, month, day);
+                            if (!isNaN(date.getTime())) {
+                              setAddendums(
+                                addendums.map((add) =>
+                                  add.id === addendum.id
+                                    ? { ...add, startDate: date }
+                                    : add
+                                )
+                              );
+                            }
                           }
-                          initialFocus
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
+                        }}
+                        maxLength={10}
+                        className="flex-1"
+                      />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                          >
+                            <CalendarIcon className="h-4 w-4" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={addendum.startDate}
+                            onSelect={(date) =>
+                              setAddendums(
+                                addendums.map((add) =>
+                                  add.id === addendum.id
+                                    ? { ...add, startDate: date }
+                                    : add
+                                )
+                              )
+                            }
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label>Data Final do Aditivo</Label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !addendum.endDate && "text-muted-foreground"
-                          )}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {addendum.endDate ? (
-                            format(addendum.endDate, "PPP", { locale: ptBR })
-                          ) : (
-                            <span>Selecione a data</span>
-                          )}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={addendum.endDate}
-                          onSelect={(date) =>
-                            setAddendums(
-                              addendums.map((add) =>
-                                add.id === addendum.id
-                                  ? { ...add, endDate: date }
-                                  : add
-                              )
-                            )
+                    <div className="flex gap-2">
+                      <Input
+                        type="text"
+                        placeholder="DD/MM/AAAA"
+                        value={addendum.endDate ? format(addendum.endDate, "dd/MM/yyyy") : ""}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/\D/g, "");
+                          if (value.length === 8) {
+                            const day = parseInt(value.slice(0, 2));
+                            const month = parseInt(value.slice(2, 4)) - 1;
+                            const year = parseInt(value.slice(4, 8));
+                            const date = new Date(year, month, day);
+                            if (!isNaN(date.getTime())) {
+                              setAddendums(
+                                addendums.map((add) =>
+                                  add.id === addendum.id
+                                    ? { ...add, endDate: date }
+                                    : add
+                                )
+                              );
+                            }
                           }
-                          initialFocus
-                          className="pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
+                        }}
+                        maxLength={10}
+                        className="flex-1"
+                      />
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                          >
+                            <CalendarIcon className="h-4 w-4" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={addendum.endDate}
+                            onSelect={(date) =>
+                              setAddendums(
+                                addendums.map((add) =>
+                                  add.id === addendum.id
+                                    ? { ...add, endDate: date }
+                                    : add
+                                )
+                              )
+                            }
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
