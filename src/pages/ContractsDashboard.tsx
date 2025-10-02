@@ -11,6 +11,7 @@ import { parseCurrency } from "@/utils/currencyMask";
 export default function ContractsDashboard() {
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [editingContract, setEditingContract] = useState<any>(null);
+  const [monthlyTotals, setMonthlyTotals] = useState<number[]>(Array(12).fill(0));
 
   const handleEditContract = (contractData: any) => {
     setEditingContract(contractData);
@@ -35,7 +36,7 @@ export default function ContractsDashboard() {
     const fetchTotals = async () => {
       const { data, error } = await supabase
         .from('contracts')
-        .select('company_name, annual_value, monthly_value, addendums');
+        .select('company_name, annual_value, monthly_value, addendums, start_date, end_date');
       if (error) {
         console.error('Erro ao carregar contratos:', error);
         return;
@@ -58,11 +59,15 @@ export default function ContractsDashboard() {
         return null;
       };
 
+      // Calcular valores mensais para cada mês de 2025
+      const monthlyValues = Array(12).fill(0);
+      const currentYear = 2025;
+
       data?.forEach((c: any) => {
         const key = getKey(c.company_name);
         if (!key) return;
-        const addendums = Array.isArray(c.addendums) ? c.addendums : [];
         
+        const addendums = Array.isArray(c.addendums) ? c.addendums : [];
         let annual = Number(c.annual_value) || 0;
         
         // Se houver aditivos, usar apenas o último
@@ -76,9 +81,29 @@ export default function ContractsDashboard() {
         const monthly = annual / 12;
         totals[key].annual += annual;
         totals[key].monthly += monthly;
+
+        // Calcular para cada mês se o contrato estava ativo
+        const startDate = c.start_date ? new Date(c.start_date) : null;
+        const endDate = c.end_date ? new Date(c.end_date) : null;
+
+        for (let month = 0; month < 12; month++) {
+          const monthDate = new Date(currentYear, month, 1);
+          
+          // Verificar se o contrato está ativo neste mês
+          const isActive = 
+            (!startDate || monthDate >= startDate || monthDate.getFullYear() > startDate.getFullYear() || 
+             (monthDate.getFullYear() === startDate.getFullYear() && monthDate.getMonth() >= startDate.getMonth())) &&
+            (!endDate || monthDate <= endDate || monthDate.getFullYear() < endDate.getFullYear() ||
+             (monthDate.getFullYear() === endDate.getFullYear() && monthDate.getMonth() <= endDate.getMonth()));
+
+          if (isActive) {
+            monthlyValues[month] += monthly;
+          }
+        }
       });
 
       setCompanyTotals(totals);
+      setMonthlyTotals(monthlyValues);
     };
 
     fetchTotals();
@@ -87,20 +112,20 @@ export default function ContractsDashboard() {
   const totalMonthly = (Object.values(companyTotals) as Array<{monthly:number; annual:number}>).reduce((sum, c) => sum + c.monthly, 0);
   const totalAnnual = (Object.values(companyTotals) as Array<{monthly:number; annual:number}>).reduce((sum, c) => sum + c.annual, 0);
 
-  // Valores mensais calculados dinamicamente
+  // Valores mensais calculados dinamicamente baseados nas datas dos contratos
   const monthlyData = [
-    { month: 'Janeiro', total: totalMonthly },
-    { month: 'Fevereiro', total: totalMonthly },
-    { month: 'Março', total: totalMonthly },
-    { month: 'Abril', total: totalMonthly },
-    { month: 'Maio', total: totalMonthly },
-    { month: 'Junho', total: totalMonthly },
-    { month: 'Julho', total: totalMonthly },
-    { month: 'Agosto', total: totalMonthly },
-    { month: 'Setembro', total: totalMonthly },
-    { month: 'Outubro', total: totalMonthly },
-    { month: 'Novembro', total: totalMonthly },
-    { month: 'Dezembro', total: totalMonthly },
+    { month: 'Janeiro', total: monthlyTotals[0] },
+    { month: 'Fevereiro', total: monthlyTotals[1] },
+    { month: 'Março', total: monthlyTotals[2] },
+    { month: 'Abril', total: monthlyTotals[3] },
+    { month: 'Maio', total: monthlyTotals[4] },
+    { month: 'Junho', total: monthlyTotals[5] },
+    { month: 'Julho', total: monthlyTotals[6] },
+    { month: 'Agosto', total: monthlyTotals[7] },
+    { month: 'Setembro', total: monthlyTotals[8] },
+    { month: 'Outubro', total: monthlyTotals[9] },
+    { month: 'Novembro', total: monthlyTotals[10] },
+    { month: 'Dezembro', total: monthlyTotals[11] },
   ];
 
   const formatCurrency = (value: number) => {
