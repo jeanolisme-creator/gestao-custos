@@ -12,6 +12,7 @@ export default function ContractsDashboard() {
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [editingContract, setEditingContract] = useState<any>(null);
   const [monthlyTotals, setMonthlyTotals] = useState<number[]>(Array(12).fill(0));
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleEditContract = (contractData: any) => {
     setEditingContract(contractData);
@@ -219,7 +220,27 @@ export default function ContractsDashboard() {
     };
 
     fetchTotals();
+  }, [refreshKey]);
+
+  // Recalculate when contracts change in real-time
+  useEffect(() => {
+    const channel = supabase
+      .channel('contracts-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'contracts' }, () => {
+        setRefreshKey((k) => k + 1);
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  // Also refresh when user navigates back to Dashboard or Reports
+  useEffect(() => {
+    if (currentTab === 'dashboard' || currentTab === 'reports') {
+      setRefreshKey((k) => k + 1);
+    }
+  }, [currentTab]);
 
   const totalMonthly = (Object.values(companyTotals) as Array<{monthly:number; annual:number}>).reduce((sum, c) => sum + c.monthly, 0);
   const totalAnnual = (Object.values(companyTotals) as Array<{monthly:number; annual:number}>).reduce((sum, c) => sum + c.annual, 0);
