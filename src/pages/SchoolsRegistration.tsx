@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Building2, Trash2, Upload, Download } from "lucide-react";
+import { ArrowLeft, Building2, Trash2, Upload, Download, Edit, Filter, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from 'xlsx';
 
@@ -28,6 +28,8 @@ const MACROREGIOES = [
   "Pinheirinho",
   "Ceu",
 ];
+
+const TIPOS_ESCOLA = ["EMEI", "EMEF", "EMEIF", "PAR", "COMP", "SEDE"];
 
 interface School {
   id: string;
@@ -66,14 +68,110 @@ export default function SchoolsRegistration() {
     alunos_fundamental_ii: 0,
   });
   const [schools, setSchools] = useState<School[]>([]);
+  const [filteredSchools, setFilteredSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingSchool, setEditingSchool] = useState<School | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    nome_escola: "",
+    macroregiao: "",
+    bairro: "",
+    endereco_completo: "",
+    tipo_escola: "",
+    alunos_creche_min: "",
+    alunos_infantil_min: "",
+    alunos_fundamental_i_min: "",
+    alunos_fundamental_ii_min: "",
+    total_alunos_min: "",
+  });
   const { toast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchSchools();
   }, []);
+
+  useEffect(() => {
+    applyFilters();
+  }, [schools, filters]);
+
+  const applyFilters = () => {
+    let filtered = [...schools];
+
+    if (filters.nome_escola) {
+      filtered = filtered.filter(s => 
+        s.nome_escola.toLowerCase().includes(filters.nome_escola.toLowerCase())
+      );
+    }
+    if (filters.macroregiao) {
+      filtered = filtered.filter(s => s.macroregiao === filters.macroregiao);
+    }
+    if (filters.bairro) {
+      filtered = filtered.filter(s => 
+        s.bairro?.toLowerCase().includes(filters.bairro.toLowerCase())
+      );
+    }
+    if (filters.endereco_completo) {
+      filtered = filtered.filter(s => 
+        s.endereco_completo?.toLowerCase().includes(filters.endereco_completo.toLowerCase())
+      );
+    }
+    if (filters.tipo_escola) {
+      filtered = filtered.filter(s => s.tipo_escola === filters.tipo_escola);
+    }
+    if (filters.alunos_creche_min) {
+      filtered = filtered.filter(s => 
+        (s.alunos_creche || 0) >= parseInt(filters.alunos_creche_min)
+      );
+    }
+    if (filters.alunos_infantil_min) {
+      filtered = filtered.filter(s => 
+        (s.alunos_infantil || 0) >= parseInt(filters.alunos_infantil_min)
+      );
+    }
+    if (filters.alunos_fundamental_i_min) {
+      filtered = filtered.filter(s => 
+        (s.alunos_fundamental_i || 0) >= parseInt(filters.alunos_fundamental_i_min)
+      );
+    }
+    if (filters.alunos_fundamental_ii_min) {
+      filtered = filtered.filter(s => 
+        (s.alunos_fundamental_ii || 0) >= parseInt(filters.alunos_fundamental_ii_min)
+      );
+    }
+    if (filters.total_alunos_min) {
+      filtered = filtered.filter(s => 
+        (s.total_alunos || 0) >= parseInt(filters.total_alunos_min)
+      );
+    }
+
+    setFilteredSchools(filtered);
+  };
+
+  const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFilters({ ...filters, [name]: value });
+  };
+
+  const handleFilterSelectChange = (name: string, value: string) => {
+    setFilters({ ...filters, [name]: value });
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      nome_escola: "",
+      macroregiao: "",
+      bairro: "",
+      endereco_completo: "",
+      tipo_escola: "",
+      alunos_creche_min: "",
+      alunos_infantil_min: "",
+      alunos_fundamental_i_min: "",
+      alunos_fundamental_ii_min: "",
+      total_alunos_min: "",
+    });
+  };
 
   const fetchSchools = async () => {
     setLoading(true);
@@ -96,6 +194,7 @@ export default function SchoolsRegistration() {
 
       if (error) throw error;
       setSchools(data || []);
+      setFilteredSchools(data || []);
     } catch (error) {
       console.error("Error fetching schools:", error);
       toast({
@@ -132,6 +231,13 @@ export default function SchoolsRegistration() {
     });
   };
 
+  const handleTipoEscolaChange = (value: string) => {
+    setFormData({
+      ...formData,
+      tipo_escola: value,
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -156,17 +262,34 @@ export default function SchoolsRegistration() {
         return;
       }
 
-      const { error } = await supabase.from("schools").insert({
-        ...formData,
-        user_id: user.id,
-      });
+      if (editingSchool) {
+        const { error } = await supabase
+          .from("schools")
+          .update({
+            ...formData,
+          })
+          .eq("id", editingSchool.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Sucesso!",
-        description: "Escola cadastrada com sucesso",
-      });
+        toast({
+          title: "Sucesso!",
+          description: "Escola atualizada com sucesso",
+        });
+        setEditingSchool(null);
+      } else {
+        const { error } = await supabase.from("schools").insert({
+          ...formData,
+          user_id: user.id,
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Sucesso!",
+          description: "Escola cadastrada com sucesso",
+        });
+      }
 
       setFormData({
         nome_escola: "",
@@ -190,12 +313,53 @@ export default function SchoolsRegistration() {
       console.error("Error saving school:", error);
       toast({
         title: "Erro ao salvar",
-        description: "Não foi possível cadastrar a escola",
+        description: editingSchool ? "Não foi possível atualizar a escola" : "Não foi possível cadastrar a escola",
         variant: "destructive",
       });
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleEdit = (school: School) => {
+    setEditingSchool(school);
+    setFormData({
+      nome_escola: school.nome_escola,
+      proprietario: school.proprietario || "",
+      endereco_completo: school.endereco_completo || "",
+      numero: school.numero || "",
+      bairro: school.bairro || "",
+      macroregiao: school.macroregiao || "",
+      telefone_fixo: school.telefone_fixo || "",
+      telefone_celular: school.telefone_celular || "",
+      tipo_escola: school.tipo_escola || "",
+      email: school.email || "",
+      alunos_creche: school.alunos_creche || 0,
+      alunos_infantil: school.alunos_infantil || 0,
+      alunos_fundamental_i: school.alunos_fundamental_i || 0,
+      alunos_fundamental_ii: school.alunos_fundamental_ii || 0,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const cancelEdit = () => {
+    setEditingSchool(null);
+    setFormData({
+      nome_escola: "",
+      proprietario: "",
+      endereco_completo: "",
+      numero: "",
+      bairro: "",
+      macroregiao: "",
+      telefone_fixo: "",
+      telefone_celular: "",
+      tipo_escola: "",
+      email: "",
+      alunos_creche: 0,
+      alunos_infantil: 0,
+      alunos_fundamental_i: 0,
+      alunos_fundamental_ii: 0,
+    });
   };
 
   const handleDelete = async (id: string) => {
@@ -389,10 +553,10 @@ export default function SchoolsRegistration() {
           <div className="space-y-2">
             <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-2">
               <Building2 className="h-8 w-8" />
-              Cadastro de Escolas
+              {editingSchool ? "Editar Escola" : "Cadastro de Escolas"}
             </h1>
             <p className="text-muted-foreground">
-              Cadastro único de escolas usado em todos os sistemas
+              {editingSchool ? "Atualize as informações da escola" : "Cadastro único de escolas usado em todos os sistemas"}
             </p>
           </div>
         </div>
@@ -526,12 +690,21 @@ export default function SchoolsRegistration() {
 
               <div className="space-y-2">
                 <Label htmlFor="tipo_escola">Tipo de Escola</Label>
-                <Input
-                  id="tipo_escola"
-                  name="tipo_escola"
+                <Select
                   value={formData.tipo_escola}
-                  onChange={handleInputChange}
-                />
+                  onValueChange={handleTipoEscolaChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo de escola" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIPOS_ESCOLA.map((tipo) => (
+                      <SelectItem key={tipo} value={tipo}>
+                        {tipo}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -604,37 +777,225 @@ export default function SchoolsRegistration() {
               </div>
             </div>
 
-            <Button type="submit" disabled={saving} className="w-full md:w-auto">
-              {saving ? "Salvando..." : "Cadastrar Escola"}
-            </Button>
+            <div className="flex gap-2">
+              <Button type="submit" disabled={saving} className="w-full md:w-auto">
+                {saving ? "Salvando..." : editingSchool ? "Atualizar Escola" : "Cadastrar Escola"}
+              </Button>
+              {editingSchool && (
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={cancelEdit}
+                  className="w-full md:w-auto"
+                >
+                  Cancelar Edição
+                </Button>
+              )}
+            </div>
           </form>
         </Card>
 
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold">Escolas Cadastradas</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">Relatório de Escolas</h2>
+            <Button
+              variant="outline"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              {showFilters ? "Ocultar Filtros" : "Mostrar Filtros"}
+            </Button>
+          </div>
+
+          {showFilters && (
+            <Card className="p-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Filtros de Busca</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="filter_nome">Nome da Escola</Label>
+                    <Input
+                      id="filter_nome"
+                      name="nome_escola"
+                      value={filters.nome_escola}
+                      onChange={handleFilterChange}
+                      placeholder="Digite o nome"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="filter_macroregiao">Macrorregião</Label>
+                    <Select
+                      value={filters.macroregiao}
+                      onValueChange={(value) => handleFilterSelectChange("macroregiao", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value=" ">Todas</SelectItem>
+                        {MACROREGIOES.map((macro) => (
+                          <SelectItem key={macro} value={macro}>
+                            {macro}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="filter_bairro">Bairro</Label>
+                    <Input
+                      id="filter_bairro"
+                      name="bairro"
+                      value={filters.bairro}
+                      onChange={handleFilterChange}
+                      placeholder="Digite o bairro"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="filter_endereco">Endereço</Label>
+                    <Input
+                      id="filter_endereco"
+                      name="endereco_completo"
+                      value={filters.endereco_completo}
+                      onChange={handleFilterChange}
+                      placeholder="Digite o endereço"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="filter_tipo">Tipo de Escola</Label>
+                    <Select
+                      value={filters.tipo_escola}
+                      onValueChange={(value) => handleFilterSelectChange("tipo_escola", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value=" ">Todas</SelectItem>
+                        {TIPOS_ESCOLA.map((tipo) => (
+                          <SelectItem key={tipo} value={tipo}>
+                            {tipo}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="filter_creche">Creche (min.)</Label>
+                    <Input
+                      id="filter_creche"
+                      name="alunos_creche_min"
+                      type="number"
+                      min="0"
+                      value={filters.alunos_creche_min}
+                      onChange={handleFilterChange}
+                      placeholder="Quantidade mínima"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="filter_infantil">Infantil/Pré-escola (min.)</Label>
+                    <Input
+                      id="filter_infantil"
+                      name="alunos_infantil_min"
+                      type="number"
+                      min="0"
+                      value={filters.alunos_infantil_min}
+                      onChange={handleFilterChange}
+                      placeholder="Quantidade mínima"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="filter_fundamental_i">Ensino Fundamental I (min.)</Label>
+                    <Input
+                      id="filter_fundamental_i"
+                      name="alunos_fundamental_i_min"
+                      type="number"
+                      min="0"
+                      value={filters.alunos_fundamental_i_min}
+                      onChange={handleFilterChange}
+                      placeholder="Quantidade mínima"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="filter_fundamental_ii">Ensino Fundamental II (min.)</Label>
+                    <Input
+                      id="filter_fundamental_ii"
+                      name="alunos_fundamental_ii_min"
+                      type="number"
+                      min="0"
+                      value={filters.alunos_fundamental_ii_min}
+                      onChange={handleFilterChange}
+                      placeholder="Quantidade mínima"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="filter_total">Total de Alunos (min.)</Label>
+                    <Input
+                      id="filter_total"
+                      name="total_alunos_min"
+                      type="number"
+                      min="0"
+                      value={filters.total_alunos_min}
+                      onChange={handleFilterChange}
+                      placeholder="Quantidade mínima"
+                    />
+                  </div>
+                </div>
+
+                <Button variant="outline" onClick={clearFilters}>
+                  <X className="h-4 w-4 mr-2" />
+                  Limpar Filtros
+                </Button>
+              </div>
+            </Card>
+          )}
+
           {loading ? (
             <p className="text-muted-foreground">Carregando...</p>
-          ) : schools.length === 0 ? (
+          ) : filteredSchools.length === 0 ? (
             <Card className="p-6">
               <p className="text-muted-foreground text-center">
-                Nenhuma escola cadastrada ainda
+                {showFilters ? "Nenhuma escola encontrada com os filtros aplicados" : "Nenhuma escola cadastrada ainda"}
               </p>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {schools.map((school) => (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Mostrando {filteredSchools.length} de {schools.length} escola(s)
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredSchools.map((school) => (
                 <Card key={school.id} className="p-4">
                   <div className="space-y-2">
                     <div className="flex items-start justify-between">
                       <h3 className="font-semibold text-lg">{school.nome_escola}</h3>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(school.id)}
-                        className="h-8 w-8 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(school)}
+                          className="h-8 w-8"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(school.id)}
+                          className="h-8 w-8 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     {school.proprietario && (
                       <p className="text-sm text-muted-foreground">
@@ -684,7 +1045,8 @@ export default function SchoolsRegistration() {
                     )}
                   </div>
                 </Card>
-              ))}
+                ))}
+              </div>
             </div>
           )}
         </div>
