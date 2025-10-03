@@ -448,8 +448,13 @@ export type Database = {
       }
       schools: {
         Row: {
+          alunos_creche: number | null
+          alunos_fundamental_i: number | null
+          alunos_fundamental_ii: number | null
+          alunos_infantil: number | null
           bairro: string | null
           created_at: string
+          email: string | null
           endereco_completo: string | null
           id: string
           macroregiao: string | null
@@ -458,12 +463,19 @@ export type Database = {
           proprietario: string | null
           telefone_celular: string | null
           telefone_fixo: string | null
+          tipo_escola: string | null
+          total_alunos: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          alunos_creche?: number | null
+          alunos_fundamental_i?: number | null
+          alunos_fundamental_ii?: number | null
+          alunos_infantil?: number | null
           bairro?: string | null
           created_at?: string
+          email?: string | null
           endereco_completo?: string | null
           id?: string
           macroregiao?: string | null
@@ -472,12 +484,19 @@ export type Database = {
           proprietario?: string | null
           telefone_celular?: string | null
           telefone_fixo?: string | null
+          tipo_escola?: string | null
+          total_alunos?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          alunos_creche?: number | null
+          alunos_fundamental_i?: number | null
+          alunos_fundamental_ii?: number | null
+          alunos_infantil?: number | null
           bairro?: string | null
           created_at?: string
+          email?: string | null
           endereco_completo?: string | null
           id?: string
           macroregiao?: string | null
@@ -486,6 +505,8 @@ export type Database = {
           proprietario?: string | null
           telefone_celular?: string | null
           telefone_fixo?: string | null
+          tipo_escola?: string | null
+          total_alunos?: number | null
           updated_at?: string
           user_id?: string
         }

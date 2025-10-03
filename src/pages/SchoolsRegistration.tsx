@@ -12,8 +12,9 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Building2, Trash2 } from "lucide-react";
+import { ArrowLeft, Building2, Trash2, Upload, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import * as XLSX from 'xlsx';
 
 const MACROREGIOES = [
   "HB",
@@ -38,6 +39,13 @@ interface School {
   macroregiao: string | null;
   telefone_fixo: string | null;
   telefone_celular: string | null;
+  tipo_escola: string | null;
+  email: string | null;
+  alunos_creche: number | null;
+  alunos_infantil: number | null;
+  alunos_fundamental_i: number | null;
+  alunos_fundamental_ii: number | null;
+  total_alunos: number | null;
 }
 
 export default function SchoolsRegistration() {
@@ -50,6 +58,12 @@ export default function SchoolsRegistration() {
     macroregiao: "",
     telefone_fixo: "",
     telefone_celular: "",
+    tipo_escola: "",
+    email: "",
+    alunos_creche: 0,
+    alunos_infantil: 0,
+    alunos_fundamental_i: 0,
+    alunos_fundamental_ii: 0,
   });
   const [schools, setSchools] = useState<School[]>([]);
   const [loading, setLoading] = useState(false);
@@ -95,10 +109,20 @@ export default function SchoolsRegistration() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: type === "number" ? parseInt(value) || 0 : value,
     });
+  };
+
+  const getTotalAlunos = () => {
+    return (
+      (formData.alunos_creche || 0) +
+      (formData.alunos_infantil || 0) +
+      (formData.alunos_fundamental_i || 0) +
+      (formData.alunos_fundamental_ii || 0)
+    );
   };
 
   const handleMacroregiaoChange = (value: string) => {
@@ -153,6 +177,12 @@ export default function SchoolsRegistration() {
         macroregiao: "",
         telefone_fixo: "",
         telefone_celular: "",
+        tipo_escola: "",
+        email: "",
+        alunos_creche: 0,
+        alunos_infantil: 0,
+        alunos_fundamental_i: 0,
+        alunos_fundamental_ii: 0,
       });
 
       fetchSchools();
@@ -192,6 +222,159 @@ export default function SchoolsRegistration() {
     }
   };
 
+  const handleExportCSV = () => {
+    if (schools.length === 0) {
+      toast({
+        title: "Aviso",
+        description: "Não há dados para exportar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const csvData = schools.map(school => ({
+      "Nome da Escola": school.nome_escola,
+      "Proprietário": school.proprietario || "",
+      "Endereço": school.endereco_completo || "",
+      "Número": school.numero || "",
+      "Bairro": school.bairro || "",
+      "Macrorregião": school.macroregiao || "",
+      "Telefone Fixo": school.telefone_fixo || "",
+      "Telefone Celular": school.telefone_celular || "",
+      "Tipo de Escola": school.tipo_escola || "",
+      "Email": school.email || "",
+      "Creche (0-3 anos)": school.alunos_creche || 0,
+      "Infantil/Pré-escola (4-5 anos)": school.alunos_infantil || 0,
+      "Ensino Fundamental I (6-10 anos)": school.alunos_fundamental_i || 0,
+      "Ensino Fundamental II (11-14 anos)": school.alunos_fundamental_ii || 0,
+      "Total de Alunos": school.total_alunos || 0,
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(csvData);
+    const csv = XLSX.utils.sheet_to_csv(ws);
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `escolas_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+
+    toast({
+      title: "Sucesso!",
+      description: "Dados exportados em CSV",
+    });
+  };
+
+  const handleExportXLSX = () => {
+    if (schools.length === 0) {
+      toast({
+        title: "Aviso",
+        description: "Não há dados para exportar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const xlsxData = schools.map(school => ({
+      "Nome da Escola": school.nome_escola,
+      "Proprietário": school.proprietario || "",
+      "Endereço": school.endereco_completo || "",
+      "Número": school.numero || "",
+      "Bairro": school.bairro || "",
+      "Macrorregião": school.macroregiao || "",
+      "Telefone Fixo": school.telefone_fixo || "",
+      "Telefone Celular": school.telefone_celular || "",
+      "Tipo de Escola": school.tipo_escola || "",
+      "Email": school.email || "",
+      "Creche (0-3 anos)": school.alunos_creche || 0,
+      "Infantil/Pré-escola (4-5 anos)": school.alunos_infantil || 0,
+      "Ensino Fundamental I (6-10 anos)": school.alunos_fundamental_i || 0,
+      "Ensino Fundamental II (11-14 anos)": school.alunos_fundamental_ii || 0,
+      "Total de Alunos": school.total_alunos || 0,
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(xlsxData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Escolas");
+    XLSX.writeFile(wb, `escolas_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+    toast({
+      title: "Sucesso!",
+      description: "Dados exportados em XLSX",
+    });
+  };
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          const data = new Uint8Array(event.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: "array" });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            toast({
+              title: "Erro",
+              description: "Usuário não autenticado",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          const schoolsToImport = jsonData.map((row: any) => ({
+            user_id: user.id,
+            nome_escola: row["Nome da Escola"] || row.nome_escola || "",
+            proprietario: row["Proprietário"] || row.proprietario || null,
+            endereco_completo: row["Endereço"] || row.endereco_completo || null,
+            numero: row["Número"] || row.numero || null,
+            bairro: row["Bairro"] || row.bairro || null,
+            macroregiao: row["Macrorregião"] || row.macroregiao || null,
+            telefone_fixo: row["Telefone Fixo"] || row.telefone_fixo || null,
+            telefone_celular: row["Telefone Celular"] || row.telefone_celular || null,
+            tipo_escola: row["Tipo de Escola"] || row.tipo_escola || null,
+            email: row["Email"] || row.email || null,
+            alunos_creche: parseInt(row["Creche (0-3 anos)"] || row.alunos_creche || "0") || 0,
+            alunos_infantil: parseInt(row["Infantil/Pré-escola (4-5 anos)"] || row.alunos_infantil || "0") || 0,
+            alunos_fundamental_i: parseInt(row["Ensino Fundamental I (6-10 anos)"] || row.alunos_fundamental_i || "0") || 0,
+            alunos_fundamental_ii: parseInt(row["Ensino Fundamental II (11-14 anos)"] || row.alunos_fundamental_ii || "0") || 0,
+          }));
+
+          const { error } = await supabase.from("schools").insert(schoolsToImport);
+
+          if (error) throw error;
+
+          toast({
+            title: "Sucesso!",
+            description: `${schoolsToImport.length} escola(s) importada(s)`,
+          });
+
+          fetchSchools();
+        } catch (error) {
+          console.error("Error processing file:", error);
+          toast({
+            title: "Erro ao importar",
+            description: "Verifique o formato do arquivo",
+            variant: "destructive",
+          });
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    } catch (error) {
+      console.error("Error reading file:", error);
+      toast({
+        title: "Erro ao ler arquivo",
+        description: "Não foi possível ler o arquivo",
+        variant: "destructive",
+      });
+    }
+    e.target.value = "";
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="p-6 space-y-8">
@@ -212,6 +395,38 @@ export default function SchoolsRegistration() {
               Cadastro único de escolas usado em todos os sistemas
             </p>
           </div>
+        </div>
+
+        <div className="flex gap-2 flex-wrap">
+          <input
+            type="file"
+            id="import-file"
+            accept=".csv,.xlsx,.xls"
+            onChange={handleImportFile}
+            className="hidden"
+          />
+          <Button
+            variant="outline"
+            onClick={() => document.getElementById("import-file")?.click()}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Importar CSV
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => document.getElementById("import-file")?.click()}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Importar XLSX
+          </Button>
+          <Button variant="outline" onClick={handleExportCSV}>
+            <Download className="h-4 w-4 mr-2" />
+            Exportar CSV
+          </Button>
+          <Button variant="outline" onClick={handleExportXLSX}>
+            <Download className="h-4 w-4 mr-2" />
+            Exportar XLSX
+          </Button>
         </div>
 
         <Card className="p-6">
@@ -308,6 +523,85 @@ export default function SchoolsRegistration() {
                   placeholder="(00) 00000-0000"
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="tipo_escola">Tipo de Escola</Label>
+                <Input
+                  id="tipo_escola"
+                  name="tipo_escola"
+                  value={formData.tipo_escola}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="alunos_creche">Creche: de 0 a 3 anos</Label>
+                <Input
+                  id="alunos_creche"
+                  name="alunos_creche"
+                  type="number"
+                  min="0"
+                  value={formData.alunos_creche}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="alunos_infantil">Infantil/Pré-escola: de 4 a 5 anos</Label>
+                <Input
+                  id="alunos_infantil"
+                  name="alunos_infantil"
+                  type="number"
+                  min="0"
+                  value={formData.alunos_infantil}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="alunos_fundamental_i">Ensino Fundamental I: de 6 a 10 anos</Label>
+                <Input
+                  id="alunos_fundamental_i"
+                  name="alunos_fundamental_i"
+                  type="number"
+                  min="0"
+                  value={formData.alunos_fundamental_i}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="alunos_fundamental_ii">Ensino Fundamental II: de 11 a 14 anos</Label>
+                <Input
+                  id="alunos_fundamental_ii"
+                  name="alunos_fundamental_ii"
+                  type="number"
+                  min="0"
+                  value={formData.alunos_fundamental_ii}
+                  onChange={handleInputChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Total de Alunos</Label>
+                <Input
+                  value={getTotalAlunos()}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
             </div>
 
             <Button type="submit" disabled={saving} className="w-full md:w-auto">
@@ -371,6 +665,21 @@ export default function SchoolsRegistration() {
                     {school.telefone_celular && (
                       <p className="text-sm text-muted-foreground">
                         <strong>Tel. Celular:</strong> {school.telefone_celular}
+                      </p>
+                    )}
+                    {school.tipo_escola && (
+                      <p className="text-sm text-muted-foreground">
+                        <strong>Tipo:</strong> {school.tipo_escola}
+                      </p>
+                    )}
+                    {school.email && (
+                      <p className="text-sm text-muted-foreground">
+                        <strong>Email:</strong> {school.email}
+                      </p>
+                    )}
+                    {school.total_alunos !== null && school.total_alunos > 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        <strong>Total de Alunos:</strong> {school.total_alunos}
                       </p>
                     )}
                   </div>
