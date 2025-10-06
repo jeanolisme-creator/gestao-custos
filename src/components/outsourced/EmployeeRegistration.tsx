@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Search, Plus, X, Building2, Users, AlertTriangle, CheckCircle, Edit, Save } from "lucide-react";
+import { Search, Plus, X, Building2, Users, AlertTriangle, CheckCircle, Edit, Save, Upload } from "lucide-react";
+import * as XLSX from 'xlsx';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -380,8 +381,91 @@ export function EmployeeRegistration() {
     }).format(value);
   };
 
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const data = event.target?.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet) as any[];
+
+        // Process imported data
+        const importedRecords = jsonData.map((row, index) => ({
+          id: `imported-${Date.now()}-${index}`,
+          school: {
+            name: row['Nome da Escola'] || row['name'] || '',
+            proprietario: row['Proprietário'] || row['proprietario'] || '',
+            address: row['Endereço'] || row['address'] || '',
+            number: row['Número'] || row['number'] || '',
+            neighborhood: row['Bairro'] || row['neighborhood'] || '',
+            macroregiao: row['Macrorregião'] || row['macroregiao'] || '',
+            telefone_fixo: row['Telefone Fixo'] || row['telefone_fixo'] || '',
+            telefone_celular: row['Telefone Celular'] || row['telefone_celular'] || '',
+            tipo_escola: row['Tipo de Escola'] || row['tipo_escola'] || '',
+            email: row['Email'] || row['email'] || '',
+            alunos_creche: parseInt(row['Creche (0-3 anos)'] || row['alunos_creche'] || '0'),
+            alunos_infantil: parseInt(row['Infantil/Pré-escola (4-5 anos)'] || row['alunos_infantil'] || '0'),
+            alunos_fundamental_i: parseInt(row['Ensino Fundamental I (6-10 anos)'] || row['alunos_fundamental_i'] || '0'),
+            alunos_fundamental_ii: parseInt(row['Ensino Fundamental II (11-14 anos)'] || row['alunos_fundamental_ii'] || '0'),
+            total_alunos: parseInt(row['Total de Alunos'] || row['total_alunos'] || '0'),
+          },
+          employees: []
+        }));
+
+        setRegisteredEmployees([...registeredEmployees, ...importedRecords]);
+        toast.success(`${importedRecords.length} registro(s) importado(s) com sucesso!`);
+      };
+      reader.readAsBinaryString(file);
+    } catch (error) {
+      console.error('Erro ao importar arquivo:', error);
+      toast.error('Erro ao importar arquivo');
+    }
+    e.target.value = '';
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header com botões de importação */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Cadastro de Funcionários Terceirizados</h2>
+        <div className="flex gap-2">
+          <input
+            type="file"
+            id="import-csv"
+            accept=".csv"
+            onChange={handleImportFile}
+            style={{ display: 'none' }}
+          />
+          <Button 
+            onClick={() => document.getElementById('import-csv')?.click()} 
+            variant="outline" 
+            size="sm"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Importar CSV
+          </Button>
+          <input
+            type="file"
+            id="import-xlsx"
+            accept=".xlsx,.xls"
+            onChange={handleImportFile}
+            style={{ display: 'none' }}
+          />
+          <Button 
+            onClick={() => document.getElementById('import-xlsx')?.click()} 
+            variant="outline" 
+            size="sm"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Importar XLSX
+          </Button>
+        </div>
+      </div>
+
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogTrigger asChild>
           <Button className="w-full md:w-auto">
