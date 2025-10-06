@@ -5,18 +5,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { FileDown, Filter, Search, Users, DollarSign, TrendingUp, Building2 } from "lucide-react";
-import { toast } from "@/components/ui/sonner";
+import { FileDown, Filter, Search, Users, DollarSign, TrendingUp, Building2, Upload, Edit, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import * as XLSX from 'xlsx';
 
 interface Employee {
   id: string;
-  workPosition: string; // Changed from 'name' to 'workPosition'
+  workPosition: string;
   company: string;
   role: string;
   workplace: string;
   workload: string;
   monthlySalary: number;
-  admissionDate: string;
 }
 
 export function OutsourcedReports() {
@@ -24,20 +24,18 @@ export function OutsourcedReports() {
   const [filterRole, setFilterRole] = useState<string>("");
   const [filterWorkplace, setFilterWorkplace] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [employees, setEmployees] = useState<Employee[]>([
+    { id: "1", workPosition: "Posto de Portaria 1", company: "Produserv", role: "Porteiro", workplace: "EMEF João Silva", workload: "40h", monthlySalary: 1500 },
+    { id: "2", workPosition: "Posto de Apoio Escolar 1", company: "GF", role: "Aux. Apoio Escolar", workplace: "EMEI Maria Santos", workload: "44h", monthlySalary: 1400 },
+    { id: "3", workPosition: "Posto de Portaria 2", company: "Eficience", role: "Porteiro", workplace: "EMEIF Carlos Lima", workload: "12x36h", monthlySalary: 1600 },
+    { id: "4", workPosition: "Posto Administrativo 1", company: "Assej", role: "Apoio Administrativo", workplace: "EMEF João Silva", workload: "40h", monthlySalary: 1750 },
+    { id: "5", workPosition: "Posto de Higienização 1", company: "Produserv", role: "Agente de Higienização", workplace: "EMEI Maria Santos", workload: "44h", monthlySalary: 1500 },
+    { id: "6", workPosition: "Posto Ed. Especial 1", company: "GF", role: "Apoio Ed. Especial", workplace: "EMEIF Carlos Lima", workload: "40h", monthlySalary: 1600 },
+    { id: "7", workPosition: "Posto de Limpeza 1", company: "Eficience", role: "Aux. de limpeza", workplace: "EMEF João Silva", workload: "44h", monthlySalary: 1400 },
+    { id: "8", workPosition: "Posto de Apoio Escolar 2", company: "Assej", role: "Aux. Apoio Escolar", workplace: "EMEI Maria Santos", workload: "40h", monthlySalary: 1500 },
+  ]);
 
-  // Mock data de postos de trabalho
-  const mockEmployees: Employee[] = [
-    { id: "1", workPosition: "Posto de Portaria 1", company: "Produserv", role: "Porteiro", workplace: "EMEF João Silva", workload: "40h", monthlySalary: 1500, admissionDate: "2023-01-15" },
-    { id: "2", workPosition: "Posto de Apoio Escolar 1", company: "GF", role: "Aux. Apoio Escolar", workplace: "EMEI Maria Santos", workload: "44h", monthlySalary: 1400, admissionDate: "2023-02-20" },
-    { id: "3", workPosition: "Posto de Portaria 2", company: "Eficience", role: "Porteiro", workplace: "EMEIF Carlos Lima", workload: "12x36h", monthlySalary: 1600, admissionDate: "2023-03-10" },
-    { id: "4", workPosition: "Posto Administrativo 1", company: "Assej", role: "Apoio Administrativo", workplace: "EMEF João Silva", workload: "40h", monthlySalary: 1750, admissionDate: "2023-04-05" },
-    { id: "5", workPosition: "Posto de Higienização 1", company: "Produserv", role: "Agente de Higienização", workplace: "EMEI Maria Santos", workload: "44h", monthlySalary: 1500, admissionDate: "2023-05-12" },
-    { id: "6", workPosition: "Posto Ed. Especial 1", company: "GF", role: "Apoio Ed. Especial", workplace: "EMEIF Carlos Lima", workload: "40h", monthlySalary: 1600, admissionDate: "2023-06-18" },
-    { id: "7", workPosition: "Posto de Limpeza 1", company: "Eficience", role: "Aux. de limpeza", workplace: "EMEF João Silva", workload: "44h", monthlySalary: 1400, admissionDate: "2023-07-22" },
-    { id: "8", workPosition: "Posto de Apoio Escolar 2", company: "Assej", role: "Aux. Apoio Escolar", workplace: "EMEI Maria Santos", workload: "40h", monthlySalary: 1500, admissionDate: "2023-08-30" },
-  ];
-
-  const filteredEmployees = mockEmployees.filter(employee => {
+  const filteredEmployees = employees.filter(employee => {
     const matchesCompany = !filterCompany || employee.company === filterCompany;
     const matchesRole = !filterRole || employee.role === filterRole;
     const matchesWorkplace = !filterWorkplace || employee.workplace === filterWorkplace;
@@ -50,9 +48,9 @@ export function OutsourcedReports() {
     return matchesCompany && matchesRole && matchesWorkplace && matchesSearch;
   });
 
-  const companies = Array.from(new Set(mockEmployees.map(e => e.company)));
-  const roles = Array.from(new Set(mockEmployees.map(e => e.role)));
-  const workplaces = Array.from(new Set(mockEmployees.map(e => e.workplace)));
+  const companies = Array.from(new Set(employees.map(e => e.company)));
+  const roles = Array.from(new Set(employees.map(e => e.role)));
+  const workplaces = Array.from(new Set(employees.map(e => e.workplace)));
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -61,12 +59,41 @@ export function OutsourcedReports() {
     }).format(value);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const data = event.target?.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet) as any[];
+
+        const importedEmployees: Employee[] = jsonData.map((row, index) => ({
+          id: `imported-${Date.now()}-${index}`,
+          workPosition: row['Posto de Trabalho'] || row['workPosition'] || '',
+          company: row['Empresa'] || row['company'] || '',
+          role: row['Cargo'] || row['role'] || '',
+          workplace: row['Local de Trabalho'] || row['workplace'] || '',
+          workload: row['Carga Horária'] || row['workload'] || '',
+          monthlySalary: parseFloat(row['Salário Mensal'] || row['monthlySalary'] || '0'),
+        }));
+
+        setEmployees([...employees, ...importedEmployees]);
+        toast.success(`${importedEmployees.length} posto(s) de trabalho importado(s) com sucesso!`);
+      };
+      reader.readAsBinaryString(file);
+    } catch (error) {
+      console.error('Erro ao importar arquivo:', error);
+      toast.error('Erro ao importar arquivo');
+    }
+    e.target.value = '';
   };
 
   const exportToCSV = () => {
-    const headers = ["Posto de Trabalho", "Empresa", "Cargo", "Local de Trabalho", "Carga Horária", "Salário Mensal", "Data de Admissão"];
+    const headers = ["Posto de Trabalho", "Empresa", "Cargo", "Local de Trabalho", "Carga Horária", "Salário Mensal"];
     const rows = filteredEmployees.map(emp => [
       emp.workPosition,
       emp.company,
@@ -74,7 +101,6 @@ export function OutsourcedReports() {
       emp.workplace,
       emp.workload,
       emp.monthlySalary.toString(),
-      emp.admissionDate
     ]);
 
     const csvContent = [
@@ -95,8 +121,32 @@ export function OutsourcedReports() {
     toast.success("Relatório exportado em CSV com sucesso!");
   };
 
-  const exportToPDF = () => {
-    toast.info("Exportação para PDF em desenvolvimento");
+  const exportToXLSX = () => {
+    const data = filteredEmployees.map(emp => ({
+      'Posto de Trabalho': emp.workPosition,
+      'Empresa': emp.company,
+      'Cargo': emp.role,
+      'Local de Trabalho': emp.workplace,
+      'Carga Horária': emp.workload,
+      'Salário Mensal': emp.monthlySalary,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Terceirizados");
+    XLSX.writeFile(workbook, `relatorio_terceirizados_${new Date().toISOString().split('T')[0]}.xlsx`);
+
+    toast.success("Relatório exportado em XLSX com sucesso!");
+  };
+
+  const handleEdit = (employee: Employee) => {
+    toast.info(`Editar posto: ${employee.workPosition}`);
+    // Implementar lógica de edição
+  };
+
+  const handleDelete = (id: string) => {
+    setEmployees(employees.filter(emp => emp.id !== id));
+    toast.success("Posto de trabalho excluído com sucesso!");
   };
 
   const clearFilters = () => {
@@ -183,6 +233,28 @@ export function OutsourcedReports() {
             <Button onClick={clearFilters} variant="outline" size="sm">
               Limpar Filtros
             </Button>
+            <input
+              type="file"
+              id="import-csv"
+              accept=".csv"
+              onChange={handleImportFile}
+              style={{ display: 'none' }}
+            />
+            <Button onClick={() => document.getElementById('import-csv')?.click()} variant="outline" size="sm">
+              <Upload className="h-4 w-4 mr-2" />
+              Importar CSV
+            </Button>
+            <input
+              type="file"
+              id="import-xlsx"
+              accept=".xlsx,.xls"
+              onChange={handleImportFile}
+              style={{ display: 'none' }}
+            />
+            <Button onClick={() => document.getElementById('import-xlsx')?.click()} variant="outline" size="sm">
+              <Upload className="h-4 w-4 mr-2" />
+              Importar XLSX
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -251,7 +323,7 @@ export function OutsourcedReports() {
             <div>
               <CardTitle>Relatório de Funcionários Terceirizados</CardTitle>
               <CardDescription>
-                Exibindo {filteredEmployees.length} de {mockEmployees.length} posto(s) de trabalho
+                Exibindo {filteredEmployees.length} de {employees.length} posto(s) de trabalho
               </CardDescription>
             </div>
             <div className="flex gap-2">
@@ -259,9 +331,9 @@ export function OutsourcedReports() {
                 <FileDown className="h-4 w-4 mr-2" />
                 Exportar CSV
               </Button>
-              <Button onClick={exportToPDF} variant="outline" size="sm">
+              <Button onClick={exportToXLSX} variant="outline" size="sm">
                 <FileDown className="h-4 w-4 mr-2" />
-                Exportar PDF
+                Exportar XLSX
               </Button>
             </div>
           </div>
@@ -277,7 +349,7 @@ export function OutsourcedReports() {
                   <TableHead className="font-bold text-foreground">Local de Trabalho</TableHead>
                   <TableHead className="font-bold text-foreground">Carga Horária</TableHead>
                   <TableHead className="text-right font-bold text-foreground">Salário Mensal</TableHead>
-                  <TableHead className="font-bold text-foreground">Data Admissão</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -301,7 +373,26 @@ export function OutsourcedReports() {
                       <TableCell className="text-right font-bold text-green-700 dark:text-green-400">
                         {formatCurrency(employee.monthlySalary)}
                       </TableCell>
-                      <TableCell className="text-muted-foreground">{formatDate(employee.admissionDate)}</TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(employee)}
+                            className="h-8 w-8"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(employee.id)}
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}

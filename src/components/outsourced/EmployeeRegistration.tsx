@@ -30,10 +30,20 @@ interface Employee {
 
 interface SchoolData {
   name: string;
-  phone: string;
+  proprietario: string;
   address: string;
   number: string;
   neighborhood: string;
+  macroregiao: string;
+  telefone_fixo: string;
+  telefone_celular: string;
+  tipo_escola: string;
+  email: string;
+  alunos_creche: number;
+  alunos_infantil: number;
+  alunos_fundamental_i: number;
+  alunos_fundamental_ii: number;
+  total_alunos: number;
 }
 
 interface PositionQuota {
@@ -65,10 +75,20 @@ export function EmployeeRegistration() {
   
   const [schoolData, setSchoolData] = useState<SchoolData>({
     name: "",
-    phone: "",
+    proprietario: "",
     address: "",
     number: "",
-    neighborhood: ""
+    neighborhood: "",
+    macroregiao: "",
+    telefone_fixo: "",
+    telefone_celular: "",
+    tipo_escola: "",
+    email: "",
+    alunos_creche: 0,
+    alunos_infantil: 0,
+    alunos_fundamental_i: 0,
+    alunos_fundamental_ii: 0,
+    total_alunos: 0
   });
 
   const [employees, setEmployees] = useState<Employee[]>([{
@@ -135,20 +155,40 @@ export function EmployeeRegistration() {
     if (foundSchool) {
       setSchoolData({
         name: foundSchool.nome_escola,
-        phone: foundSchool.telefone_fixo || foundSchool.telefone_celular || "",
+        proprietario: foundSchool.proprietario || "",
         address: foundSchool.endereco_completo || "",
         number: foundSchool.numero || "",
-        neighborhood: foundSchool.bairro || ""
+        neighborhood: foundSchool.bairro || "",
+        macroregiao: foundSchool.macroregiao || "",
+        telefone_fixo: foundSchool.telefone_fixo || "",
+        telefone_celular: foundSchool.telefone_celular || "",
+        tipo_escola: foundSchool.tipo_escola || "",
+        email: foundSchool.email || "",
+        alunos_creche: foundSchool.alunos_creche || 0,
+        alunos_infantil: foundSchool.alunos_infantil || 0,
+        alunos_fundamental_i: foundSchool.alunos_fundamental_i || 0,
+        alunos_fundamental_ii: foundSchool.alunos_fundamental_ii || 0,
+        total_alunos: foundSchool.total_alunos || 0
       });
       toast.success("Escola encontrada! Dados preenchidos automaticamente.");
     } else {
       toast.info("Escola não encontrada. Preencha os dados manualmente.");
       setSchoolData({
         name: searchSchoolName,
-        phone: "",
+        proprietario: "",
         address: "",
         number: "",
-        neighborhood: ""
+        neighborhood: "",
+        macroregiao: "",
+        telefone_fixo: "",
+        telefone_celular: "",
+        tipo_escola: "",
+        email: "",
+        alunos_creche: 0,
+        alunos_infantil: 0,
+        alunos_fundamental_i: 0,
+        alunos_fundamental_ii: 0,
+        total_alunos: 0
       });
     }
   };
@@ -217,7 +257,7 @@ export function EmployeeRegistration() {
 
   const handleSave = () => {
     // Validação básica
-    if (!schoolData.name || !schoolData.phone || !schoolData.neighborhood) {
+    if (!schoolData.name || !schoolData.neighborhood) {
       toast.error("Preencha os campos obrigatórios da escola");
       return;
     }
@@ -303,10 +343,20 @@ export function EmployeeRegistration() {
     setSearchSchoolName("");
     setSchoolData({
       name: "",
-      phone: "",
+      proprietario: "",
       address: "",
       number: "",
-      neighborhood: ""
+      neighborhood: "",
+      macroregiao: "",
+      telefone_fixo: "",
+      telefone_celular: "",
+      tipo_escola: "",
+      email: "",
+      alunos_creche: 0,
+      alunos_infantil: 0,
+      alunos_fundamental_i: 0,
+      alunos_fundamental_ii: 0,
+      total_alunos: 0
     });
     setEmployees([{
       id: '1',
@@ -502,16 +552,16 @@ export function EmployeeRegistration() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="schoolPhone">Telefone *</Label>
+                  <Label htmlFor="schoolProprietario">Proprietário</Label>
                   <Input
-                    id="schoolPhone"
-                    value={schoolData.phone}
-                    onChange={(e) => setSchoolData({...schoolData, phone: e.target.value})}
-                    placeholder="(17) 3333-4444"
+                    id="schoolProprietario"
+                    value={schoolData.proprietario}
+                    onChange={(e) => setSchoolData({...schoolData, proprietario: e.target.value})}
+                    placeholder="Proprietário"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="schoolAddress">Endereço Completo</Label>
+                  <Label htmlFor="schoolAddress">Endereço</Label>
                   <Input
                     id="schoolAddress"
                     value={schoolData.address}
@@ -535,6 +585,130 @@ export function EmployeeRegistration() {
                     value={schoolData.neighborhood}
                     onChange={(e) => setSchoolData({...schoolData, neighborhood: e.target.value})}
                     placeholder="Centro, Jardim..."
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="schoolMacroregiao">Macrorregião</Label>
+                  <Select
+                    value={schoolData.macroregiao}
+                    onValueChange={(value) => setSchoolData({...schoolData, macroregiao: value})}
+                  >
+                    <SelectTrigger id="schoolMacroregiao">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="HB">HB</SelectItem>
+                      <SelectItem value="Vila Toninho">Vila Toninho</SelectItem>
+                      <SelectItem value="Schmidt">Schmidt</SelectItem>
+                      <SelectItem value="Represa">Represa</SelectItem>
+                      <SelectItem value="Bosque">Bosque</SelectItem>
+                      <SelectItem value="Talhado">Talhado</SelectItem>
+                      <SelectItem value="Central">Central</SelectItem>
+                      <SelectItem value="Cidade da Criança">Cidade da Criança</SelectItem>
+                      <SelectItem value="Pinheirinho">Pinheirinho</SelectItem>
+                      <SelectItem value="Ceu">Ceu</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="schoolTelefoneFixo">Telefone Fixo</Label>
+                  <Input
+                    id="schoolTelefoneFixo"
+                    value={schoolData.telefone_fixo}
+                    onChange={(e) => setSchoolData({...schoolData, telefone_fixo: e.target.value})}
+                    placeholder="(17) 3333-4444"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="schoolTelefoneCelular">Telefone Celular</Label>
+                  <Input
+                    id="schoolTelefoneCelular"
+                    value={schoolData.telefone_celular}
+                    onChange={(e) => setSchoolData({...schoolData, telefone_celular: e.target.value})}
+                    placeholder="(17) 99999-8888"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="schoolTipoEscola">Tipo de Escola</Label>
+                  <Select
+                    value={schoolData.tipo_escola}
+                    onValueChange={(value) => setSchoolData({...schoolData, tipo_escola: value})}
+                  >
+                    <SelectTrigger id="schoolTipoEscola">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="EMEI">EMEI</SelectItem>
+                      <SelectItem value="EMEF">EMEF</SelectItem>
+                      <SelectItem value="EMEIF">EMEIF</SelectItem>
+                      <SelectItem value="PAR">PAR</SelectItem>
+                      <SelectItem value="COMP">COMP</SelectItem>
+                      <SelectItem value="SEDE">SEDE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="schoolEmail">Email</Label>
+                  <Input
+                    id="schoolEmail"
+                    type="email"
+                    value={schoolData.email}
+                    onChange={(e) => setSchoolData({...schoolData, email: e.target.value})}
+                    placeholder="escola@email.com"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="schoolCreche">Creche (0-3 anos)</Label>
+                  <Input
+                    id="schoolCreche"
+                    type="number"
+                    min="0"
+                    value={schoolData.alunos_creche}
+                    onChange={(e) => setSchoolData({...schoolData, alunos_creche: parseInt(e.target.value) || 0})}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="schoolInfantil">Infantil/Pré-escola (4-5 anos)</Label>
+                  <Input
+                    id="schoolInfantil"
+                    type="number"
+                    min="0"
+                    value={schoolData.alunos_infantil}
+                    onChange={(e) => setSchoolData({...schoolData, alunos_infantil: parseInt(e.target.value) || 0})}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="schoolFundamentalI">Ensino Fundamental I (6-10 anos)</Label>
+                  <Input
+                    id="schoolFundamentalI"
+                    type="number"
+                    min="0"
+                    value={schoolData.alunos_fundamental_i}
+                    onChange={(e) => setSchoolData({...schoolData, alunos_fundamental_i: parseInt(e.target.value) || 0})}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="schoolFundamentalII">Ensino Fundamental II (11-14 anos)</Label>
+                  <Input
+                    id="schoolFundamentalII"
+                    type="number"
+                    min="0"
+                    value={schoolData.alunos_fundamental_ii}
+                    onChange={(e) => setSchoolData({...schoolData, alunos_fundamental_ii: parseInt(e.target.value) || 0})}
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="schoolTotalAlunos">Total de Alunos</Label>
+                  <Input
+                    id="schoolTotalAlunos"
+                    type="number"
+                    value={schoolData.alunos_creche + schoolData.alunos_infantil + schoolData.alunos_fundamental_i + schoolData.alunos_fundamental_ii}
+                    disabled
+                    className="bg-muted"
                   />
                 </div>
               </div>

@@ -12,6 +12,13 @@ export interface School {
   macroregiao: string | null;
   telefone_fixo: string | null;
   telefone_celular: string | null;
+  tipo_escola: string | null;
+  email: string | null;
+  alunos_creche: number | null;
+  alunos_infantil: number | null;
+  alunos_fundamental_i: number | null;
+  alunos_fundamental_ii: number | null;
+  total_alunos: number | null;
   created_at: string;
   updated_at: string;
 }
