@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useSchools } from "@/hooks/useSchools";
+import { useOutsourcedEmployees } from "@/hooks/useOutsourcedEmployees";
 
 interface Employee {
   id: string;
@@ -69,6 +70,7 @@ interface QuotaAlert {
 
 export function EmployeeRegistration() {
   const { schools, loading } = useSchools();
+  const { addEmployee } = useOutsourcedEmployees();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchSchoolName, setSearchSchoolName] = useState("");
   const [showQuotaSetup, setShowQuotaSetup] = useState(false);
@@ -256,7 +258,7 @@ export function EmployeeRegistration() {
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     // Validação básica
     if (!schoolData.name || !schoolData.neighborhood) {
       toast.error("Preencha os campos obrigatórios da escola");
@@ -271,6 +273,10 @@ export function EmployeeRegistration() {
       toast.error("Preencha todos os campos obrigatórios dos funcionários");
       return;
     }
+
+    // Buscar school_id da escola selecionada
+    const selectedSchool = schools.find(s => s.nome_escola === schoolData.name);
+    const schoolId = selectedSchool?.id || null;
 
     // Verificar quadro de vagas
     const newAlerts: QuotaAlert[] = [];
@@ -330,48 +336,68 @@ export function EmployeeRegistration() {
       });
     }
 
-    // Salvar dados
-    const newRecord = {
-      id: Date.now().toString(),
-      school: schoolData,
-      employees: employees
-    };
+    // Salvar cada funcionário no banco de dados
+    try {
+      for (const emp of employees) {
+        await addEmployee({
+          company: emp.company,
+          work_position: `${emp.position} - ${schoolData.name}`,
+          role: emp.position,
+          workload: emp.workload,
+          monthly_salary: emp.totalValue / emp.quantity, // Salário unitário
+          workplace: schoolData.name,
+          school_id: schoolId,
+          status: emp.status,
+          observations: emp.observations || null,
+        });
+      }
 
-    setRegisteredEmployees([...registeredEmployees, newRecord]);
-    
-    // Reset form
-    setIsDialogOpen(false);
-    setSearchSchoolName("");
-    setSchoolData({
-      name: "",
-      proprietario: "",
-      address: "",
-      number: "",
-      neighborhood: "",
-      macroregiao: "",
-      telefone_fixo: "",
-      telefone_celular: "",
-      tipo_escola: "",
-      email: "",
-      alunos_creche: 0,
-      alunos_infantil: 0,
-      alunos_fundamental_i: 0,
-      alunos_fundamental_ii: 0,
-      total_alunos: 0
-    });
-    setEmployees([{
-      id: '1',
-      company: "",
-      position: "",
-      quantity: 0,
-      workload: "",
-      unitValue: 0,
-      totalValue: 0,
-      status: "",
-      observations: ""
-    }]);
+      // Salvar dados localmente também (para quadro de vagas)
+      const newRecord = {
+        id: Date.now().toString(),
+        school: schoolData,
+        employees: employees
+      };
 
-    toast.success("Cadastro realizado com sucesso!");
+      setRegisteredEmployees([...registeredEmployees, newRecord]);
+      
+      // Reset form
+      setIsDialogOpen(false);
+      setSearchSchoolName("");
+      setSchoolData({
+        name: "",
+        proprietario: "",
+        address: "",
+        number: "",
+        neighborhood: "",
+        macroregiao: "",
+        telefone_fixo: "",
+        telefone_celular: "",
+        tipo_escola: "",
+        email: "",
+        alunos_creche: 0,
+        alunos_infantil: 0,
+        alunos_fundamental_i: 0,
+        alunos_fundamental_ii: 0,
+        total_alunos: 0
+      });
+      setEmployees([{
+        id: '1',
+        company: "",
+        position: "",
+        quantity: 0,
+        workload: "",
+        unitValue: 0,
+        totalValue: 0,
+        status: "",
+        observations: ""
+      }]);
+
+      toast.success("Cadastro realizado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      toast.error("Erro ao salvar os dados. Tente novamente.");
+    }
   };
 
   const formatCurrency = (value: number) => {
