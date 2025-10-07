@@ -77,6 +77,7 @@ export function EmployeeRegistration() {
   const [isEditingQuota, setIsEditingQuota] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [customWorkload, setCustomWorkload] = useState("");
   
   const [schoolData, setSchoolData] = useState<SchoolData>({
     name: "",
@@ -428,7 +429,8 @@ export function EmployeeRegistration() {
   };
 
   const handleEditEmployee = (employee: any) => {
-    setEditingEmployee({...employee});
+    setEditingEmployee({...employee, quantity: 1}); // Adicionar quantidade padrão se não existir
+    setCustomWorkload("");
     setIsEditDialogOpen(true);
   };
 
@@ -1215,10 +1217,28 @@ export function EmployeeRegistration() {
               </div>
               
               <div className="space-y-2">
+                <Label>Quantidade</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={editingEmployee.quantity || 1}
+                  onChange={(e) => setEditingEmployee({...editingEmployee, quantity: parseInt(e.target.value) || 1})}
+                />
+              </div>
+              
+              <div className="space-y-2">
                 <Label>Carga Horária</Label>
                 <Select
-                  value={editingEmployee.workload}
-                  onValueChange={(value) => setEditingEmployee({...editingEmployee, workload: value})}
+                  value={editingEmployee.workload === "40h" || editingEmployee.workload === "44h" || editingEmployee.workload === "12x36h" ? editingEmployee.workload : "outro"}
+                  onValueChange={(value) => {
+                    if (value === "outro") {
+                      setCustomWorkload(editingEmployee.workload || "");
+                      setEditingEmployee({...editingEmployee, workload: ""});
+                    } else {
+                      setCustomWorkload("");
+                      setEditingEmployee({...editingEmployee, workload: value});
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -1226,11 +1246,25 @@ export function EmployeeRegistration() {
                   <SelectContent>
                     <SelectItem value="40h">40h</SelectItem>
                     <SelectItem value="44h">44h</SelectItem>
-                    <SelectItem value="20h">20h</SelectItem>
-                    <SelectItem value="30h">30h</SelectItem>
+                    <SelectItem value="12x36h">12x36h</SelectItem>
+                    <SelectItem value="outro">Outro</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+              
+              {(customWorkload !== "" || (editingEmployee.workload !== "40h" && editingEmployee.workload !== "44h" && editingEmployee.workload !== "12x36h")) && (
+                <div className="space-y-2">
+                  <Label>Carga Horária Personalizada</Label>
+                  <Input
+                    placeholder="Digite a carga horária"
+                    value={customWorkload || editingEmployee.workload || ""}
+                    onChange={(e) => {
+                      setCustomWorkload(e.target.value);
+                      setEditingEmployee({...editingEmployee, workload: e.target.value});
+                    }}
+                  />
+                </div>
+              )}
               
               <div className="space-y-2">
                 <Label>Local de Trabalho</Label>

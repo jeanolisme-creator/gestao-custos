@@ -20,6 +20,7 @@ export function OutsourcedReports() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [customWorkload, setCustomWorkload] = useState("");
 
   const filteredEmployees = employees.filter(employee => {
     const matchesCompany = !filterCompany || employee.company === filterCompany;
@@ -143,7 +144,8 @@ export function OutsourcedReports() {
   };
 
   const handleEdit = (employee: any) => {
-    setEditingEmployee({...employee});
+    setEditingEmployee({...employee, quantity: 1}); // Adicionar quantidade padrão se não existir
+    setCustomWorkload("");
     setIsEditDialogOpen(true);
   };
 
@@ -474,19 +476,74 @@ export function OutsourcedReports() {
               
               <div className="space-y-2">
                 <Label>Cargo</Label>
-                <Input
+                <Select
                   value={editingEmployee.role}
-                  onChange={(e) => setEditingEmployee({...editingEmployee, role: e.target.value})}
+                  onValueChange={(value) => setEditingEmployee({...editingEmployee, role: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Apoio Administrativo">Apoio Administrativo</SelectItem>
+                    <SelectItem value="Aux. Apoio Escolar">Aux. Apoio Escolar</SelectItem>
+                    <SelectItem value="Porteiro">Porteiro</SelectItem>
+                    <SelectItem value="Aux. de limpeza">Aux. de limpeza</SelectItem>
+                    <SelectItem value="Agente de Higienização">Agente de Higienização</SelectItem>
+                    <SelectItem value="Apoio Ed. Especial">Apoio Ed. Especial</SelectItem>
+                    <SelectItem value="Outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Quantidade</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={editingEmployee.quantity || 1}
+                  onChange={(e) => setEditingEmployee({...editingEmployee, quantity: parseInt(e.target.value) || 1})}
                 />
               </div>
               
               <div className="space-y-2">
                 <Label>Carga Horária</Label>
-                <Input
-                  value={editingEmployee.workload}
-                  onChange={(e) => setEditingEmployee({...editingEmployee, workload: e.target.value})}
-                />
+                <Select
+                  value={editingEmployee.workload === "40h" || editingEmployee.workload === "44h" || editingEmployee.workload === "12x36h" ? editingEmployee.workload : "outro"}
+                  onValueChange={(value) => {
+                    if (value === "outro") {
+                      setCustomWorkload(editingEmployee.workload || "");
+                      setEditingEmployee({...editingEmployee, workload: ""});
+                    } else {
+                      setCustomWorkload("");
+                      setEditingEmployee({...editingEmployee, workload: value});
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="40h">40h</SelectItem>
+                    <SelectItem value="44h">44h</SelectItem>
+                    <SelectItem value="12x36h">12x36h</SelectItem>
+                    <SelectItem value="outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
+              
+              {(customWorkload !== "" || (editingEmployee.workload !== "40h" && editingEmployee.workload !== "44h" && editingEmployee.workload !== "12x36h")) && (
+                <div className="space-y-2">
+                  <Label>Carga Horária Personalizada</Label>
+                  <Input
+                    placeholder="Digite a carga horária"
+                    value={customWorkload || editingEmployee.workload || ""}
+                    onChange={(e) => {
+                      setCustomWorkload(e.target.value);
+                      setEditingEmployee({...editingEmployee, workload: e.target.value});
+                    }}
+                  />
+                </div>
+              )}
               
               <div className="space-y-2">
                 <Label>Local de Trabalho</Label>
@@ -502,6 +559,24 @@ export function OutsourcedReports() {
                   value={editingEmployee.monthly_salary}
                   onValueChange={(value) => setEditingEmployee({...editingEmployee, monthly_salary: value})}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={editingEmployee.status}
+                  onValueChange={(value) => setEditingEmployee({...editingEmployee, status: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ativo">Ativo</SelectItem>
+                    <SelectItem value="Inativo">Inativo</SelectItem>
+                    <SelectItem value="Férias">Férias</SelectItem>
+                    <SelectItem value="Afastado">Afastado</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="space-y-2 col-span-2">
