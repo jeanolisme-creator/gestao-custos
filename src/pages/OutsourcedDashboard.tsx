@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { OutsourcedNavigation } from "@/components/outsourced/OutsourcedNavigation";
-import { EmployeeRegistrationSimple } from "@/components/outsourced/EmployeeRegistrationSimple";
+import { EmployeeRegistration } from "@/components/outsourced/EmployeeRegistration";
 import { OutsourcedCharts } from "@/components/outsourced/OutsourcedCharts";
 import { OutsourcedReports } from "@/components/outsourced/OutsourcedReports";
 import { DollarSign, Users, AlertTriangle, TrendingUp, Building2 } from "lucide-react";
@@ -168,7 +168,7 @@ export default function OutsourcedDashboard() {
         <OutsourcedNavigation currentTab={currentTab} onTabChange={setCurrentTab} />
 
         {currentTab === 'dashboard' && renderDashboard()}
-        {currentTab === 'employees' && <EmployeeRegistrationSimple />}
+        {currentTab === 'employees' && <EmployeeRegistration />}
         {currentTab === 'payroll' && <div className="text-center p-8">Folha de Pagamento - Em desenvolvimento</div>}
         {currentTab === 'costs' && <OutsourcedCharts />}
         {currentTab === 'reports' && <OutsourcedReports />}
