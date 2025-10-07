@@ -41,7 +41,6 @@ export async function importSchoolsFromCSV() {
         alunos_infantil,
         alunos_fundamental_i,
         alunos_fundamental_ii,
-        total_alunos: alunos_creche + alunos_infantil + alunos_fundamental_i + alunos_fundamental_ii,
       };
     }).filter(school => school.nome_escola); // Only import schools with names
     

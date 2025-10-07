@@ -514,7 +514,6 @@ export default function SchoolsRegistration() {
               alunos_infantil,
               alunos_fundamental_i,
               alunos_fundamental_ii,
-              total_alunos: alunos_creche + alunos_infantil + alunos_fundamental_i + alunos_fundamental_ii,
             };
           });
 
