@@ -34,6 +34,29 @@ export function OutsourcedReports() {
     return matchesCompany && matchesRole && matchesWorkplace && matchesSearch;
   });
 
+  // Agrupar por escola e cargo para mostrar quantidade e soma de salários
+  const groupedData = filteredEmployees.reduce((acc, employee) => {
+    const key = `${employee.workplace}-${employee.role}`;
+    if (!acc[key]) {
+      acc[key] = {
+        workplace: employee.workplace,
+        role: employee.role,
+        company: employee.company,
+        workload: employee.workload,
+        status: employee.status,
+        quantity: 0,
+        totalSalary: 0,
+        employees: []
+      };
+    }
+    acc[key].quantity += 1;
+    acc[key].totalSalary += employee.monthly_salary;
+    acc[key].employees.push(employee);
+    return acc;
+  }, {} as Record<string, any>);
+
+  const aggregatedData = Object.values(groupedData);
+
   const companies = Array.from(new Set(employees.map(e => e.company)));
   const roles = Array.from(new Set(employees.map(e => e.role)));
   const workplaces = Array.from(new Set(employees.map(e => e.workplace)));
@@ -345,53 +368,46 @@ export function OutsourcedReports() {
             <Table>
               <TableHeader>
                 <TableRow className="bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950">
-                  <TableHead className="font-bold text-foreground">Posto de Trabalho</TableHead>
-                  <TableHead className="font-bold text-foreground">Empresa</TableHead>
-                  <TableHead className="font-bold text-foreground">Cargo</TableHead>
                   <TableHead className="font-bold text-foreground">Local de Trabalho</TableHead>
+                  <TableHead className="font-bold text-foreground">Cargo</TableHead>
+                  <TableHead className="font-bold text-foreground">Empresa</TableHead>
+                  <TableHead className="text-center font-bold text-foreground">Quantidade</TableHead>
                   <TableHead className="font-bold text-foreground">Carga Horária</TableHead>
-                  <TableHead className="text-right font-bold text-foreground">Salário Mensal</TableHead>
+                  <TableHead className="text-right font-bold text-foreground">Salário Total</TableHead>
                   <TableHead className="text-center font-bold text-foreground">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredEmployees.length === 0 ? (
+                {aggregatedData.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       Nenhum posto de trabalho encontrado com os filtros aplicados
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredEmployees.map((employee, idx) => (
+                  aggregatedData.map((group, idx) => (
                     <TableRow 
-                      key={employee.id}
+                      key={`${group.workplace}-${group.role}`}
                       className={idx % 2 === 0 ? "bg-blue-50/30 dark:bg-blue-950/20" : "bg-purple-50/30 dark:bg-purple-950/20 hover:bg-purple-100/50 dark:hover:bg-purple-900/30"}
                     >
-                      <TableCell className="font-semibold text-blue-700 dark:text-blue-400">{employee.work_position}</TableCell>
-                      <TableCell className="text-foreground">{employee.company}</TableCell>
-                      <TableCell className="font-medium text-purple-700 dark:text-purple-400">{employee.role}</TableCell>
-                      <TableCell className="text-foreground">{employee.workplace || "-"}</TableCell>
-                      <TableCell className="text-center font-medium">{employee.workload}</TableCell>
+                      <TableCell className="font-semibold text-blue-700 dark:text-blue-400">{group.workplace || "-"}</TableCell>
+                      <TableCell className="font-medium text-purple-700 dark:text-purple-400">{group.role}</TableCell>
+                      <TableCell className="text-foreground">{group.company}</TableCell>
+                      <TableCell className="text-center font-bold text-orange-600 dark:text-orange-400">{group.quantity}</TableCell>
+                      <TableCell className="text-center font-medium">{group.workload}</TableCell>
                       <TableCell className="text-right font-bold text-green-700 dark:text-green-400">
-                        {formatCurrency(employee.monthly_salary)}
+                        {formatCurrency(group.totalSalary)}
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-2">
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleEdit(employee)}
+                            onClick={() => handleEdit(group.employees[0])}
                             className="h-8 w-8"
+                            title="Editar primeiro funcionário"
                           >
                             <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(employee.id)}
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>

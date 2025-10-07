@@ -106,7 +106,6 @@ export function EmployeeRegistration() {
     observations: ""
   }]);
 
-  const [registeredEmployees, setRegisteredEmployees] = useState<any[]>([]);
   const [schoolQuotas, setSchoolQuotas] = useState<SchoolQuota[]>([]);
   const [quotaAlerts, setQuotaAlerts] = useState<QuotaAlert[]>([]);
   
@@ -379,14 +378,6 @@ export function EmployeeRegistration() {
         });
       }
 
-      // Salvar dados localmente também (para quadro de vagas)
-      const newRecord = {
-        id: Date.now().toString(),
-        school: schoolData,
-        employees: employees
-      };
-
-      setRegisteredEmployees([...registeredEmployees, newRecord]);
       
       // Reset form
       setIsDialogOpen(false);
@@ -469,7 +460,6 @@ export function EmployeeRegistration() {
           employees: []
         }));
 
-        setRegisteredEmployees([...registeredEmployees, ...importedRecords]);
         toast.success(`${importedRecords.length} registro(s) importado(s) com sucesso!`);
       };
       reader.readAsBinaryString(file);
@@ -1039,64 +1029,95 @@ export function EmployeeRegistration() {
         </DialogContent>
       </Dialog>
 
-      {/* Lista de Funcionários Cadastrados */}
-      {registeredEmployees.length > 0 && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Funcionários Cadastrados</h3>
-          {registeredEmployees.map((record) => (
-            <Card key={record.id}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Building2 className="h-5 w-5" />
-                  {record.school.name}
+      {/* Listagem de funcionários cadastrados por escola */}
+      {!dbEmployees || dbEmployees.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Building2 className="h-16 w-16 text-muted-foreground mb-4" />
+            <p className="text-xl font-semibold text-muted-foreground">Nenhum funcionário cadastrado ainda</p>
+            <p className="text-sm text-muted-foreground mt-2">Use o botão acima para fazer o primeiro cadastro</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {Array.from(new Set(dbEmployees.map(e => e.workplace))).map((schoolName) => {
+            const schoolEmployees = dbEmployees.filter(e => e.workplace === schoolName);
+            return (
+            <Card key={schoolName}>
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5 text-blue-600" />
+                    {schoolName}
+                  </span>
+                  <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                    {schoolEmployees.length} posto(s)
+                  </Badge>
                 </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {record.school.address}, {record.school.number} - {record.school.neighborhood}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Telefone: {record.school.phone}
-                </p>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {record.employees.map((emp: Employee, idx: number) => (
-                    <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Users className="h-4 w-4" />
-                        <div>
-                          <p className="font-medium">
-                            {emp.company === "outro" ? emp.customCompany : emp.company} - {emp.position === "Outro" ? emp.customPosition : emp.position}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Quantidade: {emp.quantity} | Carga: {emp.workload === "outro" ? emp.customWorkload : emp.workload} | Status: {emp.status}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold">{formatCurrency(emp.totalValue)}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {formatCurrency(emp.unitValue)}/unidade
-                        </p>
-                      </div>
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  {/* Lista de funcionários agrupados por cargo */}
+                  <div className="border-t pt-4 mt-4">
+                    <h4 className="font-semibold mb-3 text-blue-700 dark:text-blue-400">Funcionários Terceirizados</h4>
+                    <div className="space-y-2">
+                      {Array.from(new Set(schoolEmployees.map(e => e.role))).map((role) => {
+                        const roleEmployees = schoolEmployees.filter(e => e.role === role);
+                        const totalSalary = roleEmployees.reduce((sum, e) => sum + e.monthly_salary, 0);
+                        const company = roleEmployees[0].company;
+                        const workload = roleEmployees[0].workload;
+                        const status = roleEmployees[0].status;
+                        
+                        return (
+                          <div key={role} className="bg-blue-50/50 dark:bg-blue-950/30 p-3 rounded-lg">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <p className="font-semibold text-purple-700 dark:text-purple-400">{role}</p>
+                                <p className="text-sm text-muted-foreground">{company}</p>
+                              </div>
+                              <Badge variant={status === "Ativo" ? "default" : "secondary"}>
+                                {status}
+                              </Badge>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-xs">
+                              <div>
+                                <span className="text-muted-foreground">Qtd:</span>
+                                <span className="ml-1 font-medium">{roleEmployees.length}</span>
+                              </div>
+                              <div>
+                                <span className="text-muted-foreground">Carga:</span>
+                                <span className="ml-1 font-medium">{workload}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-muted-foreground">Total:</span>
+                                <span className="ml-1 font-bold text-green-600 dark:text-green-400">
+                                  {formatCurrency(totalSalary)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Resumo financeiro */}
+                  <div className="border-t pt-4 mt-4">
+                    <div className="flex justify-between items-center bg-green-50 dark:bg-green-950/30 p-3 rounded-lg">
+                      <span className="font-semibold text-sm">Custo Total Mensal</span>
+                      <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                        {formatCurrency(schoolEmployees.reduce((sum, e) => sum + e.monthly_salary, 0))}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {registeredEmployees.length === 0 && (
-        <Card>
-          <CardContent className="text-center py-12">
-            <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">
-              Nenhum funcionário cadastrado ainda. Clique em "Cadastrar Funcionário" para começar.
-            </p>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
