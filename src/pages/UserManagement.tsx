@@ -96,7 +96,7 @@ export default function UserManagement() {
     try {
       setLoading(true);
       
-      // Load all profiles
+      // Load all profiles with email
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
@@ -113,20 +113,10 @@ export default function UserManagement() {
             .eq("user_id", profile.user_id)
             .maybeSingle();
 
-          // Get email from auth metadata if available
-          let email = "";
-          try {
-            const { data } = await supabase.auth.admin.listUsers();
-            const authUser = data.users?.find((u: any) => u.id === profile.user_id);
-            email = authUser?.email || "";
-          } catch (error) {
-            console.error("Error fetching user email:", error);
-          }
-
           return {
             ...profile,
             role: roleData?.role || "operador",
-            email,
+            email: profile.email || "",
           };
         })
       );
@@ -166,6 +156,7 @@ export default function UserManagement() {
         .insert({
           user_id: authData.user.id,
           display_name: formData.display_name,
+          email: formData.email,
         });
 
       if (profileError) throw profileError;
@@ -212,6 +203,7 @@ export default function UserManagement() {
         .from("profiles")
         .update({
           display_name: formData.display_name,
+          email: formData.email,
         })
         .eq("user_id", editingUser.user_id);
 
