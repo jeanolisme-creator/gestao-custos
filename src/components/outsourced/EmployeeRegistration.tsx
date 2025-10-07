@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useSchools } from "@/hooks/useSchools";
 import { useOutsourcedEmployees } from "@/hooks/useOutsourcedEmployees";
+import { useOutsourcedQuotas } from "@/hooks/useOutsourcedQuotas";
 
 interface Employee {
   id: string;
@@ -71,6 +72,7 @@ interface QuotaAlert {
 export function EmployeeRegistration() {
   const { schools, loading } = useSchools();
   const { employees: dbEmployees, addEmployee, updateEmployee, deleteEmployee, refetch } = useOutsourcedEmployees();
+  const { fetchSchoolQuotas, upsertSchoolQuotas } = useOutsourcedQuotas();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchSchoolName, setSearchSchoolName] = useState("");
   const [showQuotaSetup, setShowQuotaSetup] = useState(false);
@@ -123,56 +125,45 @@ export function EmployeeRegistration() {
     { position: "Outro", total: 0, occupied: 0 },
   ]);
 
-  // Verificar se escola já tem funcionários cadastrados no banco de dados
+  // Carregar quadro de vagas da escola (BD) e calcular ocupação
   useEffect(() => {
-    if (schoolData.name && dbEmployees) {
-      // Verificar se já existem funcionários cadastrados para essa escola no banco
+    const load = async () => {
+      if (!schoolData.name) return;
+
       const schoolEmployees = dbEmployees.filter(emp => emp.workplace === schoolData.name);
-      
-      // Verificar também no estado local (schoolQuotas)
-      const existingQuota = schoolQuotas.find(q => q.schoolName === schoolData.name);
-      
-      if (schoolEmployees.length > 0 || existingQuota) {
-        // Escola já tem funcionários - não mostrar setup, mostrar quadro com dados existentes
-        if (existingQuota) {
-          setCurrentQuota(existingQuota.positions);
-        } else {
-          // Calcular quadro baseado nos funcionários cadastrados
-          const defaultQuota = [
-            { position: "Apoio Administrativo", total: 0, occupied: 0 },
-            { position: "Aux. Apoio Escolar", total: 0, occupied: 0 },
-            { position: "Porteiro", total: 0, occupied: 0 },
-            { position: "Aux. de limpeza", total: 0, occupied: 0 },
-            { position: "Agente de Higienização", total: 0, occupied: 0 },
-            { position: "Apoio Ed. Especial", total: 0, occupied: 0 },
-            { position: "Outro", total: 0, occupied: 0 },
-          ];
-          
-          // Contar quantos funcionários já estão em cada posição
-          const quotaWithOccupied = defaultQuota.map(q => {
-            const count = schoolEmployees.filter(emp => emp.role === q.position).length;
-            return { ...q, occupied: count };
-          });
-          
-          setCurrentQuota(quotaWithOccupied);
-        }
-        setShowQuotaSetup(false);
-      } else {
-        // Escola nova - mostrar setup de quadro de vagas
-        setShowQuotaSetup(true);
-        // Reset para valores padrão
-        setCurrentQuota([
-          { position: "Apoio Administrativo", total: 0, occupied: 0 },
-          { position: "Aux. Apoio Escolar", total: 0, occupied: 0 },
-          { position: "Porteiro", total: 0, occupied: 0 },
-          { position: "Aux. de limpeza", total: 0, occupied: 0 },
-          { position: "Agente de Higienização", total: 0, occupied: 0 },
-          { position: "Apoio Ed. Especial", total: 0, occupied: 0 },
-          { position: "Outro", total: 0, occupied: 0 },
-        ]);
+      const defaultQuota = [
+        { position: "Apoio Administrativo", total: 0, occupied: 0 },
+        { position: "Aux. Apoio Escolar", total: 0, occupied: 0 },
+        { position: "Porteiro", total: 0, occupied: 0 },
+        { position: "Aux. de limpeza", total: 0, occupied: 0 },
+        { position: "Agente de Higienização", total: 0, occupied: 0 },
+        { position: "Apoio Ed. Especial", total: 0, occupied: 0 },
+        { position: "Outro", total: 0, occupied: 0 },
+      ];
+
+      try {
+        const dbQuotas = await fetchSchoolQuotas(schoolData.name);
+        let merged = defaultQuota.map(q => {
+          const found = dbQuotas.find((d: any) => d.position === q.position);
+          return { ...q, total: found?.total ?? 0 };
+        });
+        merged = merged.map(q => ({
+          ...q,
+          occupied: schoolEmployees.filter(emp => emp.role === q.position).length,
+        }));
+        setCurrentQuota(merged);
+        setShowQuotaSetup((dbQuotas?.length || 0) === 0 && schoolEmployees.length === 0);
+      } catch (e) {
+        const quotaWithOccupied = defaultQuota.map(q => {
+          const count = schoolEmployees.filter(emp => emp.role === q.position).length;
+          return { ...q, occupied: count };
+        });
+        setCurrentQuota(quotaWithOccupied);
+        setShowQuotaSetup(schoolEmployees.length === 0);
       }
-    }
-  }, [schoolData.name, schoolQuotas, dbEmployees]);
+    };
+    load();
+  }, [schoolData.name, dbEmployees]);
 
   const handleSearchSchool = () => {
     if (!searchSchoolName.trim()) {
@@ -231,24 +222,39 @@ export function EmployeeRegistration() {
     ));
   };
 
-  const saveQuotaSetup = () => {
+  const saveQuotaSetup = async () => {
     if (!schoolData.name) {
       toast.error("Selecione uma escola primeiro");
       return;
     }
 
-    const existingIndex = schoolQuotas.findIndex(q => q.schoolName === schoolData.name);
-    if (existingIndex >= 0) {
-      const updated = [...schoolQuotas];
-      updated[existingIndex] = { schoolName: schoolData.name, positions: currentQuota };
-      setSchoolQuotas(updated);
-    } else {
-      setSchoolQuotas([...schoolQuotas, { schoolName: schoolData.name, positions: currentQuota }]);
+    try {
+      // Atualiza estado local (mantém experiência atual)
+      const existingIndex = schoolQuotas.findIndex(q => q.schoolName === schoolData.name);
+      if (existingIndex >= 0) {
+        const updated = [...schoolQuotas];
+        updated[existingIndex] = { schoolName: schoolData.name, positions: currentQuota };
+        setSchoolQuotas(updated);
+      } else {
+        setSchoolQuotas([...schoolQuotas, { schoolName: schoolData.name, positions: currentQuota }]);
+      }
+
+      // Persiste no banco de dados
+      const selectedSchool = schools.find(s => s.nome_escola === schoolData.name);
+      const schoolId = selectedSchool?.id || null;
+      await upsertSchoolQuotas(
+        schoolData.name,
+        currentQuota.map(q => ({ position: q.position, total: q.total })),
+        schoolId
+      );
+
+      setShowQuotaSetup(false);
+      setIsEditingQuota(false);
+      toast.success("Quadro de vagas salvo com sucesso!");
+    } catch (err) {
+      console.error("Erro ao salvar quadro de vagas:", err);
+      toast.error("Erro ao salvar quadro de vagas");
     }
-    
-    setShowQuotaSetup(false);
-    setIsEditingQuota(false);
-    toast.success("Quadro de vagas salvo com sucesso!");
   };
 
   const handleAddEmployee = () => {

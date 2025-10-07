@@ -358,6 +358,39 @@ export type Database = {
           },
         ]
       }
+      outsourced_quotas: {
+        Row: {
+          created_at: string
+          id: string
+          position: string
+          school_id: string | null
+          school_name: string
+          total: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          position: string
+          school_id?: string | null
+          school_name: string
+          total?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          position?: string
+          school_id?: string | null
+          school_name?: string
+          total?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
