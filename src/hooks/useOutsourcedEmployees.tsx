@@ -36,11 +36,23 @@ export function useOutsourcedEmployees() {
         return;
       }
 
-      const { data, error } = await supabase
+      // Check if current user is admin
+      const { data: adminRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "administrador")
+        .maybeSingle();
+      const isAdmin = !!adminRole;
+
+      const baseQuery = supabase
         .from("outsourced_employees")
         .select("*")
-        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
+
+      const { data, error } = isAdmin
+        ? await baseQuery
+        : await baseQuery.eq("user_id", user.id);
 
       if (error) throw error;
       setEmployees(data || []);

@@ -16,11 +16,23 @@ export function useOutsourcedQuotas() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Usuário não autenticado");
 
-    const { data, error } = await supabase
+    // Check if current user is admin
+    const { data: adminRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "administrador")
+      .maybeSingle();
+    const isAdmin = !!adminRole;
+
+    const baseQuery = supabase
       .from("outsourced_quotas")
       .select("*")
-      .eq("user_id", user.id)
       .eq("school_name", schoolName);
+
+    const { data, error } = isAdmin
+      ? await baseQuery
+      : await baseQuery.eq("user_id", user.id);
 
     if (error) throw error;
     return (data || []) as OutsourcedQuota[];
