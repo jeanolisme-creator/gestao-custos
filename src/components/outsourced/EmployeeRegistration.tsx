@@ -368,17 +368,22 @@ export function EmployeeRegistration() {
     // Salvar cada funcionário no banco de dados
     try {
       for (const emp of employees) {
-        await addEmployee({
-          company: emp.company,
-          work_position: `${emp.position} - ${schoolData.name}`,
-          role: emp.position,
-          workload: emp.workload,
-          monthly_salary: emp.totalValue / emp.quantity, // Salário unitário
-          workplace: schoolData.name,
-          school_id: schoolId,
-          status: emp.status,
-          observations: emp.observations || null,
-        });
+        // Criar múltiplos registros quando quantity > 1
+        const unitSalary = emp.totalValue / emp.quantity;
+        
+        for (let i = 0; i < emp.quantity; i++) {
+          await addEmployee({
+            company: emp.company,
+            work_position: `${emp.position} - ${schoolData.name}`,
+            role: emp.position,
+            workload: emp.workload,
+            monthly_salary: unitSalary, // Salário unitário
+            workplace: schoolData.name,
+            school_id: schoolId,
+            status: emp.status,
+            observations: emp.observations || null,
+          });
+        }
       }
 
       
