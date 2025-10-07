@@ -1,44 +1,16 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { OutsourcedNavigation } from "@/components/outsourced/OutsourcedNavigation";
-import { EmployeeRegistration } from "@/components/outsourced/EmployeeRegistration";
+import { EmployeeRegistrationSimple } from "@/components/outsourced/EmployeeRegistrationSimple";
 import { OutsourcedCharts } from "@/components/outsourced/OutsourcedCharts";
 import { OutsourcedReports } from "@/components/outsourced/OutsourcedReports";
 import { DollarSign, Users, AlertTriangle, TrendingUp, Building2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useOutsourcedEmployees } from "@/hooks/useOutsourcedEmployees";
 
 export default function OutsourcedDashboard() {
   const [currentTab, setCurrentTab] = useState('dashboard');
-
-  // Mock data para empresas
-  const companies = {
-    assej: { monthly: 150000, annual: 1800000 },
-    produserv: { monthly: 200000, annual: 2400000 },
-    gf: { monthly: 180000, annual: 2160000 },
-    eficience: { monthly: 120000, annual: 1440000 },
-  };
-
-  // Mock data para cargos
-  const positions = [
-    { name: 'Aux. Apoio Escolar', quantity: 45, monthly: 67500, color: 'bg-blue-500' },
-    { name: 'Apoio Administrativo', quantity: 20, monthly: 35000, color: 'bg-green-500' },
-    { name: 'Porteiro', quantity: 30, monthly: 42000, color: 'bg-yellow-500' },
-    { name: 'Auxiliar de Limpeza', quantity: 50, monthly: 70000, color: 'bg-red-500' },
-    { name: 'Agente de Higienização', quantity: 35, monthly: 52500, color: 'bg-purple-500' },
-    { name: 'Apoio Ed. Especial', quantity: 25, monthly: 40000, color: 'bg-pink-500' },
-    { name: 'Outro', quantity: 15, monthly: 22500, color: 'bg-gray-500' },
-  ];
-
-  // Alertas de quadro de vagas
-  const [quotaAlerts, setQuotaAlerts] = useState<any[]>([
-    { type: 'excess', school: 'EMEF João Silva', position: 'Auxiliar de Limpeza', occupied: 3, total: 2 },
-    { type: 'vacancy', school: 'EMEI Maria Santos', position: 'Porteiro', occupied: 1, total: 2, available: 1 },
-    { type: 'vacancy', school: 'EMEIF Carlos Lima', position: 'Aux. Apoio Escolar', occupied: 2, total: 3, available: 1 },
-  ]);
-
-  const totalMonthly = Object.values(companies).reduce((sum, c) => sum + c.monthly, 0);
-  const totalAnnual = Object.values(companies).reduce((sum, c) => sum + c.annual, 0);
-  const totalEmployees = positions.reduce((sum, p) => sum + p.quantity, 0);
+  const { employees, loading } = useOutsourcedEmployees();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -47,6 +19,46 @@ export default function OutsourcedDashboard() {
       minimumFractionDigits: 0,
     }).format(value);
   };
+
+  // Calcular dados reais
+  const companies = employees.reduce((acc, emp) => {
+    if (!acc[emp.company]) {
+      acc[emp.company] = { monthly: 0, count: 0 };
+    }
+    acc[emp.company].monthly += emp.monthly_salary;
+    acc[emp.company].count += 1;
+    return acc;
+  }, {} as Record<string, { monthly: number; count: number }>);
+
+  const positions = employees.reduce((acc, emp) => {
+    if (!acc[emp.role]) {
+      acc[emp.role] = { quantity: 0, monthly: 0 };
+    }
+    acc[emp.role].quantity += 1;
+    acc[emp.role].monthly += emp.monthly_salary;
+    return acc;
+  }, {} as Record<string, { quantity: number; monthly: number }>);
+
+  const totalMonthly = employees.reduce((sum, emp) => sum + emp.monthly_salary, 0);
+  const totalAnnual = totalMonthly * 12;
+  const totalEmployees = employees.length;
+
+  const positionsArray = Object.entries(positions).map(([name, data], index) => ({
+    name,
+    quantity: data.quantity,
+    monthly: data.monthly,
+    color: ['bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-red-500', 'bg-purple-500', 'bg-pink-500', 'bg-gray-500'][index % 7]
+  }));
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="flex items-center justify-center p-8">Carregando...</div>
+        </div>
+      </div>
+    );
+  }
 
   const renderDashboard = () => (
     <div className="space-y-6">
@@ -60,49 +72,28 @@ export default function OutsourcedDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="border-blue-200 bg-blue-50">
-              <CardContent className="p-4 text-center">
-                <div className="h-12 w-12 rounded-full bg-blue-500 mx-auto mb-2 flex items-center justify-center">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
-                <p className="text-sm font-medium text-blue-600 mb-1">Assej</p>
-                <p className="text-2xl font-bold text-blue-700 mb-1">45</p>
-                <p className="text-sm font-semibold text-blue-600">{formatCurrency(companies.assej.monthly)}</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="p-4 text-center">
-                <div className="h-12 w-12 rounded-full bg-green-500 mx-auto mb-2 flex items-center justify-center">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
-                <p className="text-sm font-medium text-green-600 mb-1">Produserv</p>
-                <p className="text-2xl font-bold text-green-700 mb-1">60</p>
-                <p className="text-sm font-semibold text-green-600">{formatCurrency(companies.produserv.monthly)}</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-yellow-200 bg-yellow-50">
-              <CardContent className="p-4 text-center">
-                <div className="h-12 w-12 rounded-full bg-yellow-500 mx-auto mb-2 flex items-center justify-center">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
-                <p className="text-sm font-medium text-yellow-600 mb-1">GF</p>
-                <p className="text-2xl font-bold text-yellow-700 mb-1">50</p>
-                <p className="text-sm font-semibold text-yellow-600">{formatCurrency(companies.gf.monthly)}</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-purple-200 bg-purple-50">
-              <CardContent className="p-4 text-center">
-                <div className="h-12 w-12 rounded-full bg-purple-500 mx-auto mb-2 flex items-center justify-center">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
-                <p className="text-sm font-medium text-purple-600 mb-1">Eficience</p>
-                <p className="text-2xl font-bold text-purple-700 mb-1">35</p>
-                <p className="text-sm font-semibold text-purple-600">{formatCurrency(companies.eficience.monthly)}</p>
-              </CardContent>
-            </Card>
+            {Object.entries(companies).map(([company, data], idx) => {
+              const colors = [
+                { border: 'border-blue-200', bg: 'bg-blue-50', icon: 'bg-blue-500', text: 'text-blue-600', bold: 'text-blue-700' },
+                { border: 'border-green-200', bg: 'bg-green-50', icon: 'bg-green-500', text: 'text-green-600', bold: 'text-green-700' },
+                { border: 'border-yellow-200', bg: 'bg-yellow-50', icon: 'bg-yellow-500', text: 'text-yellow-600', bold: 'text-yellow-700' },
+                { border: 'border-purple-200', bg: 'bg-purple-50', icon: 'bg-purple-500', text: 'text-purple-600', bold: 'text-purple-700' },
+              ];
+              const color = colors[idx % colors.length];
+              
+              return (
+                <Card key={company} className={`${color.border} ${color.bg}`}>
+                  <CardContent className="p-4 text-center">
+                    <div className={`h-12 w-12 rounded-full ${color.icon} mx-auto mb-2 flex items-center justify-center`}>
+                      <Users className="h-6 w-6 text-white" />
+                    </div>
+                    <p className={`text-sm font-medium ${color.text} mb-1`}>{company}</p>
+                    <p className={`text-2xl font-bold ${color.bold} mb-1`}>{data.count}</p>
+                    <p className={`text-sm font-semibold ${color.text}`}>{formatCurrency(data.monthly)}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </CardContent>
       </Card>
@@ -136,83 +127,7 @@ export default function OutsourcedDashboard() {
         </Card>
       </div>
 
-      {/* Card de Alertas em linha completa */}
-      <Card className="border-red-200 bg-red-50">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-red-700">
-            <AlertTriangle className="h-5 w-5" />
-            Alertas do Quadro de Vagas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="max-h-[500px] overflow-y-auto pr-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {quotaAlerts.slice(0, 9).map((alert, index) => (
-                <div 
-                  key={index} 
-                  className={`flex items-start gap-2 p-3 rounded-lg ${
-                    alert.type === 'excess' ? 'bg-red-100' : 'bg-amber-100'
-                  }`}
-                >
-                  <AlertTriangle className={`h-5 w-5 mt-0.5 ${
-                    alert.type === 'excess' ? 'text-red-600' : 'text-amber-600'
-                  }`} />
-                  <div className="flex-1">
-                    <p className={`text-sm font-medium ${
-                      alert.type === 'excess' ? 'text-red-800' : 'text-amber-800'
-                    }`}>
-                      {alert.school}
-                    </p>
-                    <p className={`text-xs ${
-                      alert.type === 'excess' ? 'text-red-600' : 'text-amber-600'
-                    }`}>
-                      {alert.type === 'excess' 
-                        ? `ATENÇÃO: ${alert.position} excedeu o limite. Ocupadas: ${alert.occupied} / Limite: ${alert.total}`
-                        : `INFORMAÇÃO: ${alert.position} possui ${alert.available} vaga(s) disponível(eis)`
-                      }
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            {quotaAlerts.length > 9 && (
-              <div className="mt-3 border-t pt-3">
-                <p className="text-sm font-medium text-red-700 mb-2">Mais Alertas:</p>
-                <div className="space-y-2">
-                  {quotaAlerts.slice(9).map((alert, index) => (
-                    <div 
-                      key={index + 9} 
-                      className={`flex items-start gap-2 p-2 rounded-lg ${
-                        alert.type === 'excess' ? 'bg-red-100' : 'bg-amber-100'
-                      }`}
-                    >
-                      <AlertTriangle className={`h-4 w-4 mt-0.5 ${
-                        alert.type === 'excess' ? 'text-red-600' : 'text-amber-600'
-                      }`} />
-                      <div className="flex-1">
-                        <p className={`text-xs font-medium ${
-                          alert.type === 'excess' ? 'text-red-800' : 'text-amber-800'
-                        }`}>
-                          {alert.school}
-                        </p>
-                        <p className={`text-xs ${
-                          alert.type === 'excess' ? 'text-red-600' : 'text-amber-600'
-                        }`}>
-                          {alert.type === 'excess' 
-                            ? `${alert.position} excedeu (${alert.occupied}/${alert.total})`
-                            : `${alert.position}: ${alert.available} vaga(s)`
-                          }
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Card de Alertas removido temporariamente - será implementado com lógica real */}
 
       {/* Minicards por cargo */}
       <Card>
@@ -222,7 +137,7 @@ export default function OutsourcedDashboard() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
-            {positions.map((position, index) => (
+            {positionsArray.map((position, index) => (
               <Card key={index} className={`border-2 ${position.color.replace('bg-', 'border-')}`}>
                 <CardContent className="p-4 text-center">
                   <div className={`h-12 w-12 rounded-full ${position.color} mx-auto mb-2 flex items-center justify-center`}>
@@ -253,7 +168,7 @@ export default function OutsourcedDashboard() {
         <OutsourcedNavigation currentTab={currentTab} onTabChange={setCurrentTab} />
 
         {currentTab === 'dashboard' && renderDashboard()}
-        {currentTab === 'employees' && <EmployeeRegistration />}
+        {currentTab === 'employees' && <EmployeeRegistrationSimple />}
         {currentTab === 'payroll' && <div className="text-center p-8">Folha de Pagamento - Em desenvolvimento</div>}
         {currentTab === 'costs' && <OutsourcedCharts />}
         {currentTab === 'reports' && <OutsourcedReports />}

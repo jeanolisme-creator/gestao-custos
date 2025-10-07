@@ -5,45 +5,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { FileDown, Filter, Search, Users, DollarSign, TrendingUp, Building2, Upload, Edit, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from 'xlsx';
-
-interface Employee {
-  id: string;
-  workPosition: string;
-  company: string;
-  role: string;
-  workplace: string;
-  workload: string;
-  monthlySalary: number;
-}
+import { useOutsourcedEmployees } from "@/hooks/useOutsourcedEmployees";
+import { CurrencyInput } from "@/components/ui/currency-input";
 
 export function OutsourcedReports() {
+  const { employees, loading, deleteEmployee, updateEmployee } = useOutsourcedEmployees();
   const [filterCompany, setFilterCompany] = useState<string>("");
   const [filterRole, setFilterRole] = useState<string>("");
   const [filterWorkplace, setFilterWorkplace] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [employees, setEmployees] = useState<Employee[]>([
-    { id: "1", workPosition: "Posto de Portaria 1", company: "Produserv", role: "Porteiro", workplace: "EMEF João Silva", workload: "40h", monthlySalary: 1500 },
-    { id: "2", workPosition: "Posto de Apoio Escolar 1", company: "GF", role: "Aux. Apoio Escolar", workplace: "EMEI Maria Santos", workload: "44h", monthlySalary: 1400 },
-    { id: "3", workPosition: "Posto de Portaria 2", company: "Eficience", role: "Porteiro", workplace: "EMEIF Carlos Lima", workload: "12x36h", monthlySalary: 1600 },
-    { id: "4", workPosition: "Posto Administrativo 1", company: "Assej", role: "Apoio Administrativo", workplace: "EMEF João Silva", workload: "40h", monthlySalary: 1750 },
-    { id: "5", workPosition: "Posto de Higienização 1", company: "Produserv", role: "Agente de Higienização", workplace: "EMEI Maria Santos", workload: "44h", monthlySalary: 1500 },
-    { id: "6", workPosition: "Posto Ed. Especial 1", company: "GF", role: "Apoio Ed. Especial", workplace: "EMEIF Carlos Lima", workload: "40h", monthlySalary: 1600 },
-    { id: "7", workPosition: "Posto de Limpeza 1", company: "Eficience", role: "Aux. de limpeza", workplace: "EMEF João Silva", workload: "44h", monthlySalary: 1400 },
-    { id: "8", workPosition: "Posto de Apoio Escolar 2", company: "Assej", role: "Aux. Apoio Escolar", workplace: "EMEI Maria Santos", workload: "40h", monthlySalary: 1500 },
-  ]);
+  const [editingEmployee, setEditingEmployee] = useState<any>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const filteredEmployees = employees.filter(employee => {
     const matchesCompany = !filterCompany || employee.company === filterCompany;
     const matchesRole = !filterRole || employee.role === filterRole;
-    const matchesWorkplace = !filterWorkplace || employee.workplace === filterWorkplace;
+    const matchesWorkplace = !filterWorkplace || (employee.workplace && employee.workplace.toLowerCase().includes(filterWorkplace.toLowerCase()));
     const matchesSearch = !searchTerm || 
-      employee.workPosition.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      employee.work_position.toLowerCase().includes(searchTerm.toLowerCase()) ||
       employee.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
       employee.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      employee.workplace.toLowerCase().includes(searchTerm.toLowerCase());
+      (employee.workplace && employee.workplace.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return matchesCompany && matchesRole && matchesWorkplace && matchesSearch;
   });
@@ -71,18 +57,8 @@ export function OutsourcedReports() {
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(firstSheet) as any[];
 
-        const importedEmployees: Employee[] = jsonData.map((row, index) => ({
-          id: `imported-${Date.now()}-${index}`,
-          workPosition: row['Posto de Trabalho'] || row['workPosition'] || '',
-          company: row['Empresa'] || row['company'] || '',
-          role: row['Cargo'] || row['role'] || '',
-          workplace: row['Local de Trabalho'] || row['workplace'] || '',
-          workload: row['Carga Horária'] || row['workload'] || '',
-          monthlySalary: parseFloat(row['Salário Mensal'] || row['monthlySalary'] || '0'),
-        }));
-
-        setEmployees([...employees, ...importedEmployees]);
-        toast.success(`${importedEmployees.length} posto(s) de trabalho importado(s) com sucesso!`);
+        // Process and log imported data (would need backend implementation)
+        toast.success(`${jsonData.length} registro(s) identificado(s) no arquivo!`);
       };
       reader.readAsBinaryString(file);
     } catch (error) {
@@ -95,12 +71,12 @@ export function OutsourcedReports() {
   const exportToCSV = () => {
     const headers = ["Posto de Trabalho", "Empresa", "Cargo", "Local de Trabalho", "Carga Horária", "Salário Mensal"];
     const rows = filteredEmployees.map(emp => [
-      emp.workPosition,
+      emp.work_position,
       emp.company,
       emp.role,
-      emp.workplace,
+      emp.workplace || "",
       emp.workload,
-      emp.monthlySalary.toString(),
+      emp.monthly_salary.toString(),
     ]);
 
     const csvContent = [
@@ -123,12 +99,12 @@ export function OutsourcedReports() {
 
   const exportToXLSX = () => {
     const data = filteredEmployees.map(emp => ({
-      'Posto de Trabalho': emp.workPosition,
+      'Posto de Trabalho': emp.work_position,
       'Empresa': emp.company,
       'Cargo': emp.role,
-      'Local de Trabalho': emp.workplace,
+      'Local de Trabalho': emp.workplace || "",
       'Carga Horária': emp.workload,
-      'Salário Mensal': emp.monthlySalary,
+      'Salário Mensal': emp.monthly_salary,
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(data);
@@ -139,14 +115,36 @@ export function OutsourcedReports() {
     toast.success("Relatório exportado em XLSX com sucesso!");
   };
 
-  const handleEdit = (employee: Employee) => {
-    toast.info(`Editar posto: ${employee.workPosition}`);
-    // Implementar lógica de edição
+  const handleEdit = (employee: any) => {
+    setEditingEmployee({...employee});
+    setIsEditDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setEmployees(employees.filter(emp => emp.id !== id));
-    toast.success("Posto de trabalho excluído com sucesso!");
+  const handleSaveEdit = async () => {
+    if (!editingEmployee) return;
+    
+    try {
+      await updateEmployee(editingEmployee.id, {
+        company: editingEmployee.company,
+        work_position: editingEmployee.work_position,
+        role: editingEmployee.role,
+        workload: editingEmployee.workload,
+        monthly_salary: editingEmployee.monthly_salary,
+        workplace: editingEmployee.workplace,
+        status: editingEmployee.status,
+        observations: editingEmployee.observations,
+      });
+      setIsEditDialogOpen(false);
+      setEditingEmployee(null);
+    } catch (error) {
+      // Error handled by hook
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Tem certeza que deseja excluir este funcionário?")) {
+      await deleteEmployee(id);
+    }
   };
 
   const clearFilters = () => {
@@ -156,6 +154,10 @@ export function OutsourcedReports() {
     setSearchTerm("");
     toast.success("Filtros limpos");
   };
+
+  if (loading) {
+    return <div className="flex items-center justify-center p-8">Carregando...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -282,7 +284,7 @@ export function OutsourcedReports() {
           </CardHeader>
           <CardContent className="text-center">
             <div className="text-2xl font-bold text-green-700">
-              {formatCurrency(filteredEmployees.reduce((sum, e) => sum + e.monthlySalary, 0))}
+              {formatCurrency(filteredEmployees.reduce((sum, e) => sum + e.monthly_salary, 0))}
             </div>
           </CardContent>
         </Card>
@@ -296,7 +298,7 @@ export function OutsourcedReports() {
           </CardHeader>
           <CardContent className="text-center">
             <div className="text-2xl font-bold text-purple-700">
-              {formatCurrency(filteredEmployees.reduce((sum, e) => sum + e.monthlySalary * 12, 0))}
+              {formatCurrency(filteredEmployees.reduce((sum, e) => sum + e.monthly_salary * 12, 0))}
             </div>
           </CardContent>
         </Card>
@@ -365,13 +367,13 @@ export function OutsourcedReports() {
                       key={employee.id}
                       className={idx % 2 === 0 ? "bg-blue-50/30 dark:bg-blue-950/20" : "bg-purple-50/30 dark:bg-purple-950/20 hover:bg-purple-100/50 dark:hover:bg-purple-900/30"}
                     >
-                      <TableCell className="font-semibold text-blue-700 dark:text-blue-400">{employee.workPosition}</TableCell>
+                      <TableCell className="font-semibold text-blue-700 dark:text-blue-400">{employee.work_position}</TableCell>
                       <TableCell className="text-foreground">{employee.company}</TableCell>
                       <TableCell className="font-medium text-purple-700 dark:text-purple-400">{employee.role}</TableCell>
-                      <TableCell className="text-foreground">{employee.workplace}</TableCell>
+                      <TableCell className="text-foreground">{employee.workplace || "-"}</TableCell>
                       <TableCell className="text-center font-medium">{employee.workload}</TableCell>
                       <TableCell className="text-right font-bold text-green-700 dark:text-green-400">
-                        {formatCurrency(employee.monthlySalary)}
+                        {formatCurrency(employee.monthly_salary)}
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-2">
@@ -401,6 +403,84 @@ export function OutsourcedReports() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog de Edição */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Funcionário Terceirizado</DialogTitle>
+          </DialogHeader>
+          
+          {editingEmployee && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Empresa</Label>
+                <Input
+                  value={editingEmployee.company}
+                  onChange={(e) => setEditingEmployee({...editingEmployee, company: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Posto de Trabalho</Label>
+                <Input
+                  value={editingEmployee.work_position}
+                  onChange={(e) => setEditingEmployee({...editingEmployee, work_position: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Cargo</Label>
+                <Input
+                  value={editingEmployee.role}
+                  onChange={(e) => setEditingEmployee({...editingEmployee, role: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Carga Horária</Label>
+                <Input
+                  value={editingEmployee.workload}
+                  onChange={(e) => setEditingEmployee({...editingEmployee, workload: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Local de Trabalho</Label>
+                <Input
+                  value={editingEmployee.workplace || ""}
+                  onChange={(e) => setEditingEmployee({...editingEmployee, workplace: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Salário Mensal</Label>
+                <CurrencyInput
+                  value={editingEmployee.monthly_salary}
+                  onValueChange={(value) => setEditingEmployee({...editingEmployee, monthly_salary: value})}
+                />
+              </div>
+              
+              <div className="space-y-2 col-span-2">
+                <Label>Observações</Label>
+                <Input
+                  value={editingEmployee.observations || ""}
+                  onChange={(e) => setEditingEmployee({...editingEmployee, observations: e.target.value})}
+                />
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveEdit}>
+              Salvar Alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

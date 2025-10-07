@@ -302,6 +302,62 @@ export type Database = {
         }
         Relationships: []
       }
+      outsourced_employees: {
+        Row: {
+          company: string
+          created_at: string
+          id: string
+          monthly_salary: number
+          observations: string | null
+          role: string
+          school_id: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          work_position: string
+          workload: string
+          workplace: string | null
+        }
+        Insert: {
+          company: string
+          created_at?: string
+          id?: string
+          monthly_salary?: number
+          observations?: string | null
+          role: string
+          school_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          work_position: string
+          workload: string
+          workplace?: string | null
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          id?: string
+          monthly_salary?: number
+          observations?: string | null
+          role?: string
+          school_id?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          work_position?: string
+          workload?: string
+          workplace?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outsourced_employees_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
