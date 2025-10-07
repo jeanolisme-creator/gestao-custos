@@ -32,7 +32,7 @@ export async function importSchoolsFromCSV() {
         endereco_completo: row.endereco_completo || null,
         numero: row.numero || null,
         bairro: row.bairro || null,
-        macroregiao: row.macroregiao === 'nan' ? null : (row.macroregiao || null),
+        macroregiao: null,
         telefone_fixo: row.telefone_fixo || null,
         telefone_celular: (row.telefone_celular === 'NULL' || row.telefone_celular === 'nan') ? null : (row.telefone_celular || null),
         tipo_escola: row.tipo_escola || null,
