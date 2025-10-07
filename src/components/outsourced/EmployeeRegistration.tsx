@@ -70,7 +70,7 @@ interface QuotaAlert {
 
 export function EmployeeRegistration() {
   const { schools, loading } = useSchools();
-  const { addEmployee } = useOutsourcedEmployees();
+  const { employees: dbEmployees, addEmployee } = useOutsourcedEmployees();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchSchoolName, setSearchSchoolName] = useState("");
   const [showQuotaSetup, setShowQuotaSetup] = useState(false);
@@ -121,12 +121,39 @@ export function EmployeeRegistration() {
     { position: "Outro", total: 1, occupied: 0 },
   ]);
 
-  // Verificar se escola já tem quadro de vagas cadastrado
+  // Verificar se escola já tem funcionários cadastrados no banco de dados
   useEffect(() => {
-    if (schoolData.name) {
+    if (schoolData.name && dbEmployees) {
+      // Verificar se já existem funcionários cadastrados para essa escola no banco
+      const schoolEmployees = dbEmployees.filter(emp => emp.workplace === schoolData.name);
+      
+      // Verificar também no estado local (schoolQuotas)
       const existingQuota = schoolQuotas.find(q => q.schoolName === schoolData.name);
-      if (existingQuota) {
-        setCurrentQuota(existingQuota.positions);
+      
+      if (schoolEmployees.length > 0 || existingQuota) {
+        // Escola já tem funcionários - não mostrar setup, mostrar quadro com dados existentes
+        if (existingQuota) {
+          setCurrentQuota(existingQuota.positions);
+        } else {
+          // Calcular quadro baseado nos funcionários cadastrados
+          const defaultQuota = [
+            { position: "Apoio Administrativo", total: 1, occupied: 0 },
+            { position: "Aux. Apoio Escolar", total: 3, occupied: 0 },
+            { position: "Porteiro", total: 2, occupied: 0 },
+            { position: "Aux. de limpeza", total: 2, occupied: 0 },
+            { position: "Agente de Higienização", total: 2, occupied: 0 },
+            { position: "Apoio Ed. Especial", total: 3, occupied: 0 },
+            { position: "Outro", total: 1, occupied: 0 },
+          ];
+          
+          // Contar quantos funcionários já estão em cada posição
+          const quotaWithOccupied = defaultQuota.map(q => {
+            const count = schoolEmployees.filter(emp => emp.role === q.position).length;
+            return { ...q, occupied: count };
+          });
+          
+          setCurrentQuota(quotaWithOccupied);
+        }
         setShowQuotaSetup(false);
       } else {
         // Escola nova - mostrar setup de quadro de vagas
@@ -143,7 +170,7 @@ export function EmployeeRegistration() {
         ]);
       }
     }
-  }, [schoolData.name, schoolQuotas]);
+  }, [schoolData.name, schoolQuotas, dbEmployees]);
 
   const handleSearchSchool = () => {
     if (!searchSchoolName.trim()) {
