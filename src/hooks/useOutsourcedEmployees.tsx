@@ -69,7 +69,7 @@ export function useOutsourcedEmployees() {
 
       if (error) throw error;
       
-      setEmployees([data, ...employees]);
+      setEmployees((prev) => [data, ...prev]);
       toast({
         title: "Sucesso",
         description: "Funcionário cadastrado com sucesso!",
@@ -96,7 +96,7 @@ export function useOutsourcedEmployees() {
 
       if (error) throw error;
 
-      setEmployees(employees.map(emp => emp.id === id ? { ...emp, ...updates } : emp));
+      setEmployees((prev) => prev.map(emp => emp.id === id ? { ...emp, ...updates } : emp));
       toast({
         title: "Sucesso",
         description: "Funcionário atualizado com sucesso!",
@@ -121,7 +121,7 @@ export function useOutsourcedEmployees() {
 
       if (error) throw error;
 
-      setEmployees(employees.filter(emp => emp.id !== id));
+      setEmployees((prev) => prev.filter(emp => emp.id !== id));
       toast({
         title: "Sucesso",
         description: "Funcionário excluído com sucesso!",
