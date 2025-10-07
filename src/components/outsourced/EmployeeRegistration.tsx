@@ -111,13 +111,13 @@ export function EmployeeRegistration() {
   
   // Quadro de vagas padrão
   const [currentQuota, setCurrentQuota] = useState<PositionQuota[]>([
-    { position: "Apoio Administrativo", total: 1, occupied: 0 },
-    { position: "Aux. Apoio Escolar", total: 3, occupied: 0 },
-    { position: "Porteiro", total: 2, occupied: 0 },
-    { position: "Aux. de limpeza", total: 2, occupied: 0 },
-    { position: "Agente de Higienização", total: 2, occupied: 0 },
-    { position: "Apoio Ed. Especial", total: 3, occupied: 0 },
-    { position: "Outro", total: 1, occupied: 0 },
+    { position: "Apoio Administrativo", total: 0, occupied: 0 },
+    { position: "Aux. Apoio Escolar", total: 0, occupied: 0 },
+    { position: "Porteiro", total: 0, occupied: 0 },
+    { position: "Aux. de limpeza", total: 0, occupied: 0 },
+    { position: "Agente de Higienização", total: 0, occupied: 0 },
+    { position: "Apoio Ed. Especial", total: 0, occupied: 0 },
+    { position: "Outro", total: 0, occupied: 0 },
   ]);
 
   // Verificar se escola já tem funcionários cadastrados no banco de dados
@@ -136,13 +136,13 @@ export function EmployeeRegistration() {
         } else {
           // Calcular quadro baseado nos funcionários cadastrados
           const defaultQuota = [
-            { position: "Apoio Administrativo", total: 1, occupied: 0 },
-            { position: "Aux. Apoio Escolar", total: 3, occupied: 0 },
-            { position: "Porteiro", total: 2, occupied: 0 },
-            { position: "Aux. de limpeza", total: 2, occupied: 0 },
-            { position: "Agente de Higienização", total: 2, occupied: 0 },
-            { position: "Apoio Ed. Especial", total: 3, occupied: 0 },
-            { position: "Outro", total: 1, occupied: 0 },
+            { position: "Apoio Administrativo", total: 0, occupied: 0 },
+            { position: "Aux. Apoio Escolar", total: 0, occupied: 0 },
+            { position: "Porteiro", total: 0, occupied: 0 },
+            { position: "Aux. de limpeza", total: 0, occupied: 0 },
+            { position: "Agente de Higienização", total: 0, occupied: 0 },
+            { position: "Apoio Ed. Especial", total: 0, occupied: 0 },
+            { position: "Outro", total: 0, occupied: 0 },
           ];
           
           // Contar quantos funcionários já estão em cada posição
@@ -159,13 +159,13 @@ export function EmployeeRegistration() {
         setShowQuotaSetup(true);
         // Reset para valores padrão
         setCurrentQuota([
-          { position: "Apoio Administrativo", total: 1, occupied: 0 },
-          { position: "Aux. Apoio Escolar", total: 3, occupied: 0 },
-          { position: "Porteiro", total: 2, occupied: 0 },
-          { position: "Aux. de limpeza", total: 2, occupied: 0 },
-          { position: "Agente de Higienização", total: 2, occupied: 0 },
-          { position: "Apoio Ed. Especial", total: 3, occupied: 0 },
-          { position: "Outro", total: 1, occupied: 0 },
+          { position: "Apoio Administrativo", total: 0, occupied: 0 },
+          { position: "Aux. Apoio Escolar", total: 0, occupied: 0 },
+          { position: "Porteiro", total: 0, occupied: 0 },
+          { position: "Aux. de limpeza", total: 0, occupied: 0 },
+          { position: "Agente de Higienização", total: 0, occupied: 0 },
+          { position: "Apoio Ed. Especial", total: 0, occupied: 0 },
+          { position: "Outro", total: 0, occupied: 0 },
         ]);
       }
     }
