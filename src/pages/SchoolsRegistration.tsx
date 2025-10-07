@@ -12,9 +12,10 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Building2, Trash2, Upload, Download, Edit, Filter, X } from "lucide-react";
+import { ArrowLeft, Building2, Trash2, Upload, Download, Edit, Filter, X, FileUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from 'xlsx';
+import { importSchoolsFromCSV } from "@/utils/importSchools";
 
 const MACROREGIOES = [
   "HB",
@@ -73,6 +74,7 @@ export default function SchoolsRegistration() {
   const [saving, setSaving] = useState(false);
   const [editingSchool, setEditingSchool] = useState<School | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [filters, setFilters] = useState({
     nome_escola: "",
     macroregiao: "",
@@ -490,23 +492,31 @@ export default function SchoolsRegistration() {
             return;
           }
 
-          const schoolsToImport = jsonData.map((row: any) => ({
-            user_id: user.id,
-            nome_escola: row["Nome da Escola"] || row.nome_escola || "",
-            proprietario: row["Proprietário"] || row.proprietario || null,
-            endereco_completo: row["Endereço"] || row.endereco_completo || null,
-            numero: row["Número"] || row.numero || null,
-            bairro: row["Bairro"] || row.bairro || null,
-            macroregiao: row["Macrorregião"] || row.macroregiao || null,
-            telefone_fixo: row["Telefone Fixo"] || row.telefone_fixo || null,
-            telefone_celular: row["Telefone Celular"] || row.telefone_celular || null,
-            tipo_escola: row["Tipo de Escola"] || row.tipo_escola || null,
-            email: row["Email"] || row.email || null,
-            alunos_creche: parseInt(row["Creche (0-3 anos)"] || row.alunos_creche || "0") || 0,
-            alunos_infantil: parseInt(row["Infantil/Pré-escola (4-5 anos)"] || row.alunos_infantil || "0") || 0,
-            alunos_fundamental_i: parseInt(row["Ensino Fundamental I (6-10 anos)"] || row.alunos_fundamental_i || "0") || 0,
-            alunos_fundamental_ii: parseInt(row["Ensino Fundamental II (11-14 anos)"] || row.alunos_fundamental_ii || "0") || 0,
-          }));
+          const schoolsToImport = jsonData.map((row: any) => {
+            const alunos_creche = parseInt(row["Creche (0-3 anos)"] || row.alunos_creche || "0") || 0;
+            const alunos_infantil = parseInt(row["Infantil/Pré-escola (4-5 anos)"] || row.alunos_infantil || "0") || 0;
+            const alunos_fundamental_i = parseInt(row["Ensino Fundamental I (6-10 anos)"] || row.alunos_fundamental_i || "0") || 0;
+            const alunos_fundamental_ii = parseInt(row["Ensino Fundamental II (11-14 anos)"] || row.alunos_fundamental_ii || "0") || 0;
+            
+            return {
+              user_id: user.id,
+              nome_escola: row["Nome da Escola"] || row.nome_escola || "",
+              proprietario: row["Proprietário"] || row.proprietario || null,
+              endereco_completo: row["Endereço"] || row.endereco_completo || null,
+              numero: row["Número"] || row.numero || null,
+              bairro: row["Bairro"] || row.bairro || null,
+              macroregiao: row["Macrorregião"] || row.macroregiao || null,
+              telefone_fixo: row["Telefone Fixo"] || row.telefone_fixo || null,
+              telefone_celular: row["Telefone Celular"] || row.telefone_celular || null,
+              tipo_escola: row["Tipo de Escola"] || row.tipo_escola || null,
+              email: row["Email"] || row.email || null,
+              alunos_creche,
+              alunos_infantil,
+              alunos_fundamental_i,
+              alunos_fundamental_ii,
+              total_alunos: alunos_creche + alunos_infantil + alunos_fundamental_i + alunos_fundamental_ii,
+            };
+          });
 
           const { error } = await supabase.from("schools").insert(schoolsToImport);
 
@@ -539,6 +549,36 @@ export default function SchoolsRegistration() {
     e.target.value = "";
   };
 
+  const handleAutoImport = async () => {
+    setImporting(true);
+    try {
+      const result = await importSchoolsFromCSV();
+      
+      if (result.success) {
+        toast({
+          title: "Sucesso!",
+          description: result.message,
+        });
+        fetchSchools();
+      } else {
+        toast({
+          title: "Erro ao importar",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error importing:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível importar os dados",
+        variant: "destructive",
+      });
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="p-6 space-y-8">
@@ -562,6 +602,14 @@ export default function SchoolsRegistration() {
         </div>
 
         <div className="flex gap-2 flex-wrap">
+          <Button
+            variant="default"
+            onClick={handleAutoImport}
+            disabled={importing}
+          >
+            <FileUp className="h-4 w-4 mr-2" />
+            {importing ? "Importando..." : "Importar Dados do Arquivo"}
+          </Button>
           <input
             type="file"
             id="import-file"
