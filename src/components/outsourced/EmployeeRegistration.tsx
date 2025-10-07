@@ -70,7 +70,7 @@ interface QuotaAlert {
 
 export function EmployeeRegistration() {
   const { schools, loading } = useSchools();
-  const { employees: dbEmployees, addEmployee, updateEmployee, deleteEmployee } = useOutsourcedEmployees();
+  const { employees: dbEmployees, addEmployee, updateEmployee, deleteEmployee, refetch } = useOutsourcedEmployees();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchSchoolName, setSearchSchoolName] = useState("");
   const [showQuotaSetup, setShowQuotaSetup] = useState(false);
@@ -434,7 +434,10 @@ export function EmployeeRegistration() {
   };
 
   const handleEditEmployee = (employee: any) => {
-    setEditingEmployee({...employee, quantity: 1}); // Adicionar quantidade padrão se não existir
+    const groupCount = dbEmployees.filter(
+      (e) => e.workplace === employee.workplace && e.role === employee.role && e.company === employee.company
+    ).length || 1;
+    setEditingEmployee({ ...employee, quantity: groupCount });
     setCustomWorkload("");
     setIsEditDialogOpen(true);
   };
@@ -443,6 +446,9 @@ export function EmployeeRegistration() {
     if (!editingEmployee) return;
     
     try {
+      const desiredQty = Math.max(1, parseInt((editingEmployee.quantity as any)) || 1);
+
+      // Atualiza o registro atual
       await updateEmployee(editingEmployee.id, {
         company: editingEmployee.company,
         work_position: editingEmployee.work_position,
@@ -453,9 +459,45 @@ export function EmployeeRegistration() {
         status: editingEmployee.status,
         observations: editingEmployee.observations,
       });
+
+      // Ajusta a quantidade para o grupo (mesma empresa + cargo + escola)
+      const group = dbEmployees.filter(
+        (e) =>
+          e.workplace === editingEmployee.workplace &&
+          e.role === editingEmployee.role &&
+          e.company === editingEmployee.company
+      );
+
+      const currentQty = group.length;
+
+      if (desiredQty > currentQty) {
+        const toAdd = desiredQty - currentQty;
+        for (let i = 0; i < toAdd; i++) {
+          await addEmployee({
+            company: editingEmployee.company,
+            work_position: editingEmployee.work_position,
+            role: editingEmployee.role,
+            workload: editingEmployee.workload,
+            monthly_salary: editingEmployee.monthly_salary,
+            workplace: editingEmployee.workplace,
+            school_id: editingEmployee.school_id || null,
+            status: editingEmployee.status,
+            observations: editingEmployee.observations || null,
+          });
+        }
+      } else if (desiredQty < currentQty) {
+        const toRemove = currentQty - desiredQty;
+        const candidates = group.filter((e) => e.id !== editingEmployee.id).slice(0, toRemove);
+        for (const emp of candidates) {
+          await deleteEmployee(emp.id);
+        }
+      }
+
+      await refetch?.();
+
       setIsEditDialogOpen(false);
       setEditingEmployee(null);
-      toast.success("Funcionário atualizado com sucesso!");
+      toast.success("Funcionários atualizados com sucesso!");
     } catch (error) {
       console.error("Erro ao atualizar funcionário:", error);
       toast.error("Erro ao atualizar funcionário");
