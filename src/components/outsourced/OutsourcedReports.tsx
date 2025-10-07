@@ -34,28 +34,32 @@ export function OutsourcedReports() {
     return matchesCompany && matchesRole && matchesWorkplace && matchesSearch;
   });
 
-  // Agrupar por escola e cargo para mostrar quantidade e soma de salários
+  // Agrupar por escola e cargo (independente da empresa) para mostrar quantidade total e salários
   const groupedData = filteredEmployees.reduce((acc, employee) => {
     const key = `${employee.workplace}-${employee.role}`;
     if (!acc[key]) {
       acc[key] = {
         workplace: employee.workplace,
         role: employee.role,
-        company: employee.company,
-        workload: employee.workload,
-        status: employee.status,
         quantity: 0,
+        individualSalaries: [] as number[],
         totalSalary: 0,
-        employees: []
+        employees: [],
+        companies: new Set<string>()
       };
     }
     acc[key].quantity += 1;
+    acc[key].individualSalaries.push(employee.monthly_salary);
     acc[key].totalSalary += employee.monthly_salary;
     acc[key].employees.push(employee);
+    acc[key].companies.add(employee.company);
     return acc;
   }, {} as Record<string, any>);
 
-  const aggregatedData = Object.values(groupedData);
+  const aggregatedData = Object.values(groupedData).map(group => ({
+    ...group,
+    companies: Array.from(group.companies).join(', ')
+  }));
 
   const companies = Array.from(new Set(employees.map(e => e.company)));
   const roles = Array.from(new Set(employees.map(e => e.role)));
@@ -370,9 +374,9 @@ export function OutsourcedReports() {
                 <TableRow className="bg-gradient-to-r from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950">
                   <TableHead className="font-bold text-foreground">Local de Trabalho</TableHead>
                   <TableHead className="font-bold text-foreground">Cargo</TableHead>
-                  <TableHead className="font-bold text-foreground">Empresa</TableHead>
+                  <TableHead className="font-bold text-foreground">Empresas</TableHead>
                   <TableHead className="text-center font-bold text-foreground">Quantidade</TableHead>
-                  <TableHead className="font-bold text-foreground">Carga Horária</TableHead>
+                  <TableHead className="text-right font-bold text-foreground">Salários Individuais</TableHead>
                   <TableHead className="text-right font-bold text-foreground">Salário Total</TableHead>
                   <TableHead className="text-center font-bold text-foreground">Ações</TableHead>
                 </TableRow>
@@ -392,9 +396,23 @@ export function OutsourcedReports() {
                     >
                       <TableCell className="font-semibold text-blue-700 dark:text-blue-400">{group.workplace || "-"}</TableCell>
                       <TableCell className="font-medium text-purple-700 dark:text-purple-400">{group.role}</TableCell>
-                      <TableCell className="text-foreground">{group.company}</TableCell>
+                      <TableCell className="text-sm text-foreground">{group.companies}</TableCell>
                       <TableCell className="text-center font-bold text-orange-600 dark:text-orange-400">{group.quantity}</TableCell>
-                      <TableCell className="text-center font-medium">{group.workload}</TableCell>
+                      <TableCell className="text-right">
+                        {group.quantity > 1 ? (
+                          <div className="text-sm space-y-1">
+                            {group.individualSalaries.map((salary: number, idx: number) => (
+                              <div key={idx} className="text-muted-foreground">
+                                {formatCurrency(salary)}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            {formatCurrency(group.individualSalaries[0])}
+                          </span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right font-bold text-green-700 dark:text-green-400">
                         {formatCurrency(group.totalSalary)}
                       </TableCell>
@@ -405,9 +423,18 @@ export function OutsourcedReports() {
                             size="icon"
                             onClick={() => handleEdit(group.employees[0])}
                             className="h-8 w-8"
-                            title="Editar primeiro funcionário"
+                            title="Editar"
                           >
                             <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(group.employees[0].id)}
+                            className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            title="Excluir"
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>

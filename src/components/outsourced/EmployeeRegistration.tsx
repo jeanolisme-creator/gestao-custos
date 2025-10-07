@@ -70,11 +70,13 @@ interface QuotaAlert {
 
 export function EmployeeRegistration() {
   const { schools, loading } = useSchools();
-  const { employees: dbEmployees, addEmployee } = useOutsourcedEmployees();
+  const { employees: dbEmployees, addEmployee, updateEmployee, deleteEmployee } = useOutsourcedEmployees();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchSchoolName, setSearchSchoolName] = useState("");
   const [showQuotaSetup, setShowQuotaSetup] = useState(false);
   const [isEditingQuota, setIsEditingQuota] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<any>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const [schoolData, setSchoolData] = useState<SchoolData>({
     name: "",
@@ -423,6 +425,46 @@ export function EmployeeRegistration() {
       style: 'currency',
       currency: 'BRL',
     }).format(value);
+  };
+
+  const handleEditEmployee = (employee: any) => {
+    setEditingEmployee({...employee});
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEditEmployee = async () => {
+    if (!editingEmployee) return;
+    
+    try {
+      await updateEmployee(editingEmployee.id, {
+        company: editingEmployee.company,
+        work_position: editingEmployee.work_position,
+        role: editingEmployee.role,
+        workload: editingEmployee.workload,
+        monthly_salary: editingEmployee.monthly_salary,
+        workplace: editingEmployee.workplace,
+        status: editingEmployee.status,
+        observations: editingEmployee.observations,
+      });
+      setIsEditDialogOpen(false);
+      setEditingEmployee(null);
+      toast.success("Funcionário atualizado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao atualizar funcionário:", error);
+      toast.error("Erro ao atualizar funcionário");
+    }
+  };
+
+  const handleDeleteEmployee = async (id: string, employeeName: string) => {
+    if (window.confirm(`Tem certeza que deseja excluir o funcionário ${employeeName}?`)) {
+      try {
+        await deleteEmployee(id);
+        toast.success("Funcionário excluído com sucesso!");
+      } catch (error) {
+        console.error("Erro ao excluir funcionário:", error);
+        toast.error("Erro ao excluir funcionário");
+      }
+    }
   };
 
   const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1057,47 +1099,55 @@ export function EmployeeRegistration() {
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="space-y-4">
-                  {/* Lista de funcionários agrupados por cargo */}
+                  {/* Lista de funcionários */}
                   <div className="border-t pt-4 mt-4">
                     <h4 className="font-semibold mb-3 text-blue-700 dark:text-blue-400">Funcionários Terceirizados</h4>
                     <div className="space-y-2">
-                      {Array.from(new Set(schoolEmployees.map(e => e.role))).map((role) => {
-                        const roleEmployees = schoolEmployees.filter(e => e.role === role);
-                        const totalSalary = roleEmployees.reduce((sum, e) => sum + e.monthly_salary, 0);
-                        const company = roleEmployees[0].company;
-                        const workload = roleEmployees[0].workload;
-                        const status = roleEmployees[0].status;
-                        
-                        return (
-                          <div key={role} className="bg-blue-50/50 dark:bg-blue-950/30 p-3 rounded-lg">
-                            <div className="flex justify-between items-start mb-2">
-                              <div>
-                                <p className="font-semibold text-purple-700 dark:text-purple-400">{role}</p>
-                                <p className="text-sm text-muted-foreground">{company}</p>
-                              </div>
-                              <Badge variant={status === "Ativo" ? "default" : "secondary"}>
-                                {status}
-                              </Badge>
+                      {schoolEmployees.map((employee) => (
+                        <div key={employee.id} className="bg-blue-50/50 dark:bg-blue-950/30 p-3 rounded-lg">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <p className="font-semibold text-purple-700 dark:text-purple-400">{employee.role}</p>
+                              <p className="text-sm text-muted-foreground">{employee.company}</p>
                             </div>
-                            <div className="grid grid-cols-3 gap-2 text-xs">
-                              <div>
-                                <span className="text-muted-foreground">Qtd:</span>
-                                <span className="ml-1 font-medium">{roleEmployees.length}</span>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Carga:</span>
-                                <span className="ml-1 font-medium">{workload}</span>
-                              </div>
-                              <div className="text-right">
-                                <span className="text-muted-foreground">Total:</span>
-                                <span className="ml-1 font-bold text-green-600 dark:text-green-400">
-                                  {formatCurrency(totalSalary)}
-                                </span>
-                              </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={employee.status === "Ativo" ? "default" : "secondary"}>
+                                {employee.status}
+                              </Badge>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEditEmployee(employee)}
+                                className="h-8 w-8"
+                                title="Editar"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteEmployee(employee.id, employee.work_position)}
+                                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                title="Excluir"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
                             </div>
                           </div>
-                        );
-                      })}
+                          <div className="grid grid-cols-3 gap-2 text-xs">
+                            <div>
+                              <span className="text-muted-foreground">Carga:</span>
+                              <span className="ml-1 font-medium">{employee.workload}</span>
+                            </div>
+                            <div className="text-right col-span-2">
+                              <span className="text-muted-foreground">Salário:</span>
+                              <span className="ml-1 font-bold text-green-600 dark:text-green-400">
+                                {formatCurrency(employee.monthly_salary)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
@@ -1117,6 +1167,126 @@ export function EmployeeRegistration() {
           })}
         </div>
       )}
+
+      {/* Dialog de Edição de Funcionário */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Funcionário Terceirizado</DialogTitle>
+          </DialogHeader>
+          
+          {editingEmployee && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Empresa</Label>
+                <Input
+                  value={editingEmployee.company}
+                  onChange={(e) => setEditingEmployee({...editingEmployee, company: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Posto de Trabalho</Label>
+                <Input
+                  value={editingEmployee.work_position}
+                  onChange={(e) => setEditingEmployee({...editingEmployee, work_position: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Cargo</Label>
+                <Select
+                  value={editingEmployee.role}
+                  onValueChange={(value) => setEditingEmployee({...editingEmployee, role: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Apoio Administrativo">Apoio Administrativo</SelectItem>
+                    <SelectItem value="Aux. Apoio Escolar">Aux. Apoio Escolar</SelectItem>
+                    <SelectItem value="Porteiro">Porteiro</SelectItem>
+                    <SelectItem value="Aux. de limpeza">Aux. de limpeza</SelectItem>
+                    <SelectItem value="Agente de Higienização">Agente de Higienização</SelectItem>
+                    <SelectItem value="Apoio Ed. Especial">Apoio Ed. Especial</SelectItem>
+                    <SelectItem value="Outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Carga Horária</Label>
+                <Select
+                  value={editingEmployee.workload}
+                  onValueChange={(value) => setEditingEmployee({...editingEmployee, workload: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="40h">40h</SelectItem>
+                    <SelectItem value="44h">44h</SelectItem>
+                    <SelectItem value="20h">20h</SelectItem>
+                    <SelectItem value="30h">30h</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Local de Trabalho</Label>
+                <Input
+                  value={editingEmployee.workplace || ""}
+                  onChange={(e) => setEditingEmployee({...editingEmployee, workplace: e.target.value})}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Salário Mensal</Label>
+                <CurrencyInput
+                  value={editingEmployee.monthly_salary}
+                  onValueChange={(value) => setEditingEmployee({...editingEmployee, monthly_salary: value})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <Select
+                  value={editingEmployee.status}
+                  onValueChange={(value) => setEditingEmployee({...editingEmployee, status: value})}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ativo">Ativo</SelectItem>
+                    <SelectItem value="Inativo">Inativo</SelectItem>
+                    <SelectItem value="Férias">Férias</SelectItem>
+                    <SelectItem value="Afastado">Afastado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2 col-span-2">
+                <Label>Observações</Label>
+                <Textarea
+                  value={editingEmployee.observations || ""}
+                  onChange={(e) => setEditingEmployee({...editingEmployee, observations: e.target.value})}
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+          
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveEditEmployee}>
+              Salvar Alterações
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
