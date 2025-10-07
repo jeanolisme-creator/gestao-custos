@@ -32,7 +32,14 @@ export async function importSchoolsFromCSV() {
         endereco_completo: row.endereco_completo || null,
         numero: row.numero || null,
         bairro: row.bairro || null,
-        macroregiao: null,
+        macroregiao: (() => {
+          const raw = (row.macroregiao ?? '').toString().trim();
+          if (!raw || raw === 'NULL' || raw === 'nan') return null;
+          const map: Record<string, string> = { 'CÉU': 'Ceu', 'CEU': 'Ceu', 'Céu': 'Ceu', 'ceu': 'Ceu', 'Ceu': 'Ceu' };
+          const normalized = map[raw] ?? raw;
+          const allowed = ['HB','Vila Toninho','Schmidt','Represa','Bosque','Talhado','Central','Cidade da Criança','Pinheirinho','Ceu'];
+          return allowed.includes(normalized) ? normalized : null;
+        })(),
         telefone_fixo: row.telefone_fixo || null,
         telefone_celular: (row.telefone_celular === 'NULL' || row.telefone_celular === 'nan') ? null : (row.telefone_celular || null),
         tipo_escola: row.tipo_escola || null,

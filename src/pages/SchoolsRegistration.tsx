@@ -505,7 +505,14 @@ export default function SchoolsRegistration() {
               endereco_completo: row["Endereço"] || row.endereco_completo || null,
               numero: row["Número"] || row.numero || null,
               bairro: row["Bairro"] || row.bairro || null,
-              macroregiao: null,
+              macroregiao: (() => {
+                const raw = (row["Macrorregião"] ?? row.macroregiao ?? '').toString().trim();
+                if (!raw || raw === 'NULL' || raw === 'nan') return null;
+                const map: Record<string, string> = { 'CÉU': 'Ceu', 'CEU': 'Ceu', 'Céu': 'Ceu', 'ceu': 'Ceu', 'Ceu': 'Ceu' };
+                const normalized = map[raw] ?? raw;
+                const allowed = ['HB','Vila Toninho','Schmidt','Represa','Bosque','Talhado','Central','Cidade da Criança','Pinheirinho','Ceu'];
+                return allowed.includes(normalized) ? normalized : null;
+              })(),
               telefone_fixo: row["Telefone Fixo"] || row.telefone_fixo || null,
               telefone_celular: (row["Telefone Celular"] === 'NULL' || row["Telefone Celular"] === 'nan') ? null : (row["Telefone Celular"] || row.telefone_celular || null),
               tipo_escola: row["Tipo de Escola"] || row.tipo_escola || null,
