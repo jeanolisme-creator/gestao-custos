@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Search, Plus, X, Building2, Users, AlertTriangle, CheckCircle, Edit, Save, Upload, Check, ChevronsUpDown } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import * as XLSX from 'xlsx';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -1143,91 +1144,101 @@ export function EmployeeRegistration() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {Array.from(new Set(dbEmployees.map(e => e.workplace))).map((schoolName) => {
-            const schoolEmployees = dbEmployees.filter(e => e.workplace === schoolName);
-            return (
-            <Card key={schoolName}>
-              <CardHeader className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950">
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5 text-blue-600" />
-                    {schoolName}
-                  </span>
-                  <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                    {schoolEmployees.length} posto(s)
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="space-y-4">
-                  {/* Lista de funcionários */}
-                  <div className="border-t pt-4 mt-4">
-                    <h4 className="font-semibold mb-3 text-blue-700 dark:text-blue-400">Funcionários Terceirizados</h4>
-                    <div className="space-y-2">
-                      {schoolEmployees.map((employee) => (
-                        <div key={employee.id} className="bg-blue-50/50 dark:bg-blue-950/30 p-3 rounded-lg">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <p className="font-semibold text-purple-700 dark:text-purple-400">{employee.role}</p>
-                              <p className="text-sm text-muted-foreground">{employee.company}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Badge variant={employee.status === "Ativo" ? "default" : "secondary"}>
-                                {employee.status}
-                              </Badge>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleEditEmployee(employee)}
-                                className="h-8 w-8"
-                                title="Editar"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDeleteEmployee(employee.id, employee.work_position)}
-                                className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                title="Excluir"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-3 gap-2 text-xs">
-                            <div>
-                              <span className="text-muted-foreground">Carga:</span>
-                              <span className="ml-1 font-medium">{employee.workload}</span>
-                            </div>
-                            <div className="text-right col-span-2">
-                              <span className="text-muted-foreground">Salário:</span>
-                              <span className="ml-1 font-bold text-green-600 dark:text-green-400">
-                                {formatCurrency(employee.monthly_salary)}
-                              </span>
-                            </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Escolas Cadastradas
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Accordion type="multiple" className="w-full">
+              {Array.from(new Set(dbEmployees.map(e => e.workplace))).map((schoolName) => {
+                const schoolEmployees = dbEmployees.filter(e => e.workplace === schoolName);
+                return (
+                  <AccordionItem key={schoolName} value={schoolName}>
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center justify-between w-full pr-4">
+                        <span className="flex items-center gap-2">
+                          <Building2 className="h-5 w-5 text-blue-600" />
+                          <span className="font-semibold">{schoolName}</span>
+                        </span>
+                        <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                          {schoolEmployees.length} posto(s)
+                        </Badge>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-4 pt-4">
+                        {/* Lista de funcionários */}
+                        <div>
+                          <h4 className="font-semibold mb-3 text-blue-700 dark:text-blue-400">Funcionários Terceirizados</h4>
+                          <div className="space-y-2">
+                            {schoolEmployees.map((employee) => (
+                              <div key={employee.id} className="bg-blue-50/50 dark:bg-blue-950/30 p-3 rounded-lg">
+                                <div className="flex justify-between items-start mb-2">
+                                  <div>
+                                    <p className="font-semibold text-purple-700 dark:text-purple-400">{employee.role}</p>
+                                    <p className="text-sm text-muted-foreground">{employee.company}</p>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <Badge variant={employee.status === "Ativo" ? "default" : "secondary"}>
+                                      {employee.status}
+                                    </Badge>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleEditEmployee(employee)}
+                                      className="h-8 w-8"
+                                      title="Editar"
+                                    >
+                                      <Edit className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleDeleteEmployee(employee.id, employee.work_position)}
+                                      className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                                      title="Excluir"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-3 gap-2 text-xs">
+                                  <div>
+                                    <span className="text-muted-foreground">Carga:</span>
+                                    <span className="ml-1 font-medium">{employee.workload}</span>
+                                  </div>
+                                  <div className="text-right col-span-2">
+                                    <span className="text-muted-foreground">Salário:</span>
+                                    <span className="ml-1 font-bold text-green-600 dark:text-green-400">
+                                      {formatCurrency(employee.monthly_salary)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
 
-                  {/* Resumo financeiro */}
-                  <div className="border-t pt-4 mt-4">
-                    <div className="flex justify-between items-center bg-green-50 dark:bg-green-950/30 p-3 rounded-lg">
-                      <span className="font-semibold text-sm">Custo Total Mensal</span>
-                      <span className="text-lg font-bold text-green-600 dark:text-green-400">
-                        {formatCurrency(schoolEmployees.reduce((sum, e) => sum + e.monthly_salary, 0))}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            );
-          })}
-        </div>
+                        {/* Resumo financeiro */}
+                        <div className="border-t pt-4">
+                          <div className="flex justify-between items-center bg-green-50 dark:bg-green-950/30 p-3 rounded-lg">
+                            <span className="font-semibold text-sm">Custo Total Mensal</span>
+                            <span className="text-lg font-bold text-green-600 dark:text-green-400">
+                              {formatCurrency(schoolEmployees.reduce((sum, e) => sum + e.monthly_salary, 0))}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
+          </CardContent>
+        </Card>
       )}
 
       {/* Dialog de Edição de Funcionário */}
