@@ -480,6 +480,7 @@ export type Database = {
       }
       school_records: {
         Row: {
+          bairro: string | null
           cadastro: string
           consumo_m3: number | null
           created_at: string
@@ -488,10 +489,13 @@ export type Database = {
           endereco_completo: string | null
           hidrometro: string | null
           id: string
+          macroregiao: string | null
           mes_ano_referencia: string
           nome_escola: string
+          numero: string | null
           numero_dias: number | null
           ocorrencias_pendencias: string | null
+          proprietario: string | null
           responsavel: string | null
           updated_at: string
           user_id: string
@@ -499,6 +503,7 @@ export type Database = {
           valor_servicos: number | null
         }
         Insert: {
+          bairro?: string | null
           cadastro: string
           consumo_m3?: number | null
           created_at?: string
@@ -507,10 +512,13 @@ export type Database = {
           endereco_completo?: string | null
           hidrometro?: string | null
           id?: string
+          macroregiao?: string | null
           mes_ano_referencia: string
           nome_escola: string
+          numero?: string | null
           numero_dias?: number | null
           ocorrencias_pendencias?: string | null
+          proprietario?: string | null
           responsavel?: string | null
           updated_at?: string
           user_id: string
@@ -518,6 +526,7 @@ export type Database = {
           valor_servicos?: number | null
         }
         Update: {
+          bairro?: string | null
           cadastro?: string
           consumo_m3?: number | null
           created_at?: string
@@ -526,10 +535,13 @@ export type Database = {
           endereco_completo?: string | null
           hidrometro?: string | null
           id?: string
+          macroregiao?: string | null
           mes_ano_referencia?: string
           nome_escola?: string
+          numero?: string | null
           numero_dias?: number | null
           ocorrencias_pendencias?: string | null
+          proprietario?: string | null
           responsavel?: string | null
           updated_at?: string
           user_id?: string
