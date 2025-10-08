@@ -21,10 +21,16 @@ export default function OutsourcedDashboard() {
   };
 
   // Calcular dados reais com validações
+  console.log('=== DEBUG TERCEIRIZADOS ===');
+  console.log('Total de funcionários carregados:', employees.length);
+  
   const companies = employees.reduce((acc, emp) => {
     // Validar e normalizar nome da empresa
     const companyName = (emp.company || '').trim();
-    if (!companyName) return acc;
+    if (!companyName) {
+      console.warn('Funcionário sem empresa:', emp);
+      return acc;
+    }
     
     if (!acc[companyName]) {
       acc[companyName] = { monthly: 0, count: 0 };
@@ -33,6 +39,10 @@ export default function OutsourcedDashboard() {
     acc[companyName].count += 1;
     return acc;
   }, {} as Record<string, { monthly: number; count: number }>);
+  
+  console.log('Empresas agregadas:', companies);
+  console.log('Produserv postos:', companies['Produserv']?.count);
+  console.log('GF postos:', companies['GF']?.count);
 
   const positions = employees.reduce((acc, emp) => {
     // Validar e normalizar nome do cargo
