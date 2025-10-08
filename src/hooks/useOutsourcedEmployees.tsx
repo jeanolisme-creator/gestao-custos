@@ -45,17 +45,31 @@ export function useOutsourcedEmployees() {
         .maybeSingle();
       const isAdmin = !!adminRole;
 
+      // Base query ordered by newest first
       const baseQuery = supabase
         .from("outsourced_employees")
         .select("*")
         .order("created_at", { ascending: false });
 
-      const { data, error } = isAdmin
-        ? await baseQuery
-        : await baseQuery.eq("user_id", user.id);
+      // Some Supabase/PostgREST instances cap responses to 1000 rows per request.
+      // We page through results to ensure ALL employees are loaded for accurate totals.
+      const PAGE_SIZE = 1000;
+      let page = 0;
+      let allRows: OutsourcedEmployee[] = [];
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const from = page * PAGE_SIZE;
+        const to = from + PAGE_SIZE - 1;
+        const query = isAdmin ? baseQuery : baseQuery.eq("user_id", user.id);
+        const { data, error } = await query.range(from, to);
+        if (error) throw error;
+        const batch = (data as OutsourcedEmployee[]) || [];
+        allRows = allRows.concat(batch);
+        if (batch.length < PAGE_SIZE) break; // last page
+        page++;
+      }
 
-      if (error) throw error;
-      setEmployees(data || []);
+      setEmployees(allRows);
     } catch (error) {
       console.error("Error fetching outsourced employees:", error);
       toast({
