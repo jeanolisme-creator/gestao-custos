@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Search, Plus, X, Building2, Users, AlertTriangle, CheckCircle, Edit, Save, Upload } from "lucide-react";
+import { Search, Plus, X, Building2, Users, AlertTriangle, CheckCircle, Edit, Save, Upload, Check, ChevronsUpDown } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useSchools } from "@/hooks/useSchools";
 import { useOutsourcedEmployees } from "@/hooks/useOutsourcedEmployees";
 import { useOutsourcedQuotas } from "@/hooks/useOutsourcedQuotas";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface Employee {
   id: string;
@@ -76,6 +79,7 @@ export function EmployeeRegistration() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchSchoolName, setSearchSchoolName] = useState("");
   const [showQuotaSetup, setShowQuotaSetup] = useState(false);
+  const [openCombobox, setOpenCombobox] = useState(false);
   const [isEditingQuota, setIsEditingQuota] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<any>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -165,15 +169,8 @@ export function EmployeeRegistration() {
     load();
   }, [schoolData.name, dbEmployees]);
 
-  const handleSearchSchool = () => {
-    if (!searchSchoolName.trim()) {
-      toast.error("Digite o nome da escola para buscar");
-      return;
-    }
-
-    const foundSchool = schools.find(school => 
-      school.nome_escola.toLowerCase().includes(searchSchoolName.toLowerCase())
-    );
+  const handleSelectSchool = (schoolName: string) => {
+    const foundSchool = schools.find(school => school.nome_escola === schoolName);
 
     if (foundSchool) {
       setSchoolData({
@@ -193,26 +190,9 @@ export function EmployeeRegistration() {
         alunos_fundamental_ii: foundSchool.alunos_fundamental_ii || 0,
         total_alunos: foundSchool.total_alunos || 0
       });
+      setSearchSchoolName(schoolName);
+      setOpenCombobox(false);
       toast.success("Escola encontrada! Dados preenchidos automaticamente.");
-    } else {
-      toast.info("Escola não encontrada. Preencha os dados manualmente.");
-      setSchoolData({
-        name: searchSchoolName,
-        proprietario: "",
-        address: "",
-        number: "",
-        neighborhood: "",
-        macroregiao: "",
-        telefone_fixo: "",
-        telefone_celular: "",
-        tipo_escola: "",
-        email: "",
-        alunos_creche: 0,
-        alunos_infantil: 0,
-        alunos_fundamental_i: 0,
-        alunos_fundamental_ii: 0,
-        total_alunos: 0
-      });
     }
   };
 
@@ -749,19 +729,46 @@ export function EmployeeRegistration() {
             )}
             {/* Buscar Escola */}
             <div className="space-y-4">
-              <div className="flex gap-2">
-                <div className="flex-1">
-                  <Label htmlFor="searchSchool">Buscar Escola</Label>
-                  <Input
-                    id="searchSchool"
-                    placeholder="Digite o nome da escola"
-                    value={searchSchoolName}
-                    onChange={(e) => setSearchSchoolName(e.target.value)}
-                  />
-                </div>
-                <Button onClick={handleSearchSchool} className="mt-auto">
-                  <Search className="h-4 w-4" />
-                </Button>
+              <div>
+                <Label>Buscar Escola</Label>
+                <Popover open={openCombobox} onOpenChange={setOpenCombobox}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={openCombobox}
+                      className="w-full justify-between"
+                    >
+                      {searchSchoolName || "Selecione uma escola..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Digite o nome da escola..." />
+                      <CommandList>
+                        <CommandEmpty>Nenhuma escola encontrada.</CommandEmpty>
+                        <CommandGroup>
+                          {schools.map((school) => (
+                            <CommandItem
+                              key={school.id}
+                              value={school.nome_escola}
+                              onSelect={() => handleSelectSchool(school.nome_escola)}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  searchSchoolName === school.nome_escola ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {school.nome_escola}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               {/* Dados da Escola */}
