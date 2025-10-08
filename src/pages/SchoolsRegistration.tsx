@@ -432,12 +432,23 @@ export default function SchoolsRegistration() {
     try {
       if (!editingSchool) return;
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("schools")
         .update(editFormData)
-        .eq("id", editingSchool.id);
+        .eq("id", editingSchool.id)
+        .select("id");
 
       if (error) throw error;
+
+      if (!data || data.length === 0) {
+        toast({
+          title: "Sem permissão ou não encontrada",
+          description: "Você não tem permissão para editar esta escola ou ela não existe.",
+          variant: "destructive",
+        });
+        setSaving(false);
+        return;
+      }
 
       toast({
         title: "Sucesso!",
