@@ -20,26 +20,34 @@ export default function OutsourcedDashboard() {
     }).format(value);
   };
 
-  // Calcular dados reais
+  // Calcular dados reais com validações
   const companies = employees.reduce((acc, emp) => {
-    if (!acc[emp.company]) {
-      acc[emp.company] = { monthly: 0, count: 0 };
+    // Validar e normalizar nome da empresa
+    const companyName = (emp.company || '').trim();
+    if (!companyName) return acc;
+    
+    if (!acc[companyName]) {
+      acc[companyName] = { monthly: 0, count: 0 };
     }
-    acc[emp.company].monthly += emp.monthly_salary;
-    acc[emp.company].count += 1;
+    acc[companyName].monthly += Number(emp.monthly_salary) || 0;
+    acc[companyName].count += 1;
     return acc;
   }, {} as Record<string, { monthly: number; count: number }>);
 
   const positions = employees.reduce((acc, emp) => {
-    if (!acc[emp.role]) {
-      acc[emp.role] = { quantity: 0, monthly: 0 };
+    // Validar e normalizar nome do cargo
+    const roleName = (emp.role || '').trim();
+    if (!roleName) return acc;
+    
+    if (!acc[roleName]) {
+      acc[roleName] = { quantity: 0, monthly: 0 };
     }
-    acc[emp.role].quantity += 1;
-    acc[emp.role].monthly += emp.monthly_salary;
+    acc[roleName].quantity += 1;
+    acc[roleName].monthly += Number(emp.monthly_salary) || 0;
     return acc;
   }, {} as Record<string, { quantity: number; monthly: number }>);
 
-  const totalMonthly = employees.reduce((sum, emp) => sum + emp.monthly_salary, 0);
+  const totalMonthly = employees.reduce((sum, emp) => sum + (Number(emp.monthly_salary) || 0), 0);
   const totalAnnual = totalMonthly * 12;
   const totalEmployees = employees.length;
 
