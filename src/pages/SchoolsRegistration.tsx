@@ -434,10 +434,7 @@ export default function SchoolsRegistration() {
 
       const { error } = await supabase
         .from("schools")
-        .update({
-          ...editFormData,
-          total_alunos: getEditTotalAlunos(),
-        })
+        .update(editFormData)
         .eq("id", editingSchool.id);
 
       if (error) throw error;
