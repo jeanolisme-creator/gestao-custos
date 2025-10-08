@@ -10,6 +10,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Building2, Trash2, Upload, Download, Edit, Filter, X, FileUp } from "lucide-react";
@@ -75,6 +87,23 @@ export default function SchoolsRegistration() {
   const [editingSchool, setEditingSchool] = useState<School | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    nome_escola: "",
+    proprietario: "",
+    endereco_completo: "",
+    numero: "",
+    bairro: "",
+    macroregiao: "",
+    telefone_fixo: "",
+    telefone_celular: "",
+    tipo_escola: "",
+    email: "",
+    alunos_creche: 0,
+    alunos_infantil: 0,
+    alunos_fundamental_i: 0,
+    alunos_fundamental_ii: 0,
+  });
   const [filters, setFilters] = useState({
     nome_escola: "",
     macroregiao: "",
@@ -337,7 +366,7 @@ export default function SchoolsRegistration() {
 
   const handleEdit = (school: School) => {
     setEditingSchool(school);
-    setFormData({
+    setEditFormData({
       nome_escola: school.nome_escola,
       proprietario: school.proprietario || "",
       endereco_completo: school.endereco_completo || "",
@@ -353,7 +382,84 @@ export default function SchoolsRegistration() {
       alunos_fundamental_i: school.alunos_fundamental_i || 0,
       alunos_fundamental_ii: school.alunos_fundamental_ii || 0,
     });
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setDialogOpen(true);
+  };
+
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type } = e.target;
+    setEditFormData({
+      ...editFormData,
+      [name]: type === "number" ? parseInt(value) || 0 : value,
+    });
+  };
+
+  const handleEditMacroregiaoChange = (value: string) => {
+    setEditFormData({
+      ...editFormData,
+      macroregiao: value,
+    });
+  };
+
+  const handleEditTipoEscolaChange = (value: string) => {
+    setEditFormData({
+      ...editFormData,
+      tipo_escola: value,
+    });
+  };
+
+  const getEditTotalAlunos = () => {
+    return (
+      (editFormData.alunos_creche || 0) +
+      (editFormData.alunos_infantil || 0) +
+      (editFormData.alunos_fundamental_i || 0) +
+      (editFormData.alunos_fundamental_ii || 0)
+    );
+  };
+
+  const handleUpdateSchool = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!editFormData.nome_escola.trim()) {
+      toast({
+        title: "Erro",
+        description: "Nome da escola é obrigatório",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      if (!editingSchool) return;
+
+      const { error } = await supabase
+        .from("schools")
+        .update({
+          ...editFormData,
+          total_alunos: getEditTotalAlunos(),
+        })
+        .eq("id", editingSchool.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso!",
+        description: "Escola atualizada com sucesso",
+      });
+      
+      setDialogOpen(false);
+      setEditingSchool(null);
+      fetchSchools();
+    } catch (error) {
+      console.error("Error updating school:", error);
+      toast({
+        title: "Erro ao atualizar",
+        description: "Não foi possível atualizar a escola",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const cancelEdit = () => {
@@ -1038,85 +1144,341 @@ export default function SchoolsRegistration() {
               <p className="text-sm text-muted-foreground">
                 Mostrando {filteredSchools.length} de {schools.length} escola(s)
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredSchools.map((school) => (
-                <Card key={school.id} className="p-4">
-                  <div className="space-y-2">
-                    <div className="flex items-start justify-between">
-                      <h3 className="font-semibold text-lg">{school.nome_escola}</h3>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(school)}
-                          className="h-8 w-8"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(school.id)}
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    {school.proprietario && (
-                      <p className="text-sm text-muted-foreground">
-                        <strong>Proprietário:</strong> {school.proprietario}
-                      </p>
-                    )}
-                    {school.endereco_completo && (
-                      <p className="text-sm text-muted-foreground">
-                        <strong>Endereço:</strong> {school.endereco_completo}
-                        {school.numero && `, ${school.numero}`}
-                      </p>
-                    )}
-                    {school.bairro && (
-                      <p className="text-sm text-muted-foreground">
-                        <strong>Bairro:</strong> {school.bairro}
-                      </p>
-                    )}
-                    {school.macroregiao && (
-                      <p className="text-sm text-muted-foreground">
-                        <strong>Macrorregião:</strong> {school.macroregiao}
-                      </p>
-                    )}
-                    {school.telefone_fixo && (
-                      <p className="text-sm text-muted-foreground">
-                        <strong>Tel. Fixo:</strong> {school.telefone_fixo}
-                      </p>
-                    )}
-                    {school.telefone_celular && (
-                      <p className="text-sm text-muted-foreground">
-                        <strong>Tel. Celular:</strong> {school.telefone_celular}
-                      </p>
-                    )}
-                    {school.tipo_escola && (
-                      <p className="text-sm text-muted-foreground">
-                        <strong>Tipo:</strong> {school.tipo_escola}
-                      </p>
-                    )}
-                    {school.email && (
-                      <p className="text-sm text-muted-foreground">
-                        <strong>Email:</strong> {school.email}
-                      </p>
-                    )}
-                    {school.total_alunos !== null && school.total_alunos > 0 && (
-                      <p className="text-sm text-muted-foreground">
-                        <strong>Total de Alunos:</strong> {school.total_alunos}
-                      </p>
-                    )}
-                  </div>
-                </Card>
-                ))}
-              </div>
+              <Card className="p-6">
+                <Accordion type="single" collapsible className="w-full">
+                  {filteredSchools.map((school) => (
+                    <AccordionItem key={school.id} value={school.id}>
+                      <AccordionTrigger className="hover:no-underline">
+                        <div className="flex items-center justify-between w-full pr-4">
+                          <span className="font-semibold">{school.nome_escola}</span>
+                          {school.tipo_escola && (
+                            <span className="text-sm text-muted-foreground">
+                              {school.tipo_escola}
+                            </span>
+                          )}
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="space-y-4 pt-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {school.proprietario && (
+                              <div>
+                                <p className="text-sm font-medium">Proprietário</p>
+                                <p className="text-sm text-muted-foreground">{school.proprietario}</p>
+                              </div>
+                            )}
+                            {school.endereco_completo && (
+                              <div>
+                                <p className="text-sm font-medium">Endereço</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {school.endereco_completo}
+                                  {school.numero && `, ${school.numero}`}
+                                </p>
+                              </div>
+                            )}
+                            {school.bairro && (
+                              <div>
+                                <p className="text-sm font-medium">Bairro</p>
+                                <p className="text-sm text-muted-foreground">{school.bairro}</p>
+                              </div>
+                            )}
+                            {school.macroregiao && (
+                              <div>
+                                <p className="text-sm font-medium">Macrorregião</p>
+                                <p className="text-sm text-muted-foreground">{school.macroregiao}</p>
+                              </div>
+                            )}
+                            {school.telefone_fixo && (
+                              <div>
+                                <p className="text-sm font-medium">Telefone Fixo</p>
+                                <p className="text-sm text-muted-foreground">{school.telefone_fixo}</p>
+                              </div>
+                            )}
+                            {school.telefone_celular && (
+                              <div>
+                                <p className="text-sm font-medium">Telefone Celular</p>
+                                <p className="text-sm text-muted-foreground">{school.telefone_celular}</p>
+                              </div>
+                            )}
+                            {school.email && (
+                              <div>
+                                <p className="text-sm font-medium">Email</p>
+                                <p className="text-sm text-muted-foreground">{school.email}</p>
+                              </div>
+                            )}
+                            {school.total_alunos !== null && school.total_alunos > 0 && (
+                              <div>
+                                <p className="text-sm font-medium">Total de Alunos</p>
+                                <p className="text-sm text-muted-foreground">{school.total_alunos}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {(school.alunos_creche || school.alunos_infantil || school.alunos_fundamental_i || school.alunos_fundamental_ii) && (
+                            <div className="space-y-2 pt-2 border-t">
+                              <p className="text-sm font-medium">Distribuição de Alunos</p>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                {school.alunos_creche > 0 && (
+                                  <div className="text-sm">
+                                    <span className="text-muted-foreground">Creche:</span>{" "}
+                                    <span className="font-medium">{school.alunos_creche}</span>
+                                  </div>
+                                )}
+                                {school.alunos_infantil > 0 && (
+                                  <div className="text-sm">
+                                    <span className="text-muted-foreground">Infantil:</span>{" "}
+                                    <span className="font-medium">{school.alunos_infantil}</span>
+                                  </div>
+                                )}
+                                {school.alunos_fundamental_i > 0 && (
+                                  <div className="text-sm">
+                                    <span className="text-muted-foreground">Fund. I:</span>{" "}
+                                    <span className="font-medium">{school.alunos_fundamental_i}</span>
+                                  </div>
+                                )}
+                                {school.alunos_fundamental_ii > 0 && (
+                                  <div className="text-sm">
+                                    <span className="text-muted-foreground">Fund. II:</span>{" "}
+                                    <span className="font-medium">{school.alunos_fundamental_ii}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex gap-2 pt-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(school)}
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Editar
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDelete(school.id)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Excluir
+                            </Button>
+                          </div>
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </Card>
             </div>
           )}
         </div>
       </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Escola</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleUpdateSchool} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit_nome_escola">Nome da Escola *</Label>
+                <Input
+                  id="edit_nome_escola"
+                  name="nome_escola"
+                  value={editFormData.nome_escola}
+                  onChange={handleEditInputChange}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_proprietario">Proprietário</Label>
+                <Input
+                  id="edit_proprietario"
+                  name="proprietario"
+                  value={editFormData.proprietario}
+                  onChange={handleEditInputChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_endereco_completo">Endereço Completo</Label>
+                <Input
+                  id="edit_endereco_completo"
+                  name="endereco_completo"
+                  value={editFormData.endereco_completo}
+                  onChange={handleEditInputChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_numero">Número</Label>
+                <Input
+                  id="edit_numero"
+                  name="numero"
+                  value={editFormData.numero}
+                  onChange={handleEditInputChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_bairro">Bairro</Label>
+                <Input
+                  id="edit_bairro"
+                  name="bairro"
+                  value={editFormData.bairro}
+                  onChange={handleEditInputChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_macroregiao">Macrorregião</Label>
+                <Select
+                  value={editFormData.macroregiao}
+                  onValueChange={handleEditMacroregiaoChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a macrorregião" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MACROREGIOES.map((macro) => (
+                      <SelectItem key={macro} value={macro}>
+                        {macro}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_telefone_fixo">Telefone Fixo</Label>
+                <Input
+                  id="edit_telefone_fixo"
+                  name="telefone_fixo"
+                  value={editFormData.telefone_fixo}
+                  onChange={handleEditInputChange}
+                  placeholder="(00) 0000-0000"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_telefone_celular">Telefone Celular</Label>
+                <Input
+                  id="edit_telefone_celular"
+                  name="telefone_celular"
+                  value={editFormData.telefone_celular}
+                  onChange={handleEditInputChange}
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_tipo_escola">Tipo de Escola</Label>
+                <Select
+                  value={editFormData.tipo_escola}
+                  onValueChange={handleEditTipoEscolaChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo de escola" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIPOS_ESCOLA.map((tipo) => (
+                      <SelectItem key={tipo} value={tipo}>
+                        {tipo}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_email">Email</Label>
+                <Input
+                  id="edit_email"
+                  name="email"
+                  type="email"
+                  value={editFormData.email}
+                  onChange={handleEditInputChange}
+                  placeholder="email@exemplo.com"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_alunos_creche">Creche: de 0 a 3 anos</Label>
+                <Input
+                  id="edit_alunos_creche"
+                  name="alunos_creche"
+                  type="number"
+                  min="0"
+                  value={editFormData.alunos_creche}
+                  onChange={handleEditInputChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_alunos_infantil">Infantil/Pré-escola: de 4 a 5 anos</Label>
+                <Input
+                  id="edit_alunos_infantil"
+                  name="alunos_infantil"
+                  type="number"
+                  min="0"
+                  value={editFormData.alunos_infantil}
+                  onChange={handleEditInputChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_alunos_fundamental_i">Ensino Fundamental I: de 6 a 10 anos</Label>
+                <Input
+                  id="edit_alunos_fundamental_i"
+                  name="alunos_fundamental_i"
+                  type="number"
+                  min="0"
+                  value={editFormData.alunos_fundamental_i}
+                  onChange={handleEditInputChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit_alunos_fundamental_ii">Ensino Fundamental II: de 11 a 14 anos</Label>
+                <Input
+                  id="edit_alunos_fundamental_ii"
+                  name="alunos_fundamental_ii"
+                  type="number"
+                  min="0"
+                  value={editFormData.alunos_fundamental_ii}
+                  onChange={handleEditInputChange}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Total de Alunos</Label>
+                <Input
+                  value={getEditTotalAlunos()}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? "Salvando..." : "Salvar Alterações"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
