@@ -487,6 +487,23 @@ export function OutsourcedReports() {
                   ))
                 )}
               </TableBody>
+              <tfoot>
+                <TableRow className="bg-gradient-to-r from-green-100 to-blue-100 dark:from-green-950 dark:to-blue-950 font-bold border-t-2">
+                  <TableCell colSpan={3} className="text-right text-foreground text-lg">
+                    TOTAIS:
+                  </TableCell>
+                  <TableCell className="text-center text-orange-700 dark:text-orange-400 text-lg">
+                    {aggregatedData.reduce((sum, group) => sum + group.quantity, 0)}
+                  </TableCell>
+                  <TableCell className="text-right text-foreground text-lg">
+                    {aggregatedData.reduce((sum, group) => sum + group.individualSalaries.length, 0)} salário(s)
+                  </TableCell>
+                  <TableCell className="text-right text-green-700 dark:text-green-400 text-lg">
+                    {formatCurrency(aggregatedData.reduce((sum, group) => sum + group.totalSalary, 0))}
+                  </TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
+              </tfoot>
             </Table>
           </div>
         </CardContent>
