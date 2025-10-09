@@ -7,7 +7,8 @@ import { DataTable } from "@/components/common/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { WaterRegistration } from "@/components/water/WaterRegistration";
-import { Download, Plus, Eye, Pencil, Trash2, ArrowUpDown, FileSpreadsheet, FileText } from "lucide-react";
+import { MonthlyDataWizard } from "@/components/water/MonthlyDataWizard";
+import { Download, Plus, Eye, Pencil, Trash2, ArrowUpDown, FileSpreadsheet, FileText, Calendar } from "lucide-react";
 import { exportToExcel, exportToCSV, exportToPDF } from "@/utils/exportData";
 import {
   AlertDialog,
@@ -40,6 +41,7 @@ export default function WaterManagement() {
   const [viewMode, setViewMode] = useState<"create" | "edit" | "view">("create");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
+  const [monthlyWizardOpen, setMonthlyWizardOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -279,6 +281,12 @@ export default function WaterManagement() {
             Importar XLSX
           </Button>
           <Button
+            onClick={() => setMonthlyWizardOpen(true)}
+          >
+            <Calendar className="mr-2 h-4 w-4" />
+            Dados Mensais
+          </Button>
+          <Button
             variant="outline"
             onClick={() => handleExport("excel")}
             disabled={records.length === 0}
@@ -346,6 +354,12 @@ export default function WaterManagement() {
           />
         </DialogContent>
       </Dialog>
+
+      <MonthlyDataWizard
+        open={monthlyWizardOpen}
+        onOpenChange={setMonthlyWizardOpen}
+        onSuccess={fetchRecords}
+      />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
