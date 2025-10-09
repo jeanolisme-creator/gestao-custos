@@ -317,9 +317,9 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
         ) : (
           <div className="space-y-4 py-4">
             {isSchoolAlreadyFilled && (
-              <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
+              <Alert className="bg-yellow-100 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700">
+                <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
+                <AlertDescription className="text-yellow-800 dark:text-yellow-200">
                   <strong>Escola já preenchida anteriormente</strong> - Você pode editar os dados se necessário.
                 </AlertDescription>
               </Alert>

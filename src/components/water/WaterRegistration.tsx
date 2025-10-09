@@ -54,6 +54,27 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   const [pendingDialogOpen, setPendingDialogOpen] = useState(false);
   const [pendingMonth, setPendingMonth] = useState<string>();
   const [pendingSchoolIndex, setPendingSchoolIndex] = useState<number>();
+  const [hasPendingSchools, setHasPendingSchools] = useState(false);
+
+  // Check for pending schools
+  useEffect(() => {
+    const checkPending = () => {
+      const stored = localStorage.getItem('water_pending_schools');
+      if (stored) {
+        const pendingData = JSON.parse(stored);
+        const hasPending = Object.keys(pendingData).some(month => pendingData[month].length > 0);
+        setHasPendingSchools(hasPending);
+      } else {
+        setHasPendingSchools(false);
+      }
+    };
+    
+    checkPending();
+    
+    // Check periodically while the component is mounted
+    const interval = setInterval(checkPending, 1000);
+    return () => clearInterval(interval);
+  }, [monthlyWizardOpen, pendingDialogOpen]);
 
   useEffect(() => {
     if (editData) {
@@ -239,8 +260,9 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
               </Button>
               <Button 
                 type="button" 
-                variant="secondary"
+                variant={hasPendingSchools ? "default" : "secondary"}
                 onClick={() => setPendingDialogOpen(true)}
+                className={hasPendingSchools ? "bg-yellow-500 hover:bg-yellow-600 text-white dark:bg-yellow-600 dark:hover:bg-yellow-700" : ""}
               >
                 <AlertCircle className="mr-2 h-4 w-4" />
                 Pendências
