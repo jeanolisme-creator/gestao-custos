@@ -89,9 +89,22 @@ export function WaterReports() {
       console.log("Registros carregados:", records?.length || 0);
       setData(records || []);
       
-      // Extract unique school names
-      const uniqueSchools = Array.from(new Set(records?.map(r => r.nome_escola) || []));
-      setSchools(uniqueSchools as string[]);
+      // Extract unique school names from records
+      const recordsSchools = Array.from(new Set(records?.map(r => r.nome_escola).filter(Boolean) || []));
+      
+      // Also fetch from schools table to ensure all schools appear
+      const { data: schoolsData } = await supabase
+        .from("schools")
+        .select("nome_escola")
+        .eq("user_id", user.id);
+      
+      const registeredSchools = schoolsData?.map(s => s.nome_escola).filter(Boolean) || [];
+      
+      // Combine both lists and remove duplicates
+      const allSchools = Array.from(new Set([...recordsSchools, ...registeredSchools]));
+      console.log("Escolas disponíveis:", allSchools.length, allSchools);
+      
+      setSchools(allSchools as string[]);
     } catch (error) {
       console.error("Error fetching data:", error);
       toast({
