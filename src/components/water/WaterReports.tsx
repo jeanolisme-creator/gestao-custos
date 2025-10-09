@@ -3,6 +3,7 @@ import { Download, FileText, Search, Filter, Pencil, Trash2 } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -21,6 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { WaterEditForm } from "./WaterEditForm";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,6 +64,8 @@ export function WaterReports() {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<any>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [recordToEdit, setRecordToEdit] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -194,12 +198,35 @@ export function WaterReports() {
   };
 
   const handleEdit = (record: any) => {
-    toast({
-      title: "Edição",
-      description: "Redirecionando para edição do registro...",
-    });
-    // Aqui você pode implementar a lógica de edição
-    // Por exemplo, abrir um dialog de edição ou redirecionar para a página de cadastro
+    setRecordToEdit(record);
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSave = async (updatedData: any) => {
+    try {
+      const { error } = await supabase
+        .from("school_records")
+        .update(updatedData)
+        .eq("id", recordToEdit.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Registro atualizado",
+        description: "O registro foi atualizado com sucesso",
+      });
+
+      setEditDialogOpen(false);
+      setRecordToEdit(null);
+      fetchData(); // Recarrega os dados
+    } catch (error) {
+      console.error("Error updating record:", error);
+      toast({
+        title: "Erro ao atualizar",
+        description: "Não foi possível atualizar o registro",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDeleteClick = (record: any) => {
@@ -547,6 +574,25 @@ export function WaterReports() {
           </div>
         )}
       </Card>
+
+      {/* Edit Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Registro - {recordToEdit?.nome_escola}</DialogTitle>
+          </DialogHeader>
+          {recordToEdit && (
+            <WaterEditForm
+              record={recordToEdit}
+              onSave={handleEditSave}
+              onCancel={() => {
+                setEditDialogOpen(false);
+                setRecordToEdit(null);
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
