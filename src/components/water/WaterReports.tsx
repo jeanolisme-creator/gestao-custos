@@ -148,6 +148,8 @@ export function WaterReports() {
             totalConsumption: 0,
             totalService: 0,
             cadastros: [],
+            valores: [],
+            records: []
           });
         }
         
@@ -155,7 +157,14 @@ export function WaterReports() {
         school.totalValue += parseFloat(record.valor_gasto || 0);
         school.totalConsumption += parseFloat(record.consumo_m3 || 0);
         school.totalService += parseFloat(record.valor_servicos || 0);
-        school.cadastros.push(record.cadastro);
+        
+        // Parse cadastros and valores_cadastros from JSON
+        const cadastrosArray = record.cadastro ? JSON.parse(record.cadastro) : [];
+        const valoresArray = record.valores_cadastros ? JSON.parse(record.valores_cadastros as string) : [];
+        
+        school.cadastros.push(...cadastrosArray);
+        school.valores.push(...valoresArray);
+        school.records.push(record);
       });
 
       let result = Array.from(schoolMap.values());
@@ -264,38 +273,81 @@ export function WaterReports() {
     }
   };
 
-  const renderConsolidatedTable = () => (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Escola</TableHead>
-          <TableHead>Cadastros</TableHead>
-          <TableHead>Consumo Total (m³)</TableHead>
-          <TableHead>Valor Água (R$)</TableHead>
-          <TableHead>Valor Serviços (R$)</TableHead>
-          <TableHead>Total (R$)</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {(reportData as any[]).map((school, index) => (
-          <TableRow key={index}>
-            <TableCell className="font-medium">{school.schoolName}</TableCell>
-            <TableCell>
-              <Badge variant="outline">
-                {school.cadastros?.length || 0} cadastros
-              </Badge>
-            </TableCell>
-            <TableCell>{school.totalConsumption?.toFixed(1) || '0.0'}m³</TableCell>
-            <TableCell>{formatCurrency((school.totalValue || 0) - (school.totalService || 0))}</TableCell>
-            <TableCell>{formatCurrency(school.totalService || 0)}</TableCell>
-            <TableCell className="font-semibold">
-              {formatCurrency(school.totalValue || 0)}
-            </TableCell>
+  const renderConsolidatedTable = () => {
+    const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+    
+    const toggleRow = (index: number) => {
+      const newExpanded = new Set(expandedRows);
+      if (newExpanded.has(index)) {
+        newExpanded.delete(index);
+      } else {
+        newExpanded.add(index);
+      }
+      setExpandedRows(newExpanded);
+    };
+    
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead></TableHead>
+            <TableHead>Escola</TableHead>
+            <TableHead>Total Cadastros</TableHead>
+            <TableHead>Consumo Total (m³)</TableHead>
+            <TableHead>Valor Total (R$)</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
+        </TableHeader>
+        <TableBody>
+          {(reportData as any[]).map((school, index) => (
+            <>
+              <TableRow key={index} className="cursor-pointer hover:bg-muted/50" onClick={() => toggleRow(index)}>
+                <TableCell>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                    {expandedRows.has(index) ? '▼' : '▶'}
+                  </Button>
+                </TableCell>
+                <TableCell className="font-medium">{school.schoolName}</TableCell>
+                <TableCell>
+                  <Badge variant="outline">
+                    {school.cadastros?.length || 0} cadastros
+                  </Badge>
+                </TableCell>
+                <TableCell>{school.totalConsumption?.toFixed(1) || '0.0'}m³</TableCell>
+                <TableCell className="font-semibold">
+                  {formatCurrency(school.totalValue || 0)}
+                </TableCell>
+              </TableRow>
+              {expandedRows.has(index) && (
+                <TableRow key={`${index}-details`}>
+                  <TableCell colSpan={5} className="bg-muted/30 p-4">
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-sm mb-2">Detalhes dos Cadastros:</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {school.cadastros.map((cadastro: string, cadIndex: number) => (
+                          <div key={cadIndex} className="flex justify-between items-center p-2 bg-background rounded border">
+                            <span className="font-mono text-sm">{cadastro}</span>
+                            <span className="font-semibold text-primary">
+                              {formatCurrency(school.valores[cadIndex] || 0)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex justify-between items-center pt-3 border-t mt-3">
+                        <span className="font-semibold">Soma Total:</span>
+                        <span className="text-lg font-bold text-primary">
+                          {formatCurrency(school.totalValue || 0)}
+                        </span>
+                      </div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  };
 
   const renderDetailedTable = () => (
     <Table>

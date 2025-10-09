@@ -503,6 +503,7 @@ export type Database = {
           user_id: string
           valor_gasto: number | null
           valor_servicos: number | null
+          valores_cadastros: Json | null
         }
         Insert: {
           bairro?: string | null
@@ -528,6 +529,7 @@ export type Database = {
           user_id: string
           valor_gasto?: number | null
           valor_servicos?: number | null
+          valores_cadastros?: Json | null
         }
         Update: {
           bairro?: string | null
@@ -553,6 +555,7 @@ export type Database = {
           user_id?: string
           valor_gasto?: number | null
           valor_servicos?: number | null
+          valores_cadastros?: Json | null
         }
         Relationships: []
       }

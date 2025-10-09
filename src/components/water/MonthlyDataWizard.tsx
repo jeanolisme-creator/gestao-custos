@@ -45,9 +45,9 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
   }, [open, initialMonth, initialSchoolIndex]);
   const [formData, setFormData] = useState({
     cadastros: [''],
+    valores_cadastros: [''],
     data_leitura_anterior: '',
     data_leitura_atual: '',
-    valor_gasto: '',
     data_vencimento: '',
     consumo_m3: '',
     numero_dias: '',
@@ -61,6 +61,12 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
   const totalSchools = schools.length;
   const progress = totalSchools > 0 ? ((currentSchoolIndex + 1) / totalSchools) * 100 : 0;
   const isSchoolAlreadyFilled = filledSchools.has(currentSchoolIndex);
+
+  // Calculate total value from all cadastros
+  const valorTotal = formData.valores_cadastros.reduce((sum, valor) => {
+    const numericValue = parseFloat(valor.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+    return sum + numericValue;
+  }, 0);
 
   // Load existing data if school was already filled
   useEffect(() => {
@@ -97,11 +103,20 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
         };
 
         // Load existing data into form
+        const cadastros = record.cadastro ? JSON.parse(record.cadastro) : [''];
+        const valoresCadastrosRaw = record.valores_cadastros ? JSON.parse(record.valores_cadastros as string) : [];
+        
+        // Ensure values array matches cadastros array length
+        const valoresFormatted = cadastros.map((_, index) => {
+          const valor = valoresCadastrosRaw[index];
+          return valor ? formatCurrency(valor) : '';
+        });
+
         setFormData({
-          cadastros: record.cadastro ? JSON.parse(record.cadastro) : [''],
+          cadastros,
+          valores_cadastros: valoresFormatted,
           data_leitura_anterior: record.data_leitura_anterior || '',
           data_leitura_atual: record.data_leitura_atual || '',
-          valor_gasto: formatCurrency(record.valor_gasto),
           data_vencimento: record.data_vencimento || '',
           consumo_m3: record.consumo_m3?.toString() || '',
           numero_dias: record.numero_dias?.toString() || '',
@@ -114,9 +129,9 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
         // Reset form with empty data
         setFormData({
           cadastros: [''],
+          valores_cadastros: [''],
           data_leitura_anterior: '',
           data_leitura_atual: '',
-          valor_gasto: '',
           data_vencimento: '',
           consumo_m3: '',
           numero_dias: '',
@@ -185,7 +200,8 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
   const handleAddCadastro = () => {
     setFormData(prev => ({
       ...prev,
-      cadastros: [...prev.cadastros, '']
+      cadastros: [...prev.cadastros, ''],
+      valores_cadastros: [...prev.valores_cadastros, '']
     }));
   };
 
@@ -193,7 +209,8 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     if (formData.cadastros.length > 1) {
       setFormData(prev => ({
         ...prev,
-        cadastros: prev.cadastros.filter((_, i) => i !== index)
+        cadastros: prev.cadastros.filter((_, i) => i !== index),
+        valores_cadastros: prev.valores_cadastros.filter((_, i) => i !== index)
       }));
     }
   };
@@ -202,6 +219,13 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     setFormData(prev => ({
       ...prev,
       cadastros: prev.cadastros.map((cad, i) => i === index ? value : cad)
+    }));
+  };
+
+  const handleValorCadastroChange = (index: number, formatted: string) => {
+    setFormData(prev => ({
+      ...prev,
+      valores_cadastros: prev.valores_cadastros.map((val, i) => i === index ? formatted : val)
     }));
   };
 
@@ -247,11 +271,17 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
       mes_ano_referencia: selectedMonth
     };
     
-    // Convert numeric fields
-    if (formData.valor_gasto) {
-      const numericValue = parseFloat(formData.valor_gasto.replace(/[R$\s.]/g, '').replace(',', '.'));
-      submitData.valor_gasto = numericValue;
-    }
+    // Convert valores_cadastros to numeric array and store as JSON
+    const valoresNumeric = formData.valores_cadastros.map(valor => {
+      const numericValue = parseFloat(valor.replace(/[R$\s.]/g, '').replace(',', '.'));
+      return numericValue || 0;
+    });
+    submitData.valores_cadastros = JSON.stringify(valoresNumeric);
+    
+    // Calculate total from valores_cadastros
+    submitData.valor_gasto = valoresNumeric.reduce((sum, val) => sum + val, 0);
+    
+    // Convert valor_servicos
     if (formData.valor_servicos) {
       const numericValue = parseFloat(formData.valor_servicos.replace(/[R$\s.]/g, '').replace(',', '.'));
       submitData.valor_servicos = numericValue;
@@ -362,9 +392,9 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     setFilledSchools(new Set());
     setFormData({
       cadastros: [''],
+      valores_cadastros: [''],
       data_leitura_anterior: '',
       data_leitura_atual: '',
-      valor_gasto: '',
       data_vencimento: '',
       consumo_m3: '',
       numero_dias: '',
@@ -449,7 +479,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2 md:col-span-2">
                 <div className="flex items-center justify-between">
-                  <Label>Cadastro(s) *</Label>
+                  <Label>Cadastro(s) e Valores *</Label>
                   <Button
                     type="button"
                     variant="outline"
@@ -459,27 +489,52 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                     <span className="text-xs">+ Adicionar mais um número de cadastro</span>
                   </Button>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {formData.cadastros.map((cadastro, index) => (
-                    <div key={index} className="flex gap-2">
-                      <Input
-                        value={cadastro}
-                        onChange={(e) => handleCadastroChange(index, e.target.value)}
-                        placeholder={`Cadastro ${index + 1}`}
-                        required={index === 0}
-                      />
-                      {formData.cadastros.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleRemoveCadastro(index)}
-                        >
-                          Remover
-                        </Button>
-                      )}
+                    <div key={index} className="flex flex-col gap-2 p-3 border rounded-lg bg-muted/30">
+                      <div className="flex gap-2">
+                        <div className="flex-1 space-y-1">
+                          <Label className="text-xs text-muted-foreground">Cadastro {index + 1}</Label>
+                          <Input
+                            value={cadastro}
+                            onChange={(e) => handleCadastroChange(index, e.target.value)}
+                            placeholder={`Número do cadastro ${index + 1}`}
+                            required={index === 0}
+                          />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <Label className="text-xs text-muted-foreground">Valor (R$)</Label>
+                          <CurrencyInput
+                            value={formData.valores_cadastros[index] || ''}
+                            onValueChange={(formatted) => handleValorCadastroChange(index, formatted)}
+                            placeholder="R$ 0,00"
+                          />
+                        </div>
+                        {formData.cadastros.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleRemoveCadastro(index)}
+                            className="mt-6"
+                          >
+                            Remover
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   ))}
+                  
+                  {/* Valor Total */}
+                  <div className="flex justify-end items-center gap-2 pt-2 border-t">
+                    <Label className="font-semibold">Valor Total:</Label>
+                    <span className="text-lg font-bold text-primary">
+                      {new Intl.NumberFormat('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      }).format(valorTotal)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -530,16 +585,6 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                   type="number"
                   value={formData.numero_dias}
                   onChange={(e) => handleInputChange('numero_dias', e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="valor_gasto">Valor (R$)</Label>
-                <CurrencyInput
-                  id="valor_gasto"
-                  value={formData.valor_gasto}
-                  onValueChange={(formatted, numeric) => handleInputChange('valor_gasto', formatted)}
-                  placeholder="R$ 0,00"
                 />
               </div>
 
