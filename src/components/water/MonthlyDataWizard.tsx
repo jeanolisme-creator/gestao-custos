@@ -688,42 +688,12 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="data_leitura_anterior">Data Leitura Anterior</Label>
-                <Input
-                  id="data_leitura_anterior"
-                  type="date"
-                  value={formData.data_leitura_anterior}
-                  onChange={(e) => handleInputChange('data_leitura_anterior', e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="data_leitura_atual">Data Leitura Atual</Label>
-                <Input
-                  id="data_leitura_atual"
-                  type="date"
-                  value={formData.data_leitura_atual}
-                  onChange={(e) => handleInputChange('data_leitura_atual', e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="valor_servicos">Valor dos Serviços (R$)</Label>
                 <CurrencyInput
                   id="valor_servicos"
                   value={formData.valor_servicos}
                   onValueChange={(formatted, numeric) => handleInputChange('valor_servicos', formatted)}
                   placeholder="R$ 0,00"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="data_vencimento">Data de Vencimento</Label>
-                <Input
-                  id="data_vencimento"
-                  type="date"
-                  value={formData.data_vencimento}
-                  onChange={(e) => handleInputChange('data_vencimento', e.target.value)}
                 />
               </div>
 
