@@ -45,13 +45,13 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
   }, [open, initialMonth, initialSchoolIndex]);
   const [formData, setFormData] = useState({
     cadastros: [''],
+    hidrometros: [''],
     valores_cadastros: [''],
     data_leitura_anterior: '',
     data_leitura_atual: '',
     data_vencimento: '',
     consumo_m3: '',
     numero_dias: '',
-    hidrometro: '',
     descricao_servicos: '',
     valor_servicos: '',
     ocorrencias_pendencias: ''
@@ -112,15 +112,25 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
           return valor ? formatCurrency(valor) : '';
         });
 
+        // Parse hidrometros - fallback to old hidrometro field if new doesn't exist
+        let hidrometrosArray = [''];
+        if (record.hidrometro) {
+          try {
+            hidrometrosArray = JSON.parse(record.hidrometro as string);
+          } catch {
+            hidrometrosArray = [record.hidrometro as string];
+          }
+        }
+        
         setFormData({
           cadastros,
+          hidrometros: hidrometrosArray,
           valores_cadastros: valoresFormatted,
           data_leitura_anterior: record.data_leitura_anterior || '',
           data_leitura_atual: record.data_leitura_atual || '',
           data_vencimento: record.data_vencimento || '',
           consumo_m3: record.consumo_m3?.toString() || '',
           numero_dias: record.numero_dias?.toString() || '',
-          hidrometro: record.hidrometro || '',
           descricao_servicos: record.descricao_servicos || '',
           valor_servicos: formatCurrency(record.valor_servicos),
           ocorrencias_pendencias: record.ocorrencias_pendencias || ''
@@ -129,13 +139,13 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
         // Reset form with empty data
         setFormData({
           cadastros: [''],
+          hidrometros: [''],
           valores_cadastros: [''],
           data_leitura_anterior: '',
           data_leitura_atual: '',
           data_vencimento: '',
           consumo_m3: '',
           numero_dias: '',
-          hidrometro: '',
           descricao_servicos: '',
           valor_servicos: '',
           ocorrencias_pendencias: ''
@@ -201,6 +211,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     setFormData(prev => ({
       ...prev,
       cadastros: [...prev.cadastros, ''],
+      hidrometros: [...prev.hidrometros, ''],
       valores_cadastros: [...prev.valores_cadastros, '']
     }));
   };
@@ -210,6 +221,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
       setFormData(prev => ({
         ...prev,
         cadastros: prev.cadastros.filter((_, i) => i !== index),
+        hidrometros: prev.hidrometros.filter((_, i) => i !== index),
         valores_cadastros: prev.valores_cadastros.filter((_, i) => i !== index)
       }));
     }
@@ -226,6 +238,13 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     setFormData(prev => ({
       ...prev,
       valores_cadastros: prev.valores_cadastros.map((val, i) => i === index ? formatted : val)
+    }));
+  };
+
+  const handleHidrometroChange = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      hidrometros: prev.hidrometros.map((hid, i) => i === index ? value : hid)
     }));
   };
 
@@ -259,12 +278,12 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     const submitData: any = { 
       user_id: user.id,
       cadastro: JSON.stringify(formData.cadastros.filter(c => c.trim() !== '')),
+      hidrometros: JSON.stringify(formData.hidrometros),
       proprietario: currentSchool.proprietario || '',
       nome_escola: currentSchool.nome_escola,
       endereco_completo: currentSchool.endereco_completo || '',
       numero: currentSchool.numero || '',
       bairro: currentSchool.bairro || '',
-      hidrometro: formData.hidrometro,
       descricao_servicos: formData.descricao_servicos,
       macroregiao: currentSchool.macroregiao || '',
       ocorrencias_pendencias: formData.ocorrencias_pendencias,
@@ -392,13 +411,13 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     setFilledSchools(new Set());
     setFormData({
       cadastros: [''],
+      hidrometros: [''],
       valores_cadastros: [''],
       data_leitura_anterior: '',
       data_leitura_atual: '',
       data_vencimento: '',
       consumo_m3: '',
       numero_dias: '',
-      hidrometro: '',
       descricao_servicos: '',
       valor_servicos: '',
       ocorrencias_pendencias: ''
@@ -503,6 +522,14 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                           />
                         </div>
                         <div className="flex-1 space-y-1">
+                          <Label className="text-xs text-muted-foreground">Hidrômetro</Label>
+                          <Input
+                            value={formData.hidrometros[index] || ''}
+                            onChange={(e) => handleHidrometroChange(index, e.target.value)}
+                            placeholder="Nº Hidrômetro"
+                          />
+                        </div>
+                        <div className="flex-1 space-y-1">
                           <Label className="text-xs text-muted-foreground">Valor (R$)</Label>
                           <CurrencyInput
                             value={formData.valores_cadastros[index] || ''}
@@ -536,15 +563,6 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                     </span>
                   </div>
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="hidrometro">Hidrômetro</Label>
-                <Input
-                  id="hidrometro"
-                  value={formData.hidrometro}
-                  onChange={(e) => handleInputChange('hidrometro', e.target.value)}
-                />
               </div>
 
               <div className="space-y-2">

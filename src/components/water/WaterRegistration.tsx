@@ -31,6 +31,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   const [formData, setFormData] = useState({
     mes_referencia: '',
     cadastros: [''],
+    hidrometros: [''],
     valores_cadastros: [''],
     proprietario: '',
     nome_escola: '',
@@ -42,7 +43,6 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     bairro: '',
     consumo_m3: '',
     numero_dias: '',
-    hidrometro: '',
     descricao_servicos: '',
     valor_servicos: '',
     macroregiao: '',
@@ -114,6 +114,9 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
         return `R$ ${value.toFixed(2).replace('.', ',')}`;
       };
 
+      // Parse hidrometros from JSON if exists
+      const hidrometrosArray = editData.hidrometros ? JSON.parse(editData.hidrometros) : [''];
+      
       const valoresFormatted = cadastrosArray.map((_, index) => {
         const valor = valoresArray[index];
         return valor ? formatCurrency(valor) : '';
@@ -124,6 +127,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
       setFormData({
         mes_referencia: editData.mes_referencia || '',
         cadastros: cadastrosArray,
+        hidrometros: hidrometrosArray,
         valores_cadastros: valoresFormatted,
         proprietario: editData.proprietario || '',
         nome_escola: editData.nome_escola || '',
@@ -135,7 +139,6 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
         bairro: editData.bairro || '',
         consumo_m3: editData.consumo_m3?.toString() || '',
         numero_dias: editData.numero_dias?.toString() || '',
-        hidrometro: editData.hidrometro || '',
         descricao_servicos: editData.descricao_servicos || '',
         valor_servicos: valorServicos,
         macroregiao: editData.macroregiao || '',
@@ -173,6 +176,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     setFormData({
       mes_referencia: '',
       cadastros: [''],
+      hidrometros: [''],
       valores_cadastros: [''],
       proprietario: '',
       nome_escola: '',
@@ -184,7 +188,6 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
       bairro: '',
       consumo_m3: '',
       numero_dias: '',
-      hidrometro: '',
       descricao_servicos: '',
       valor_servicos: '',
       macroregiao: '',
@@ -196,6 +199,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     setFormData(prev => ({
       ...prev,
       cadastros: [...prev.cadastros, ''],
+      hidrometros: [...prev.hidrometros, ''],
       valores_cadastros: [...prev.valores_cadastros, '']
     }));
   };
@@ -205,6 +209,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
       setFormData(prev => ({
         ...prev,
         cadastros: prev.cadastros.filter((_, i) => i !== index),
+        hidrometros: prev.hidrometros.filter((_, i) => i !== index),
         valores_cadastros: prev.valores_cadastros.filter((_, i) => i !== index)
       }));
     }
@@ -224,6 +229,13 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     }));
   };
 
+  const handleHidrometroChange = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      hidrometros: prev.hidrometros.map((hid, i) => i === index ? value : hid)
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -232,12 +244,12 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     const submitData: any = { 
       user_id: user.id,
       cadastro: JSON.stringify(formData.cadastros.filter(c => c.trim() !== '')),
+      hidrometros: JSON.stringify(formData.hidrometros),
       proprietario: formData.proprietario,
       nome_escola: formData.nome_escola,
       endereco_completo: formData.endereco_completo,
       numero: formData.numero,
       bairro: formData.bairro,
-      hidrometro: formData.hidrometro,
       descricao_servicos: formData.descricao_servicos,
       macroregiao: formData.macroregiao,
       ocorrencias_pendencias: formData.ocorrencias_pendencias,
@@ -551,15 +563,6 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="hidrometro">Hidrômetro</Label>
-              <Input
-                id="hidrometro"
-                value={formData.hidrometro}
-                onChange={(e) => handleInputChange('hidrometro', e.target.value)}
-              />
             </div>
 
             <div className="space-y-2">
