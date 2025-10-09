@@ -44,7 +44,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     }
   }, [open, initialMonth, initialSchoolIndex]);
   const [formData, setFormData] = useState({
-    cadastro: '',
+    cadastros: [''],
     data_leitura_anterior: '',
     data_leitura_atual: '',
     valor_gasto: '',
@@ -69,7 +69,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
       
       // Reset form with current school data
       setFormData({
-        cadastro: '',
+        cadastros: [''],
         data_leitura_anterior: '',
         data_leitura_atual: '',
         valor_gasto: '',
@@ -135,6 +135,29 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     }));
   };
 
+  const handleAddCadastro = () => {
+    setFormData(prev => ({
+      ...prev,
+      cadastros: [...prev.cadastros, '']
+    }));
+  };
+
+  const handleRemoveCadastro = (index: number) => {
+    if (formData.cadastros.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        cadastros: prev.cadastros.filter((_, i) => i !== index)
+      }));
+    }
+  };
+
+  const handleCadastroChange = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      cadastros: prev.cadastros.map((cad, i) => i === index ? value : cad)
+    }));
+  };
+
   const handleMonthSelect = () => {
     if (!selectedMonth) {
       toast({
@@ -164,7 +187,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
 
     const submitData: any = { 
       user_id: user.id,
-      cadastro: formData.cadastro,
+      cadastro: JSON.stringify(formData.cadastros.filter(c => c.trim() !== '')),
       proprietario: currentSchool.proprietario || '',
       nome_escola: currentSchool.nome_escola,
       endereco_completo: currentSchool.endereco_completo || '',
@@ -262,7 +285,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     setCurrentSchoolIndex(0);
     setFilledSchools(new Set());
     setFormData({
-      cadastro: '',
+      cadastros: [''],
       data_leitura_anterior: '',
       data_leitura_atual: '',
       valor_gasto: '',
@@ -348,14 +371,40 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
 
             {/* Form Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="cadastro">Cadastro *</Label>
-                <Input
-                  id="cadastro"
-                  value={formData.cadastro}
-                  onChange={(e) => handleInputChange('cadastro', e.target.value)}
-                  required
-                />
+              <div className="space-y-2 md:col-span-2">
+                <div className="flex items-center justify-between">
+                  <Label>Cadastro(s) *</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddCadastro}
+                  >
+                    <span className="text-xs">+ Adicionar mais um número de cadastro</span>
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {formData.cadastros.map((cadastro, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input
+                        value={cadastro}
+                        onChange={(e) => handleCadastroChange(index, e.target.value)}
+                        placeholder={`Cadastro ${index + 1}`}
+                        required={index === 0}
+                      />
+                      {formData.cadastros.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleRemoveCadastro(index)}
+                        >
+                          Remover
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="space-y-2">

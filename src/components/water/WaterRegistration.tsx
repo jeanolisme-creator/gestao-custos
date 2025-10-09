@@ -29,7 +29,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   
   const [formData, setFormData] = useState({
     mes_referencia: '',
-    cadastro: '',
+    cadastros: [''], // Changed to array to support multiple cadastros
     proprietario: '',
     nome_escola: '',
     data_leitura_anterior: '',
@@ -78,9 +78,20 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
 
   useEffect(() => {
     if (editData) {
+      // Parse cadastros if stored as JSON array, otherwise convert to array
+      let cadastrosArray = [''];
+      try {
+        if (editData.cadastro) {
+          const parsed = JSON.parse(editData.cadastro);
+          cadastrosArray = Array.isArray(parsed) ? parsed : [editData.cadastro];
+        }
+      } catch {
+        cadastrosArray = editData.cadastro ? [editData.cadastro] : [''];
+      }
+      
       setFormData({
         mes_referencia: editData.mes_referencia || '',
-        cadastro: editData.cadastro || '',
+        cadastros: cadastrosArray,
         proprietario: editData.proprietario || '',
         nome_escola: editData.nome_escola || '',
         data_leitura_anterior: editData.data_leitura_anterior || '',
@@ -129,7 +140,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   const resetForm = () => {
     setFormData({
       mes_referencia: '',
-      cadastro: '',
+      cadastros: [''],
       proprietario: '',
       nome_escola: '',
       data_leitura_anterior: '',
@@ -149,6 +160,29 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     });
   };
 
+  const handleAddCadastro = () => {
+    setFormData(prev => ({
+      ...prev,
+      cadastros: [...prev.cadastros, '']
+    }));
+  };
+
+  const handleRemoveCadastro = (index: number) => {
+    if (formData.cadastros.length > 1) {
+      setFormData(prev => ({
+        ...prev,
+        cadastros: prev.cadastros.filter((_, i) => i !== index)
+      }));
+    }
+  };
+
+  const handleCadastroChange = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      cadastros: prev.cadastros.map((cad, i) => i === index ? value : cad)
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -156,7 +190,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
 
     const submitData: any = { 
       user_id: user.id,
-      cadastro: formData.cadastro,
+      cadastro: JSON.stringify(formData.cadastros.filter(c => c.trim() !== '')),
       proprietario: formData.proprietario,
       nome_escola: formData.nome_escola,
       endereco_completo: formData.endereco_completo,
@@ -352,15 +386,43 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="cadastro">Cadastro *</Label>
-              <Input
-                id="cadastro"
-                value={formData.cadastro}
-                onChange={(e) => handleInputChange('cadastro', e.target.value)}
-                required
-                disabled={viewMode}
-              />
+            <div className="space-y-2 md:col-span-2">
+              <div className="flex items-center justify-between">
+                <Label>Cadastro(s) *</Label>
+                {!viewMode && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddCadastro}
+                  >
+                    <span className="text-xs">+ Adicionar mais um número de cadastro</span>
+                  </Button>
+                )}
+              </div>
+              <div className="space-y-2">
+                {formData.cadastros.map((cadastro, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input
+                      value={cadastro}
+                      onChange={(e) => handleCadastroChange(index, e.target.value)}
+                      placeholder={`Cadastro ${index + 1}`}
+                      required={index === 0}
+                      disabled={viewMode}
+                    />
+                    {!viewMode && formData.cadastros.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleRemoveCadastro(index)}
+                      >
+                        Remover
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="space-y-2">
