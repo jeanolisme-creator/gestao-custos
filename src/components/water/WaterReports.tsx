@@ -73,6 +73,13 @@ export function WaterReports() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    console.log("Data state updated:", data.length, "records");
+    if (data.length > 0) {
+      console.log("Sample records:", data.slice(0, 2));
+    }
+  }, [data]);
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -126,20 +133,32 @@ export function WaterReports() {
   };
 
   const getReportData = () => {
+    console.log("=== getReportData ===");
+    console.log("Total records in data:", data.length);
+    console.log("Selected filters:", { selectedYear, selectedMonth, selectedSchool, reportType });
+    
     let filteredData = data.filter(record => {
       const mesAno = record.mes_ano_referencia || '';
-      return mesAno.includes(selectedYear);
+      const matches = mesAno.includes(selectedYear);
+      if (!matches) {
+        console.log("Record filtered out by year:", record.nome_escola, mesAno, "doesn't include", selectedYear);
+      }
+      return matches;
     });
+    
+    console.log("After year filter:", filteredData.length);
     
     if (selectedMonth !== 'todos') {
       filteredData = filteredData.filter(record => {
         const mesAno = record.mes_ano_referencia || '';
         return mesAno.toLowerCase().includes(selectedMonth);
       });
+      console.log("After month filter:", filteredData.length);
     }
 
     if (selectedSchool !== 'all') {
       filteredData = filteredData.filter(record => record.nome_escola === selectedSchool);
+      console.log("After school filter:", filteredData.length);
     }
 
     if (searchTerm) {
@@ -147,7 +166,10 @@ export function WaterReports() {
         record.nome_escola?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         record.cadastro?.includes(searchTerm)
       );
+      console.log("After search filter:", filteredData.length);
     }
+    
+    console.log("Filtered data before aggregation:", filteredData.length);
 
     // Aggregate by school for consolidated report
     if (reportType === 'consolidated' || reportType === 'by-school' || 
@@ -204,13 +226,17 @@ export function WaterReports() {
         result = result.filter(school => selectedSchools.includes(school.schoolName));
       }
 
+      console.log("Final aggregated result:", result.length, result);
       return result;
     }
 
+    console.log("Final filtered data (non-consolidated):", filteredData.length);
     return filteredData;
   };
 
   const reportData = getReportData();
+  
+  console.log("reportData length:", reportData.length);
 
   const exportToCSV = () => {
     toast({
