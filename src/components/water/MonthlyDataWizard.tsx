@@ -279,6 +279,12 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     }
   };
 
+  const handlePreviousSchool = () => {
+    if (currentSchoolIndex > 0) {
+      setCurrentSchoolIndex(prev => prev - 1);
+    }
+  };
+
   const handleClose = () => {
     setStep('select-month');
     setSelectedMonth('');
@@ -511,6 +517,11 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                 <Button type="button" variant="outline" onClick={handleClose}>
                   Cancelar
                 </Button>
+                {currentSchoolIndex > 0 && (
+                  <Button type="button" variant="outline" onClick={handlePreviousSchool}>
+                    Voltar
+                  </Button>
+                )}
                 <Button type="button" variant="outline" onClick={handleSkipSchool}>
                   Pular Escola
                 </Button>
