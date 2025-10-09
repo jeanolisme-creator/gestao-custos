@@ -88,8 +88,7 @@ export function WaterReports() {
 
       const { data: records, error } = await supabase
         .from("school_records")
-        .select("*")
-        .eq("user_id", user.id);
+        .select("*");
 
       if (error) throw error;
 
