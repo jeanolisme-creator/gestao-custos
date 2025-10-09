@@ -407,66 +407,6 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
 
   return (
     <>
-      {/* Seção de Cadastros Recentes */}
-      {!viewMode && !editData && recentRecords.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-primary" />
-              Todos os Cadastros Realizados ({recentRecords.length})
-            </CardTitle>
-            <CardDescription>
-              Histórico completo de cadastros de água realizados
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 max-h-[500px] overflow-y-auto pr-2">
-              {recentRecords.map((record) => (
-                <div key={record.id} className="p-4 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-base">{record.nome_escola}</h4>
-                        <p className="text-sm text-muted-foreground">{record.endereco_completo}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-primary">
-                          {new Intl.NumberFormat('pt-BR', {
-                            style: 'currency',
-                            currency: 'BRL',
-                          }).format(parseFloat(record.valor_gasto || 0))}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Cadastro:</span>
-                        <p className="font-medium">{record.cadastro}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Mês/Ano:</span>
-                        <p className="font-medium">{record.mes_ano_referencia}</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Consumo:</span>
-                        <p className="font-medium">{record.consumo_m3}m³</p>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Data:</span>
-                        <p className="font-medium">
-                          {new Date(record.created_at).toLocaleDateString('pt-BR')}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Formulário de Cadastro */}
       <Card>
         <CardHeader>
           <div className="flex items-start justify-between gap-4">
@@ -822,6 +762,65 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
         </form>
       </CardContent>
     </Card>
+
+    {/* Seção de Cadastros Recentes */}
+    {!viewMode && !editData && recentRecords.length > 0 && (
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" />
+            Todos os Cadastros Realizados ({recentRecords.length})
+          </CardTitle>
+          <CardDescription>
+            Histórico completo de cadastros de água realizados
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-3 max-h-[500px] overflow-y-auto pr-2">
+            {recentRecords.map((record) => (
+              <div key={record.id} className="p-4 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-base">{record.nome_escola}</h4>
+                      <p className="text-sm text-muted-foreground">{record.endereco_completo}</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-semibold text-primary">
+                        {new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }).format(parseFloat(record.valor_gasto || 0))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Cadastro:</span>
+                      <p className="font-medium">{record.cadastro}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Mês/Ano:</span>
+                      <p className="font-medium">{record.mes_ano_referencia}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Consumo:</span>
+                      <p className="font-medium">{record.consumo_m3}m³</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Data:</span>
+                      <p className="font-medium">
+                        {new Date(record.created_at).toLocaleDateString('pt-BR')}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )}
 
     <MonthlyDataWizard
         open={monthlyWizardOpen}
