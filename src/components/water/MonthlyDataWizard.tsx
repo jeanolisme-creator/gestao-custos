@@ -11,6 +11,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 interface MonthlyDataWizardProps {
   open: boolean;
@@ -28,6 +30,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess }: MonthlyData
   const [step, setStep] = useState<'select-month' | 'fill-data'>('select-month');
   const [selectedMonth, setSelectedMonth] = useState('');
   const [currentSchoolIndex, setCurrentSchoolIndex] = useState(0);
+  const [filledSchools, setFilledSchools] = useState<Set<number>>(new Set());
   const [formData, setFormData] = useState({
     cadastro: '',
     data_leitura_anterior: '',
@@ -45,6 +48,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess }: MonthlyData
   const currentSchool = schools[currentSchoolIndex];
   const totalSchools = schools.length;
   const progress = totalSchools > 0 ? ((currentSchoolIndex + 1) / totalSchools) * 100 : 0;
+  const isSchoolAlreadyFilled = filledSchools.has(currentSchoolIndex);
 
   useEffect(() => {
     if (currentSchool && step === 'fill-data') {
@@ -146,6 +150,9 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess }: MonthlyData
       description: `Dados de ${currentSchool.nome_escola} salvos com sucesso`
     });
 
+    // Mark school as filled
+    setFilledSchools(prev => new Set(prev).add(currentSchoolIndex));
+
     // Move to next school or finish
     if (currentSchoolIndex < schools.length - 1) {
       setCurrentSchoolIndex(prev => prev + 1);
@@ -160,10 +167,26 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess }: MonthlyData
     }
   };
 
+  const handleSkipSchool = () => {
+    if (currentSchoolIndex < schools.length - 1) {
+      setCurrentSchoolIndex(prev => prev + 1);
+      toast({
+        title: "Escola pulada",
+        description: "Você pode preencher os dados desta escola depois"
+      });
+    } else {
+      toast({
+        title: "Última escola",
+        description: "Esta é a última escola. Finalize ou preencha os dados."
+      });
+    }
+  };
+
   const handleClose = () => {
     setStep('select-month');
     setSelectedMonth('');
     setCurrentSchoolIndex(0);
+    setFilledSchools(new Set());
     setFormData({
       cadastro: '',
       data_leitura_anterior: '',
@@ -219,6 +242,15 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess }: MonthlyData
           </div>
         ) : (
           <div className="space-y-4 py-4">
+            {isSchoolAlreadyFilled && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Escola já preenchida anteriormente</strong> - Você pode editar os dados se necessário.
+                </AlertDescription>
+              </Alert>
+            )}
+
             <div className="space-y-2">
               <div className="flex justify-between items-center text-sm text-muted-foreground">
                 <span>Escola {currentSchoolIndex + 1} de {totalSchools}</span>
@@ -352,12 +384,24 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess }: MonthlyData
             </div>
 
             <div className="flex justify-between pt-4">
-              <Button type="button" variant="outline" onClick={handleClose}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSaveAndNext}>
-                {currentSchoolIndex < schools.length - 1 ? 'Próxima Escola' : 'Finalizar'}
-              </Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={handleClose}>
+                  Cancelar
+                </Button>
+                <Button type="button" variant="outline" onClick={handleSkipSchool}>
+                  Pular Escola
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                {isSchoolAlreadyFilled && (
+                  <Button type="button" variant="secondary" onClick={handleSaveAndNext}>
+                    Editar
+                  </Button>
+                )}
+                <Button onClick={handleSaveAndNext}>
+                  {currentSchoolIndex < schools.length - 1 ? 'Próxima Escola' : 'Finalizar'}
+                </Button>
+              </div>
             </div>
           </div>
         )}
