@@ -7,7 +7,7 @@ import { DataTable } from "@/components/common/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { WaterRegistration } from "@/components/water/WaterRegistration";
-import { Download, Plus, Eye, Pencil, Trash2, ArrowUpDown } from "lucide-react";
+import { Download, Plus, Eye, Pencil, Trash2, ArrowUpDown, FileSpreadsheet, FileText } from "lucide-react";
 import { exportToExcel, exportToCSV, exportToPDF } from "@/utils/exportData";
 import {
   AlertDialog,
@@ -254,6 +254,30 @@ export default function WaterManagement() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => {
+              toast({
+                title: "Em desenvolvimento",
+                description: "Funcionalidade de importação CSV em breve",
+              });
+            }}
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            Importar CSV
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              toast({
+                title: "Em desenvolvimento",
+                description: "Funcionalidade de importação XLSX em breve",
+              });
+            }}
+          >
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Importar XLSX
+          </Button>
           <Button
             variant="outline"
             onClick={() => handleExport("excel")}

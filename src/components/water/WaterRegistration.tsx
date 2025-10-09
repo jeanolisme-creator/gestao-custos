@@ -26,6 +26,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   const { schools } = useSchools();
   
   const [formData, setFormData] = useState({
+    mes_referencia: '',
     cadastro: '',
     proprietario: '',
     nome_escola: '',
@@ -51,6 +52,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   useEffect(() => {
     if (editData) {
       setFormData({
+        mes_referencia: editData.mes_referencia || '',
         cadastro: editData.cadastro || '',
         proprietario: editData.proprietario || '',
         nome_escola: editData.nome_escola || '',
@@ -99,6 +101,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
 
   const resetForm = () => {
     setFormData({
+      mes_referencia: '',
       cadastro: '',
       proprietario: '',
       nome_escola: '',
@@ -136,7 +139,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
       descricao_servicos: formData.descricao_servicos,
       macroregiao: formData.macroregiao,
       ocorrencias_pendencias: formData.ocorrencias_pendencias,
-      mes_ano_referencia: formData.data_leitura_atual || new Date().toISOString().slice(0, 7)
+      mes_ano_referencia: formData.mes_referencia || new Date().toISOString().slice(0, 7)
     };
     
     // Convert numeric fields
@@ -248,6 +251,33 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
 
           {/* Form Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="mes_referencia">Mês Referência *</Label>
+              <Select
+                value={formData.mes_referencia}
+                onValueChange={(value) => handleInputChange('mes_referencia', value)}
+                disabled={viewMode}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o mês..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Janeiro/2025">Janeiro/2025</SelectItem>
+                  <SelectItem value="Fevereiro/2025">Fevereiro/2025</SelectItem>
+                  <SelectItem value="Março/2025">Março/2025</SelectItem>
+                  <SelectItem value="Abril/2025">Abril/2025</SelectItem>
+                  <SelectItem value="Maio/2025">Maio/2025</SelectItem>
+                  <SelectItem value="Junho/2025">Junho/2025</SelectItem>
+                  <SelectItem value="Julho/2025">Julho/2025</SelectItem>
+                  <SelectItem value="Agosto/2025">Agosto/2025</SelectItem>
+                  <SelectItem value="Setembro/2025">Setembro/2025</SelectItem>
+                  <SelectItem value="Outubro/2025">Outubro/2025</SelectItem>
+                  <SelectItem value="Novembro/2025">Novembro/2025</SelectItem>
+                  <SelectItem value="Dezembro/2025">Dezembro/2025</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="cadastro">Cadastro *</Label>
               <Input
