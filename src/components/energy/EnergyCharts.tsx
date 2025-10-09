@@ -45,10 +45,10 @@ export function EnergyCharts() {
   const fetchData = async () => {
     const { data: records, error } = await supabase
       .from('energy_records')
-      .select('*')
-      .eq('user_id', user?.id);
+      .select('*');
 
     if (!error && records) {
+      console.log('Dados carregados para gráficos:', records.length);
       setData(records);
       setFilteredData(records);
       const uniqueSchools = [...new Set(records.map(r => r.nome_escola))];

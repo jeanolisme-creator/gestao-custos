@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,9 +10,19 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useSchools } from '@/hooks/useSchools';
-import { Search } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const macroregiaoOptions = ['HB', 'Vila Toninho', 'Schmidt', 'Represa', 'Bosque', 'Talhado', 'Central', 'Cidade da Criança', 'Pinheirinho', 'Ceu'];
+
+const monthOptions = [
+  'Janeiro/2025', 'Fevereiro/2025', 'Março/2025', 'Abril/2025', 'Maio/2025', 'Junho/2025',
+  'Julho/2025', 'Agosto/2025', 'Setembro/2025', 'Outubro/2025', 'Novembro/2025', 'Dezembro/2025',
+  'Janeiro/2026', 'Fevereiro/2026', 'Março/2026', 'Abril/2026', 'Maio/2026', 'Junho/2026',
+  'Julho/2026', 'Agosto/2026', 'Setembro/2026', 'Outubro/2026', 'Novembro/2026', 'Dezembro/2026',
+  'Janeiro/2027', 'Fevereiro/2027', 'Março/2027', 'Abril/2027', 'Maio/2027', 'Junho/2027',
+  'Julho/2027', 'Agosto/2027', 'Setembro/2027', 'Outubro/2027', 'Novembro/2027', 'Dezembro/2027'
+];
 
 interface EnergyRegistrationProps {
   onSuccess?: () => void;
@@ -25,54 +35,114 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
   const { toast } = useToast();
   const { schools } = useSchools();
   
-  const [formData, setFormData] = useState({
-    cadastro_cliente: '',
-    proprietario: '',
-    nome_escola: '',
+  const [cadastros, setCadastros] = useState<Array<{
+    cadastro: string;
+    medidor: string;
+    consumo_kwh: string;
+    numero_dias: string;
+    utilizado: string;
+    demanda_kwh: string;
+    tipo_instalacao: string;
+    data_leitura_anterior: string;
+    data_leitura_atual: string;
+    data_vencimento: string;
+    valor: string;
+  }>>([{
+    cadastro: '',
+    medidor: '',
+    consumo_kwh: '',
+    numero_dias: '',
+    utilizado: '',
+    demanda_kwh: '',
+    tipo_instalacao: '',
     data_leitura_anterior: '',
     data_leitura_atual: '',
-    valor_gasto: '',
     data_vencimento: '',
+    valor: ''
+  }]);
+
+  const [formData, setFormData] = useState({
+    mes_referencia: '',
+    proprietario: '',
+    nome_escola: '',
     endereco: '',
     numero: '',
     bairro: '',
-    consumo_kwh: '',
-    numero_dias: '',
-    tipo_instalacao: '',
-    relogio: '',
-    demanda_kwh: '',
-    utilizado: '',
-    mes_ano_referencia: '',
     macroregiao: '',
+    descricao_servicos: '',
     ocorrencias_pendencias: ''
   });
   
-  const [showSchoolSearch, setShowSchoolSearch] = useState(false);
   const [searchSchoolTerm, setSearchSchoolTerm] = useState('');
+  const [recentRecords, setRecentRecords] = useState<any[]>([]);
+
+  const fetchRecentRecords = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('energy_records')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      console.log('Dados reais carregados do energy_records:', data?.length || 0);
+      setRecentRecords(data || []);
+    } catch (error) {
+      console.error('Error fetching recent records:', error);
+      setRecentRecords([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRecentRecords();
+
+    const channel = supabase
+      .channel('energy_records_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'energy_records'
+        },
+        () => {
+          fetchRecentRecords();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchRecentRecords]);
 
   useEffect(() => {
     if (editData) {
       setFormData({
-        cadastro_cliente: editData.cadastro_cliente || '',
+        mes_referencia: editData.mes_ano_referencia || '',
         proprietario: editData.proprietario || '',
         nome_escola: editData.nome_escola || '',
-        data_leitura_anterior: editData.data_leitura_anterior || '',
-        data_leitura_atual: editData.data_leitura_atual || '',
-        valor_gasto: editData.valor_gasto?.toString() || '',
-        data_vencimento: editData.data_vencimento || '',
         endereco: editData.endereco || '',
         numero: editData.numero || '',
         bairro: editData.bairro || '',
-        consumo_kwh: editData.consumo_kwh?.toString() || '',
-        numero_dias: editData.numero_dias?.toString() || '',
-        tipo_instalacao: editData.tipo_instalacao || '',
-        relogio: editData.relogio || '',
-        demanda_kwh: editData.demanda_kwh?.toString() || '',
-        utilizado: editData.utilizado || '',
-        mes_ano_referencia: editData.mes_ano_referencia || '',
         macroregiao: editData.macroregiao || '',
+        descricao_servicos: editData.descricao_servicos || '',
         ocorrencias_pendencias: editData.ocorrencias_pendencias || ''
       });
+      
+      setCadastros([{
+        cadastro: editData.cadastro_cliente || '',
+        medidor: editData.relogio || '',
+        consumo_kwh: editData.consumo_kwh?.toString() || '',
+        numero_dias: editData.numero_dias?.toString() || '',
+        utilizado: editData.responsavel || '',
+        demanda_kwh: editData.demanda_kwh?.toString() || '',
+        tipo_instalacao: editData.tipo_instalacao || '',
+        data_leitura_anterior: editData.data_leitura_anterior || '',
+        data_leitura_atual: editData.data_leitura_atual || '',
+        data_vencimento: editData.data_vencimento || '',
+        valor: editData.valor_gasto?.toString() || ''
+      }]);
     }
   }, [editData]);
 
@@ -93,7 +163,6 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
       bairro: school.bairro || '',
       macroregiao: school.macroregiao || ''
     }));
-    setShowSchoolSearch(false);
     setSearchSchoolTerm('');
   };
 
@@ -101,28 +170,60 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
     school.nome_escola.toLowerCase().includes(searchSchoolTerm.toLowerCase())
   );
 
-  const resetForm = () => {
-    setFormData({
-      cadastro_cliente: '',
-      proprietario: '',
-      nome_escola: '',
+  const addCadastro = () => {
+    setCadastros([...cadastros, {
+      cadastro: '',
+      medidor: '',
+      consumo_kwh: '',
+      numero_dias: '',
+      utilizado: '',
+      demanda_kwh: '',
+      tipo_instalacao: '',
       data_leitura_anterior: '',
       data_leitura_atual: '',
-      valor_gasto: '',
       data_vencimento: '',
+      valor: ''
+    }]);
+  };
+
+  const removeCadastro = (index: number) => {
+    if (cadastros.length > 1) {
+      setCadastros(cadastros.filter((_, i) => i !== index));
+    }
+  };
+
+  const calculateTotal = () => {
+    return cadastros.reduce((total, cad) => {
+      const valor = parseFloat(cad.valor.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+      return total + valor;
+    }, 0);
+  };
+
+  const resetForm = () => {
+    setFormData({
+      mes_referencia: '',
+      proprietario: '',
+      nome_escola: '',
       endereco: '',
       numero: '',
       bairro: '',
-      consumo_kwh: '',
-      numero_dias: '',
-      tipo_instalacao: '',
-      relogio: '',
-      demanda_kwh: '',
-      utilizado: '',
-      mes_ano_referencia: '',
       macroregiao: '',
+      descricao_servicos: '',
       ocorrencias_pendencias: ''
     });
+    setCadastros([{
+      cadastro: '',
+      medidor: '',
+      consumo_kwh: '',
+      numero_dias: '',
+      utilizado: '',
+      demanda_kwh: '',
+      tipo_instalacao: '',
+      data_leitura_anterior: '',
+      data_leitura_atual: '',
+      data_vencimento: '',
+      valor: ''
+    }]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -130,33 +231,35 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
     
     if (!user) return;
 
+    const valorTotal = calculateTotal();
+    
     const submitData: any = { 
       user_id: user.id,
-      cadastro_cliente: formData.cadastro_cliente,
+      cadastro_cliente: cadastros[0].cadastro,
       proprietario: formData.proprietario,
       nome_escola: formData.nome_escola,
       endereco: formData.endereco,
       numero: formData.numero,
       bairro: formData.bairro,
-      tipo_instalacao: formData.tipo_instalacao,
-      relogio: formData.relogio,
-      utilizado: formData.utilizado,
-      mes_ano_referencia: formData.mes_ano_referencia || new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }),
+      tipo_instalacao: cadastros[0].tipo_instalacao,
+      relogio: cadastros[0].medidor,
+      responsavel: cadastros[0].utilizado,
+      mes_ano_referencia: formData.mes_referencia,
       macroregiao: formData.macroregiao,
-      ocorrencias_pendencias: formData.ocorrencias_pendencias
+      descricao_servicos: formData.descricao_servicos,
+      ocorrencias_pendencias: formData.ocorrencias_pendencias,
+      valor_gasto: valorTotal
     };
     
     // Convert numeric fields
-    if (formData.valor_gasto) {
-      const numericValue = parseFloat(formData.valor_gasto.replace(/[R$\s.]/g, '').replace(',', '.'));
-      submitData.valor_gasto = numericValue;
-    }
-    if (formData.consumo_kwh) submitData.consumo_kwh = parseFloat(formData.consumo_kwh);
-    if (formData.demanda_kwh) submitData.demanda_kwh = parseFloat(formData.demanda_kwh);
-    if (formData.numero_dias) submitData.numero_dias = parseInt(formData.numero_dias);
+    if (cadastros[0].consumo_kwh) submitData.consumo_kwh = parseFloat(cadastros[0].consumo_kwh);
+    if (cadastros[0].demanda_kwh) submitData.demanda_kwh = parseFloat(cadastros[0].demanda_kwh);
+    if (cadastros[0].numero_dias) submitData.numero_dias = parseInt(cadastros[0].numero_dias);
     
     // Date fields
-    if (formData.data_vencimento) submitData.data_vencimento = formData.data_vencimento;
+    if (cadastros[0].data_vencimento) submitData.data_vencimento = cadastros[0].data_vencimento;
+    if (cadastros[0].data_leitura_anterior) submitData.data_leitura_anterior = cadastros[0].data_leitura_anterior;
+    if (cadastros[0].data_leitura_atual) submitData.data_leitura_atual = cadastros[0].data_leitura_atual;
 
     let error;
     if (editData) {
@@ -184,47 +287,35 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
         description: editData ? "O registro foi atualizado." : "O novo registro de energia foi adicionado."
       });
       resetForm();
+      fetchRecentRecords();
       onSuccess?.();
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          {viewMode ? "Visualizar Registro" : editData ? "Editar Registro" : "Novo Cadastro"} - Gestão de Energia
-        </CardTitle>
-        <CardDescription>
-          {viewMode ? "Detalhes do registro de energia" : "Preencha os dados do registro de energia"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* School Search */}
-          {!viewMode && !editData && (
-            <div className="mb-4 p-4 bg-muted/50 rounded-lg">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="font-medium text-foreground">Buscar Escola Cadastrada</h4>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setShowSchoolSearch(!showSchoolSearch)}
-              >
-                <Search className="h-4 w-4 mr-2" />
-                Buscar
-              </Button>
-            </div>
-            
-            {showSchoolSearch && (
-              <div className="space-y-2">
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>
+            {viewMode ? "Visualizar Registro" : editData ? "Editar Registro" : "Novo Cadastro"} - Gestão de Energia
+          </CardTitle>
+          <CardDescription>
+            {viewMode ? "Detalhes do registro de energia" : "Preencha os dados do registro de energia"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* School Search - Always visible */}
+            {!viewMode && !editData && (
+              <div className="p-4 bg-muted/50 rounded-lg space-y-3">
+                <h4 className="font-medium text-foreground">Buscar Escola Cadastrada</h4>
                 <Input
-                  placeholder="Digite o nome da escola..."
+                  placeholder="Digite o nome da escola para buscar..."
                   value={searchSchoolTerm}
                   onChange={(e) => setSearchSchoolTerm(e.target.value)}
                 />
-                {searchSchoolTerm && (
-                  <div className="max-h-32 overflow-y-auto border rounded-md">
+                {searchSchoolTerm && filteredSchools.length > 0 && (
+                  <div className="max-h-40 overflow-y-auto border rounded-md bg-background">
                     {filteredSchools.map((school) => (
                       <button
                         key={school.id}
@@ -240,226 +331,374 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
                         </p>
                       </button>
                     ))}
-                    {filteredSchools.length === 0 && (
-                      <p className="px-3 py-2 text-sm text-muted-foreground">Nenhuma escola encontrada</p>
-                    )}
                   </div>
+                )}
+                {searchSchoolTerm && filteredSchools.length === 0 && (
+                  <p className="text-sm text-muted-foreground">Nenhuma escola encontrada</p>
                 )}
               </div>
             )}
-            </div>
-          )}
 
-          {/* Form Fields */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Mês Referência */}
             <div className="space-y-2">
-              <Label htmlFor="cadastro_cliente">Cadastro Cliente *</Label>
-              <Input
-                id="cadastro_cliente"
-                value={formData.cadastro_cliente}
-                onChange={(e) => handleInputChange('cadastro_cliente', e.target.value)}
-                required
-                disabled={viewMode}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="proprietario">Proprietário</Label>
-              <Input
-                id="proprietario"
-                value={formData.proprietario}
-                onChange={(e) => handleInputChange('proprietario', e.target.value)}
-                disabled={viewMode}
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="nome_escola">Nome da Escola *</Label>
-              <Input
-                id="nome_escola"
-                value={formData.nome_escola}
-                onChange={(e) => handleInputChange('nome_escola', e.target.value)}
-                required
-                disabled={viewMode}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="endereco">Endereço</Label>
-              <Input
-                id="endereco"
-                value={formData.endereco}
-                onChange={(e) => handleInputChange('endereco', e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="numero">Número</Label>
-              <Input
-                id="numero"
-                value={formData.numero}
-                onChange={(e) => handleInputChange('numero', e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="bairro">Bairro</Label>
-              <Input
-                id="bairro"
-                value={formData.bairro}
-                onChange={(e) => handleInputChange('bairro', e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="macroregiao">Macroregião</Label>
+              <Label htmlFor="mes_referencia">Mês Referência *</Label>
               <Select
-                value={formData.macroregiao}
-                onValueChange={(value) => handleInputChange('macroregiao', value)}
+                value={formData.mes_referencia}
+                onValueChange={(value) => handleInputChange('mes_referencia', value)}
+                disabled={viewMode}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
+                  <SelectValue placeholder="Selecione o mês..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {macroregiaoOptions.map(option => (
-                    <SelectItem key={option} value={option}>{option}</SelectItem>
+                  {monthOptions.map(month => (
+                    <SelectItem key={month} value={month}>{month}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="tipo_instalacao">Tipo de Instalação</Label>
-              <Input
-                id="tipo_instalacao"
-                value={formData.tipo_instalacao}
-                onChange={(e) => handleInputChange('tipo_instalacao', e.target.value)}
-              />
+            {/* Dados da Escola */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="nome_escola">Nome da Escola *</Label>
+                <Input
+                  id="nome_escola"
+                  value={formData.nome_escola}
+                  onChange={(e) => handleInputChange('nome_escola', e.target.value)}
+                  required
+                  disabled={viewMode}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="proprietario">Proprietário</Label>
+                <Input
+                  id="proprietario"
+                  value={formData.proprietario}
+                  onChange={(e) => handleInputChange('proprietario', e.target.value)}
+                  disabled={viewMode}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="endereco">Endereço</Label>
+                <Input
+                  id="endereco"
+                  value={formData.endereco}
+                  onChange={(e) => handleInputChange('endereco', e.target.value)}
+                  disabled={viewMode}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="numero">Número</Label>
+                <Input
+                  id="numero"
+                  value={formData.numero}
+                  onChange={(e) => handleInputChange('numero', e.target.value)}
+                  disabled={viewMode}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bairro">Bairro</Label>
+                <Input
+                  id="bairro"
+                  value={formData.bairro}
+                  onChange={(e) => handleInputChange('bairro', e.target.value)}
+                  disabled={viewMode}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="macroregiao">Macrorregião</Label>
+                <Select
+                  value={formData.macroregiao}
+                  onValueChange={(value) => handleInputChange('macroregiao', value)}
+                  disabled={viewMode}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {macroregiaoOptions.map(option => (
+                      <SelectItem key={option} value={option}>{option}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="relogio">Medidor</Label>
-              <Input
-                id="relogio"
-                value={formData.relogio}
-                onChange={(e) => handleInputChange('relogio', e.target.value)}
-              />
-            </div>
+            {/* Cadastros */}
+            {cadastros.map((cadastro, index) => (
+              <Card key={index} className="p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">Cadastro {index + 1}</h4>
+                  {!viewMode && cadastros.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeCadastro(index)}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Remover
+                    </Button>
+                  )}
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="data_leitura_anterior">Data Leitura Anterior</Label>
-              <Input
-                id="data_leitura_anterior"
-                type="date"
-                value={formData.data_leitura_anterior}
-                onChange={(e) => handleInputChange('data_leitura_anterior', e.target.value)}
-              />
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Cadastro *</Label>
+                    <Input
+                      value={cadastro.cadastro}
+                      onChange={(e) => {
+                        const newCadastros = [...cadastros];
+                        newCadastros[index].cadastro = e.target.value;
+                        setCadastros(newCadastros);
+                      }}
+                      required
+                      disabled={viewMode}
+                    />
+                  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="data_leitura_atual">Data Leitura Atual</Label>
-              <Input
-                id="data_leitura_atual"
-                type="date"
-                value={formData.data_leitura_atual}
-                onChange={(e) => handleInputChange('data_leitura_atual', e.target.value)}
-              />
-            </div>
+                  <div className="space-y-2">
+                    <Label>Medidor</Label>
+                    <Input
+                      value={cadastro.medidor}
+                      onChange={(e) => {
+                        const newCadastros = [...cadastros];
+                        newCadastros[index].medidor = e.target.value;
+                        setCadastros(newCadastros);
+                      }}
+                      disabled={viewMode}
+                    />
+                  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="consumo_kwh">Consumo (kWh)</Label>
-              <Input
-                id="consumo_kwh"
-                type="number"
-                step="0.01"
-                value={formData.consumo_kwh}
-                onChange={(e) => handleInputChange('consumo_kwh', e.target.value)}
-              />
-            </div>
+                  <div className="space-y-2">
+                    <Label>Consumo (kWh)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={cadastro.consumo_kwh}
+                      onChange={(e) => {
+                        const newCadastros = [...cadastros];
+                        newCadastros[index].consumo_kwh = e.target.value;
+                        setCadastros(newCadastros);
+                      }}
+                      disabled={viewMode}
+                    />
+                  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="demanda_kwh">Demanda (kWh)</Label>
-              <Input
-                id="demanda_kwh"
-                type="number"
-                step="0.01"
-                value={formData.demanda_kwh}
-                onChange={(e) => handleInputChange('demanda_kwh', e.target.value)}
-              />
-            </div>
+                  <div className="space-y-2">
+                    <Label>Nº de Dias</Label>
+                    <Input
+                      type="number"
+                      value={cadastro.numero_dias}
+                      onChange={(e) => {
+                        const newCadastros = [...cadastros];
+                        newCadastros[index].numero_dias = e.target.value;
+                        setCadastros(newCadastros);
+                      }}
+                      disabled={viewMode}
+                    />
+                  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="utilizado">Utilizado</Label>
-              <Input
-                id="utilizado"
-                value={formData.utilizado}
-                onChange={(e) => handleInputChange('utilizado', e.target.value)}
-              />
-            </div>
+                  <div className="space-y-2">
+                    <Label>Utilizado</Label>
+                    <Input
+                      value={cadastro.utilizado}
+                      onChange={(e) => {
+                        const newCadastros = [...cadastros];
+                        newCadastros[index].utilizado = e.target.value;
+                        setCadastros(newCadastros);
+                      }}
+                      disabled={viewMode}
+                    />
+                  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="numero_dias">Nº de Dias</Label>
-              <Input
-                id="numero_dias"
-                type="number"
-                value={formData.numero_dias}
-                onChange={(e) => handleInputChange('numero_dias', e.target.value)}
-              />
-            </div>
+                  <div className="space-y-2">
+                    <Label>Demanda (kWh)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={cadastro.demanda_kwh}
+                      onChange={(e) => {
+                        const newCadastros = [...cadastros];
+                        newCadastros[index].demanda_kwh = e.target.value;
+                        setCadastros(newCadastros);
+                      }}
+                      disabled={viewMode}
+                    />
+                  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="valor_gasto">Valor (R$)</Label>
-              <CurrencyInput
-                id="valor_gasto"
-                value={formData.valor_gasto}
-                onValueChange={(formatted, numeric) => handleInputChange('valor_gasto', formatted)}
-                placeholder="R$ 0,00"
-                disabled={viewMode}
-              />
-            </div>
+                  <div className="space-y-2">
+                    <Label>Tipo de Instalação</Label>
+                    <Input
+                      value={cadastro.tipo_instalacao}
+                      onChange={(e) => {
+                        const newCadastros = [...cadastros];
+                        newCadastros[index].tipo_instalacao = e.target.value;
+                        setCadastros(newCadastros);
+                      }}
+                      disabled={viewMode}
+                    />
+                  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="data_vencimento">Data de Vencimento</Label>
-              <Input
-                id="data_vencimento"
-                type="date"
-                value={formData.data_vencimento}
-                onChange={(e) => handleInputChange('data_vencimento', e.target.value)}
-              />
-            </div>
+                  <div className="space-y-2">
+                    <Label>Data Leitura Anterior</Label>
+                    <Input
+                      type="date"
+                      value={cadastro.data_leitura_anterior}
+                      onChange={(e) => {
+                        const newCadastros = [...cadastros];
+                        newCadastros[index].data_leitura_anterior = e.target.value;
+                        setCadastros(newCadastros);
+                      }}
+                      disabled={viewMode}
+                    />
+                  </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="mes_ano_referencia">Mês/Ano Referência</Label>
-              <Input
-                id="mes_ano_referencia"
-                placeholder="Ex: Janeiro 2025"
-                value={formData.mes_ano_referencia}
-                onChange={(e) => handleInputChange('mes_ano_referencia', e.target.value)}
-              />
-            </div>
+                  <div className="space-y-2">
+                    <Label>Data Leitura Atual</Label>
+                    <Input
+                      type="date"
+                      value={cadastro.data_leitura_atual}
+                      onChange={(e) => {
+                        const newCadastros = [...cadastros];
+                        newCadastros[index].data_leitura_atual = e.target.value;
+                        setCadastros(newCadastros);
+                      }}
+                      disabled={viewMode}
+                    />
+                  </div>
 
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="ocorrencias_pendencias">Verificar Ocorrência</Label>
-              <Textarea
-                id="ocorrencias_pendencias"
-                value={formData.ocorrencias_pendencias}
-                onChange={(e) => handleInputChange('ocorrencias_pendencias', e.target.value)}
-              />
-            </div>
-          </div>
+                  <div className="space-y-2">
+                    <Label>Data Vencimento</Label>
+                    <Input
+                      type="date"
+                      value={cadastro.data_vencimento}
+                      onChange={(e) => {
+                        const newCadastros = [...cadastros];
+                        newCadastros[index].data_vencimento = e.target.value;
+                        setCadastros(newCadastros);
+                      }}
+                      disabled={viewMode}
+                    />
+                  </div>
 
-          {!viewMode && (
-            <div className="flex justify-end gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={resetForm}>
-                Limpar
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Valor (R$) *</Label>
+                    <CurrencyInput
+                      value={cadastro.valor}
+                      onValueChange={(value) => {
+                        const newCadastros = [...cadastros];
+                        newCadastros[index].valor = value;
+                        setCadastros(newCadastros);
+                      }}
+                      disabled={viewMode}
+                    />
+                  </div>
+                </div>
+              </Card>
+            ))}
+
+            {!viewMode && (
+              <Button type="button" variant="outline" onClick={addCadastro}>
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar mais um número de cadastro
               </Button>
-              <Button type="submit">
-                {editData ? "Atualizar Registro" : "Salvar Registro"}
-              </Button>
+            )}
+
+            {/* Valor Total */}
+            {cadastros.length > 1 && (
+              <div className="p-4 bg-primary/10 rounded-lg">
+                <Label className="text-lg font-bold">Valor Total</Label>
+                <p className="text-2xl font-bold text-primary">
+                  {calculateTotal().toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </p>
+              </div>
+            )}
+
+            {/* Outros Campos */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="descricao_servicos">Descrição dos Serviços</Label>
+                <Textarea
+                  id="descricao_servicos"
+                  value={formData.descricao_servicos}
+                  onChange={(e) => handleInputChange('descricao_servicos', e.target.value)}
+                  disabled={viewMode}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ocorrencias_pendencias">Ocorrências / Pendências</Label>
+                <Textarea
+                  id="ocorrencias_pendencias"
+                  value={formData.ocorrencias_pendencias}
+                  onChange={(e) => handleInputChange('ocorrencias_pendencias', e.target.value)}
+                  disabled={viewMode}
+                />
+              </div>
             </div>
-          )}
-        </form>
-      </CardContent>
-    </Card>
+
+            {!viewMode && (
+              <div className="flex justify-end gap-2 pt-4">
+                <Button type="button" variant="outline" onClick={resetForm}>
+                  Limpar
+                </Button>
+                <Button type="submit">
+                  {editData ? "Atualizar Registro" : "Salvar Registro"}
+                </Button>
+              </div>
+            )}
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* Cadastros Recentes */}
+      {!viewMode && !editData && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Todos os Cadastros Realizados ({recentRecords.length})</CardTitle>
+            <CardDescription>Últimos registros inseridos no sistema</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {recentRecords.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">Nenhum registro encontrado</p>
+            ) : (
+              <Accordion type="single" collapsible className="w-full">
+                {recentRecords.map((record, index) => (
+                  <AccordionItem key={record.id} value={`item-${index}`}>
+                    <AccordionTrigger>
+                      <div className="flex justify-between w-full pr-4">
+                        <span className="font-medium">{record.nome_escola}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {record.mes_ano_referencia} - {new Date(record.created_at).toLocaleDateString('pt-BR')}
+                        </span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div><strong>Cadastro:</strong> {record.cadastro_cliente}</div>
+                        <div><strong>Proprietário:</strong> {record.proprietario || '-'}</div>
+                        <div><strong>Consumo:</strong> {record.consumo_kwh ? `${record.consumo_kwh} kWh` : '-'}</div>
+                        <div><strong>Valor:</strong> {record.valor_gasto ? 
+                          record.valor_gasto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}</div>
+                        <div><strong>Vencimento:</strong> {record.data_vencimento ? 
+                          new Date(record.data_vencimento).toLocaleDateString('pt-BR') : '-'}</div>
+                        <div><strong>Endereço:</strong> {record.endereco || '-'}</div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </>
   );
 }

@@ -7,7 +7,10 @@ import { DataTable } from "@/components/common/DataTable";
 import { ColumnDef } from "@tanstack/react-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EnergyRegistration } from "@/components/energy/EnergyRegistration";
-import { Download, Plus, Eye, Pencil, Trash2, ArrowUpDown } from "lucide-react";
+import { MonthlyDataWizard } from "@/components/energy/MonthlyDataWizard";
+import { PendingSchools } from "@/components/energy/PendingSchools";
+import { Download, Plus, Eye, Pencil, Trash2, ArrowUpDown, Calendar, AlertCircle, Upload, FileSpreadsheet } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { exportToExcel, exportToCSV, exportToPDF } from "@/utils/exportData";
 import {
   AlertDialog,
@@ -40,6 +43,10 @@ export default function EnergyManagement() {
   const [viewMode, setViewMode] = useState<"create" | "edit" | "view">("create");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
+  const [showMonthlyWizard, setShowMonthlyWizard] = useState(false);
+  const [showPending, setShowPending] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [pendingCount, setPendingCount] = useState(0);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -51,8 +58,14 @@ export default function EnergyManagement() {
       const { data, error } = await supabase
         .from("energy_records")
         .select("*")
-        .eq("user_id", user.id)
         .order("created_at", { ascending: false });
+      
+      const { data: pending } = await supabase
+        .from("energy_records")
+        .select("id")
+        .eq("cadastro_cliente", "PENDENTE");
+      
+      setPendingCount(pending?.length || 0);
 
       if (error) throw error;
       setRecords(data || []);
@@ -254,29 +267,28 @@ export default function EnergyManagement() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => handleExport("excel")}
-            disabled={records.length === 0}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Excel
+          <Button variant="outline" onClick={() => toast({ title: "Em breve", description: "Função de importação CSV em desenvolvimento" })}>
+            <Upload className="mr-2 h-4 w-4" />
+            Importar CSV
+          </Button>
+          <Button variant="outline" onClick={() => toast({ title: "Em breve", description: "Função de importação XLSX em desenvolvimento" })}>
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Importar XLSX
           </Button>
           <Button
-            variant="outline"
-            onClick={() => handleExport("csv")}
-            disabled={records.length === 0}
+            variant={pendingCount > 0 ? "default" : "outline"}
+            className={pendingCount > 0 ? "bg-yellow-500 hover:bg-yellow-600" : ""}
+            onClick={() => setShowPending(true)}
           >
-            <Download className="mr-2 h-4 w-4" />
-            CSV
+            <AlertCircle className="mr-2 h-4 w-4" />
+            Pendências {pendingCount > 0 && `(${pendingCount})`}
           </Button>
           <Button
-            variant="outline"
-            onClick={() => handleExport("pdf")}
-            disabled={records.length === 0}
+            className="bg-blue-500 hover:bg-blue-600"
+            onClick={() => setShowMonthlyWizard(true)}
           >
-            <Download className="mr-2 h-4 w-4" />
-            PDF
+            <Calendar className="mr-2 h-4 w-4" />
+            Dados Mensais
           </Button>
           <Button
             onClick={() => {
@@ -340,6 +352,54 @@ export default function EnergyManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={showMonthlyWizard} onOpenChange={setShowMonthlyWizard}>
+        <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>Cadastro de Dados Mensais</DialogTitle>
+          </DialogHeader>
+          {!selectedMonth ? (
+            <div className="space-y-4 p-6">
+              <Label>Selecione o Mês de Referência</Label>
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o mês..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {['Janeiro/2025', 'Fevereiro/2025', 'Março/2025', 'Abril/2025', 'Maio/2025', 'Junho/2025',
+                    'Julho/2025', 'Agosto/2025', 'Setembro/2025', 'Outubro/2025', 'Novembro/2025', 'Dezembro/2025'].map(m => (
+                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setShowMonthlyWizard(false)}>Cancelar</Button>
+                <Button onClick={() => selectedMonth && toast({ title: "Iniciando", description: "Carregando escolas..." })} disabled={!selectedMonth}>Avançar</Button>
+              </div>
+            </div>
+          ) : (
+            <div className="overflow-y-auto">
+              <MonthlyDataWizard 
+                selectedMonth={selectedMonth} 
+                onClose={() => {
+                  setShowMonthlyWizard(false);
+                  setSelectedMonth("");
+                  fetchRecords();
+                }} 
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPending} onOpenChange={setShowPending}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <PendingSchools onClose={() => {
+            setShowPending(false);
+            fetchRecords();
+          }} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
