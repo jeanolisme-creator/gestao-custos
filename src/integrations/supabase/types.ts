@@ -484,6 +484,8 @@ export type Database = {
           cadastro: string
           consumo_m3: number | null
           created_at: string
+          data_leitura_anterior: string | null
+          data_leitura_atual: string | null
           data_vencimento: string | null
           descricao_servicos: string | null
           endereco_completo: string | null
@@ -507,6 +509,8 @@ export type Database = {
           cadastro: string
           consumo_m3?: number | null
           created_at?: string
+          data_leitura_anterior?: string | null
+          data_leitura_atual?: string | null
           data_vencimento?: string | null
           descricao_servicos?: string | null
           endereco_completo?: string | null
@@ -530,6 +534,8 @@ export type Database = {
           cadastro?: string
           consumo_m3?: number | null
           created_at?: string
+          data_leitura_anterior?: string | null
+          data_leitura_atual?: string | null
           data_vencimento?: string | null
           descricao_servicos?: string | null
           endereco_completo?: string | null

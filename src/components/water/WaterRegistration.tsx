@@ -219,6 +219,8 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     
     // Date fields
     if (formData.data_vencimento) submitData.data_vencimento = formData.data_vencimento;
+    if (formData.data_leitura_anterior) submitData.data_leitura_anterior = formData.data_leitura_anterior;
+    if (formData.data_leitura_atual) submitData.data_leitura_atual = formData.data_leitura_atual;
 
     let error;
     if (editData) {

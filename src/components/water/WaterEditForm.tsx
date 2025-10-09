@@ -27,6 +27,8 @@ export function WaterEditForm({ record, onSave, onCancel }: WaterEditFormProps) 
     valor_gasto: '',
     valor_servicos: '',
     data_vencimento: '',
+    data_leitura_anterior: '',
+    data_leitura_atual: '',
     numero_dias: '',
     hidrometro: '',
     descricao_servicos: '',
@@ -60,6 +62,8 @@ export function WaterEditForm({ record, onSave, onCancel }: WaterEditFormProps) 
         valor_gasto: record.valor_gasto?.toString() || '',
         valor_servicos: record.valor_servicos?.toString() || '',
         data_vencimento: record.data_vencimento || '',
+        data_leitura_anterior: record.data_leitura_anterior || '',
+        data_leitura_atual: record.data_leitura_atual || '',
         numero_dias: record.numero_dias?.toString() || '',
         hidrometro: record.hidrometro || '',
         descricao_servicos: record.descricao_servicos || '',
@@ -196,11 +200,20 @@ export function WaterEditForm({ record, onSave, onCancel }: WaterEditFormProps) 
         </div>
 
         <div className="space-y-2">
-          <Label>Data Vencimento</Label>
+          <Label>Data Leitura Anterior</Label>
           <Input
             type="date"
-            value={formData.data_vencimento}
-            onChange={(e) => setFormData({ ...formData, data_vencimento: e.target.value })}
+            value={formData.data_leitura_anterior}
+            onChange={(e) => setFormData({ ...formData, data_leitura_anterior: e.target.value })}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Data Leitura Atual</Label>
+          <Input
+            type="date"
+            value={formData.data_leitura_atual}
+            onChange={(e) => setFormData({ ...formData, data_leitura_atual: e.target.value })}
           />
         </div>
 
@@ -210,6 +223,15 @@ export function WaterEditForm({ record, onSave, onCancel }: WaterEditFormProps) 
             type="number"
             value={formData.numero_dias}
             onChange={(e) => setFormData({ ...formData, numero_dias: e.target.value })}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Data Vencimento</Label>
+          <Input
+            type="date"
+            value={formData.data_vencimento}
+            onChange={(e) => setFormData({ ...formData, data_vencimento: e.target.value })}
           />
         </div>
 
