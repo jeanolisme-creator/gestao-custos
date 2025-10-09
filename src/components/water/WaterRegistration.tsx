@@ -77,9 +77,8 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     const { data, error } = await supabase
       .from('school_records')
       .select('*')
-      .eq('user_id', user.id)
       .order('created_at', { ascending: false })
-      .limit(100);
+      .limit(200);
     if (error) {
       console.error('Erro ao carregar registros:', error);
       return;
@@ -93,7 +92,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     if (!user) return;
     const channel = supabase
       .channel('water_recent_records')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'school_records', filter: `user_id=eq.${user.id}` }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'school_records' }, () => {
         fetchRecentRecords();
       })
       .subscribe();
