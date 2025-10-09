@@ -62,27 +62,74 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
   const progress = totalSchools > 0 ? ((currentSchoolIndex + 1) / totalSchools) * 100 : 0;
   const isSchoolAlreadyFilled = filledSchools.has(currentSchoolIndex);
 
+  // Load existing data if school was already filled
   useEffect(() => {
-    if (currentSchool && step === 'fill-data') {
+    const loadExistingData = async () => {
+      if (!currentSchool || step !== 'fill-data' || !selectedMonth) return;
+
       // Cache schools in localStorage for pending list
       localStorage.setItem('cached_schools', JSON.stringify(schools));
-      
-      // Reset form with current school data
-      setFormData({
-        cadastros: [''],
-        data_leitura_anterior: '',
-        data_leitura_atual: '',
-        valor_gasto: '',
-        data_vencimento: '',
-        consumo_m3: '',
-        numero_dias: '',
-        hidrometro: '',
-        descricao_servicos: '',
-        valor_servicos: '',
-        ocorrencias_pendencias: ''
-      });
-    }
-  }, [currentSchoolIndex, currentSchool, step, schools]);
+
+      // Check if this school already has data for this month
+      const { data: existingRecords, error } = await supabase
+        .from('school_records')
+        .select('*')
+        .eq('nome_escola', currentSchool.nome_escola)
+        .eq('mes_ano_referencia', selectedMonth)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.error('Error loading existing data:', error);
+        return;
+      }
+
+      if (existingRecords && existingRecords.length > 0) {
+        const record = existingRecords[0];
+        
+        // Mark as filled
+        setFilledSchools(prev => new Set(prev).add(currentSchoolIndex));
+
+        // Format currency values
+        const formatCurrency = (value: number | null) => {
+          if (!value) return '';
+          return `R$ ${value.toFixed(2).replace('.', ',')}`;
+        };
+
+        // Load existing data into form
+        setFormData({
+          cadastros: record.cadastro ? JSON.parse(record.cadastro) : [''],
+          data_leitura_anterior: record.data_leitura_anterior || '',
+          data_leitura_atual: record.data_leitura_atual || '',
+          valor_gasto: formatCurrency(record.valor_gasto),
+          data_vencimento: record.data_vencimento || '',
+          consumo_m3: record.consumo_m3?.toString() || '',
+          numero_dias: record.numero_dias?.toString() || '',
+          hidrometro: record.hidrometro || '',
+          descricao_servicos: record.descricao_servicos || '',
+          valor_servicos: formatCurrency(record.valor_servicos),
+          ocorrencias_pendencias: record.ocorrencias_pendencias || ''
+        });
+      } else {
+        // Reset form with empty data
+        setFormData({
+          cadastros: [''],
+          data_leitura_anterior: '',
+          data_leitura_atual: '',
+          valor_gasto: '',
+          data_vencimento: '',
+          consumo_m3: '',
+          numero_dias: '',
+          hidrometro: '',
+          descricao_servicos: '',
+          valor_servicos: '',
+          ocorrencias_pendencias: ''
+        });
+      }
+    };
+
+    loadExistingData();
+  }, [currentSchoolIndex, currentSchool, step, schools, selectedMonth]);
 
   const loadPendingSchools = (month: string) => {
     const stored = localStorage.getItem('water_pending_schools');
@@ -214,10 +261,33 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     
     // Date fields
     if (formData.data_vencimento) submitData.data_vencimento = formData.data_vencimento;
+    if (formData.data_leitura_anterior) submitData.data_leitura_anterior = formData.data_leitura_anterior;
+    if (formData.data_leitura_atual) submitData.data_leitura_atual = formData.data_leitura_atual;
 
-    const { error } = await supabase
+    // Check if record already exists
+    const { data: existingRecords } = await supabase
       .from('school_records')
-      .insert([submitData]);
+      .select('id')
+      .eq('nome_escola', currentSchool.nome_escola)
+      .eq('mes_ano_referencia', selectedMonth)
+      .limit(1);
+
+    let error;
+    
+    if (existingRecords && existingRecords.length > 0) {
+      // Update existing record
+      const result = await supabase
+        .from('school_records')
+        .update(submitData)
+        .eq('id', existingRecords[0].id);
+      error = result.error;
+    } else {
+      // Insert new record
+      const result = await supabase
+        .from('school_records')
+        .insert([submitData]);
+      error = result.error;
+    }
 
     if (error) {
       toast({
