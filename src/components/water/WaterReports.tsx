@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Download, FileText, Search, Filter } from "lucide-react";
+import { Download, FileText, Search, Filter, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,16 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const reportTypes = [
   { value: 'by-school', label: 'Por Nome da Escola' },
@@ -50,6 +60,8 @@ export function WaterReports() {
   const [data, setData] = useState<any[]>([]);
   const [schools, setSchools] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [recordToDelete, setRecordToDelete] = useState<any>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -181,6 +193,50 @@ export function WaterReports() {
     });
   };
 
+  const handleEdit = (record: any) => {
+    toast({
+      title: "Edição",
+      description: "Redirecionando para edição do registro...",
+    });
+    // Aqui você pode implementar a lógica de edição
+    // Por exemplo, abrir um dialog de edição ou redirecionar para a página de cadastro
+  };
+
+  const handleDeleteClick = (record: any) => {
+    setRecordToDelete(record);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!recordToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from("school_records")
+        .delete()
+        .eq("id", recordToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Registro excluído",
+        description: "O registro foi excluído com sucesso",
+      });
+
+      fetchData(); // Recarrega os dados
+    } catch (error) {
+      console.error("Error deleting record:", error);
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o registro",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setRecordToDelete(null);
+    }
+  };
+
   const renderConsolidatedTable = () => (
     <Table>
       <TableHeader>
@@ -226,6 +282,7 @@ export function WaterReports() {
           <TableHead>Valor (R$)</TableHead>
           <TableHead>Vencimento</TableHead>
           <TableHead>Ocorrências</TableHead>
+          <TableHead className="text-right">Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -246,6 +303,26 @@ export function WaterReports() {
                   {record.ocorrencias_pendencias}
                 </Badge>
               )}
+            </TableCell>
+            <TableCell className="text-right">
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleEdit(record)}
+                  className="h-8 w-8"
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDeleteClick(record)}
+                  className="h-8 w-8 text-destructive hover:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </TableCell>
           </TableRow>
         ))}
@@ -473,6 +550,25 @@ export function WaterReports() {
           </div>
         )}
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este registro de {recordToDelete?.nome_escola}?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
