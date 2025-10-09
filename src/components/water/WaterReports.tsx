@@ -66,6 +66,7 @@ export function WaterReports() {
   const [recordToDelete, setRecordToDelete] = useState<any>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [recordToEdit, setRecordToEdit] = useState<any>(null);
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const { toast } = useToast();
 
   useEffect(() => {
@@ -273,19 +274,17 @@ export function WaterReports() {
     }
   };
 
+  const toggleRow = (index: number) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    setExpandedRows(newExpanded);
+  };
+
   const renderConsolidatedTable = () => {
-    const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
-    
-    const toggleRow = (index: number) => {
-      const newExpanded = new Set(expandedRows);
-      if (newExpanded.has(index)) {
-        newExpanded.delete(index);
-      } else {
-        newExpanded.add(index);
-      }
-      setExpandedRows(newExpanded);
-    };
-    
     return (
       <Table>
         <TableHeader>
