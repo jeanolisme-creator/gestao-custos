@@ -71,7 +71,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [recentRecords, setRecentRecords] = useState<any[]>([]);
 
-  // Fetch recent records
+  // Fetch all records
   useEffect(() => {
     const fetchRecentRecords = async () => {
       if (!user) return;
@@ -81,7 +81,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(100);
       
       if (!error && data) {
         setRecentRecords(data);
@@ -406,52 +406,113 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <CardTitle>
-              {viewMode ? "Visualizar Registro" : editData ? "Editar Registro" : "Novo Cadastro"} - Gestão de Água
+    <>
+      {/* Seção de Cadastros Recentes */}
+      {!viewMode && !editData && recentRecords.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-primary" />
+              Todos os Cadastros Realizados ({recentRecords.length})
             </CardTitle>
             <CardDescription>
-              {viewMode ? "Detalhes do registro de água" : "Preencha os dados do registro de água"}
+              Histórico completo de cadastros de água realizados
             </CardDescription>
-          </div>
-          {!viewMode && (
-            <div className="flex flex-wrap gap-2 justify-end">
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => setImportDialogOpen(true)}
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                Importar CSV
-              </Button>
-              <Button
-                variant="outline"
-                type="button"
-                onClick={() => setImportDialogOpen(true)}
-              >
-                <FileSpreadsheet className="mr-2 h-4 w-4" />
-                Importar XLSX
-              </Button>
-              <Button type="button" onClick={() => setMonthlyWizardOpen(true)}>
-                <Calendar className="mr-2 h-4 w-4" />
-                Dados Mensais
-              </Button>
-              <Button 
-                type="button" 
-                variant={hasPendingSchools ? "default" : "secondary"}
-                onClick={() => setPendingDialogOpen(true)}
-                className={hasPendingSchools ? "bg-yellow-500 hover:bg-yellow-600 text-white dark:bg-yellow-600 dark:hover:bg-yellow-700" : ""}
-              >
-                <AlertCircle className="mr-2 h-4 w-4" />
-                Pendências
-              </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-3 max-h-[500px] overflow-y-auto pr-2">
+              {recentRecords.map((record) => (
+                <div key={record.id} className="p-4 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-base">{record.nome_escola}</h4>
+                        <p className="text-sm text-muted-foreground">{record.endereco_completo}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-primary">
+                          {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                          }).format(parseFloat(record.valor_gasto || 0))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Cadastro:</span>
+                        <p className="font-medium">{record.cadastro}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Mês/Ano:</span>
+                        <p className="font-medium">{record.mes_ano_referencia}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Consumo:</span>
+                        <p className="font-medium">{record.consumo_m3}m³</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Data:</span>
+                        <p className="font-medium">
+                          {new Date(record.created_at).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
-        </div>
-      </CardHeader>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Formulário de Cadastro */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle>
+                {viewMode ? "Visualizar Registro" : editData ? "Editar Registro" : "Novo Cadastro"} - Gestão de Água
+              </CardTitle>
+              <CardDescription>
+                {viewMode ? "Detalhes do registro de água" : "Preencha os dados do registro de água"}
+              </CardDescription>
+            </div>
+            {!viewMode && (
+              <div className="flex flex-wrap gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => setImportDialogOpen(true)}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Importar CSV
+                </Button>
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => setImportDialogOpen(true)}
+                >
+                  <FileSpreadsheet className="mr-2 h-4 w-4" />
+                  Importar XLSX
+                </Button>
+                <Button type="button" onClick={() => setMonthlyWizardOpen(true)}>
+                  <Calendar className="mr-2 h-4 w-4" />
+                  Dados Mensais
+                </Button>
+                <Button 
+                  type="button" 
+                  variant={hasPendingSchools ? "default" : "secondary"}
+                  onClick={() => setPendingDialogOpen(true)}
+                  className={hasPendingSchools ? "bg-yellow-500 hover:bg-yellow-600 text-white dark:bg-yellow-600 dark:hover:bg-yellow-700" : ""}
+                >
+                  <AlertCircle className="mr-2 h-4 w-4" />
+                  Pendências
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* School Search */}
@@ -760,45 +821,9 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
           )}
         </form>
       </CardContent>
+    </Card>
 
-      {!viewMode && !editData && recentRecords.length > 0 && (
-        <div className="px-6 pb-6">
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="recent-records" className="border rounded-lg px-4">
-              <AccordionTrigger className="hover:no-underline">
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-primary" />
-                  <span className="font-semibold">Últimos Cadastros ({recentRecords.length})</span>
-                </div>
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-3 pt-2">
-                  {recentRecords.map((record, index) => (
-                    <div key={record.id} className="p-3 border rounded-lg bg-muted/30 space-y-1">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-1 flex-1">
-                          <div className="font-semibold text-sm">{record.nome_escola}</div>
-                          <div className="text-xs text-muted-foreground">
-                            Cadastro: {record.cadastro} | Mês/Ano: {record.mes_ano_referencia}
-                          </div>
-                          <div className="text-xs">
-                            Consumo: {record.consumo_m3}m³ | Valor: {new Intl.NumberFormat('pt-BR', {
-                              style: 'currency',
-                              currency: 'BRL',
-                            }).format(parseFloat(record.valor_gasto || 0))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </div>
-      )}
-
-      <MonthlyDataWizard
+    <MonthlyDataWizard
         open={monthlyWizardOpen}
         onOpenChange={(open) => {
           setMonthlyWizardOpen(open);
@@ -825,6 +850,6 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
         onOpenChange={setImportDialogOpen}
         onSuccess={onSuccess}
       />
-    </Card>
+    </>
   );
 }
