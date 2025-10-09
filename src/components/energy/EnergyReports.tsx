@@ -177,6 +177,40 @@ export function EnergyReports() {
     });
   };
 
+  const handleEdit = (record: any) => {
+    setSelectedRecord(record);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!recordToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from("energy_records")
+        .delete()
+        .eq("id", recordToDelete);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Registro excluído com sucesso",
+      });
+      fetchData();
+    } catch (error) {
+      console.error("Error deleting record:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir o registro",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setRecordToDelete(null);
+    }
+  };
+
   const renderConsolidatedTable = () => (
     <Table>
       <TableHeader>
@@ -187,6 +221,7 @@ export function EnergyReports() {
           <TableHead>Valor Energia (R$)</TableHead>
           <TableHead>Valor Serviços (R$)</TableHead>
           <TableHead>Total (R$)</TableHead>
+          <TableHead className="text-right">Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -203,6 +238,33 @@ export function EnergyReports() {
             <TableCell>{formatCurrency(school.totalService || 0)}</TableCell>
             <TableCell className="font-semibold">
               {formatCurrency(school.totalValue || 0)}
+            </TableCell>
+            <TableCell className="text-right">
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    const firstRecord = data.find(r => r.nome_escola === school.schoolName);
+                    if (firstRecord) handleEdit(firstRecord);
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    const firstRecord = data.find(r => r.nome_escola === school.schoolName);
+                    if (firstRecord) {
+                      setRecordToDelete(firstRecord.id);
+                      setDeleteDialogOpen(true);
+                    }
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </div>
             </TableCell>
           </TableRow>
         ))}
@@ -222,6 +284,7 @@ export function EnergyReports() {
           <TableHead>Valor (R$)</TableHead>
           <TableHead>Vencimento</TableHead>
           <TableHead>Ocorrências</TableHead>
+          <TableHead className="text-right">Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -242,6 +305,27 @@ export function EnergyReports() {
                   {record.ocorrencias_pendencias}
                 </Badge>
               )}
+            </TableCell>
+            <TableCell className="text-right">
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleEdit(record)}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setRecordToDelete(record.id);
+                    setDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              </div>
             </TableCell>
           </TableRow>
         ))}
@@ -462,6 +546,39 @@ export function EnergyReports() {
           </div>
         )}
       </Card>
+      
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Registro</DialogTitle>
+          </DialogHeader>
+          <EnergyRegistration
+            onSuccess={() => {
+              setIsEditDialogOpen(false);
+              fetchData();
+            }}
+            editData={selectedRecord}
+            viewMode={false}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
