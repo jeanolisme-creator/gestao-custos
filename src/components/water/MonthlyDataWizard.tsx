@@ -46,6 +46,8 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
   const [formData, setFormData] = useState({
     cadastros: [''],
     hidrometros: [''],
+    consumos_m3: [''],
+    numeros_dias: [''],
     valores_cadastros: [''],
     data_leitura_anterior: '',
     data_leitura_atual: '',
@@ -121,10 +123,16 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
             hidrometrosArray = [record.hidrometro as string];
           }
         }
+
+        // Parse consumos_m3 and numeros_dias arrays
+        const consumosArray = record.consumos_m3 ? JSON.parse(record.consumos_m3 as string) : [''];
+        const numerosDiasArray = record.numeros_dias ? JSON.parse(record.numeros_dias as string) : [''];
         
         setFormData({
           cadastros,
           hidrometros: hidrometrosArray,
+          consumos_m3: consumosArray.map((c: any) => c?.toString() || ''),
+          numeros_dias: numerosDiasArray.map((n: any) => n?.toString() || ''),
           valores_cadastros: valoresFormatted,
           data_leitura_anterior: record.data_leitura_anterior || '',
           data_leitura_atual: record.data_leitura_atual || '',
@@ -140,6 +148,8 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
         setFormData({
           cadastros: [''],
           hidrometros: [''],
+          consumos_m3: [''],
+          numeros_dias: [''],
           valores_cadastros: [''],
           data_leitura_anterior: '',
           data_leitura_atual: '',
@@ -212,6 +222,8 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
       ...prev,
       cadastros: [...prev.cadastros, ''],
       hidrometros: [...prev.hidrometros, ''],
+      consumos_m3: [...prev.consumos_m3, ''],
+      numeros_dias: [...prev.numeros_dias, ''],
       valores_cadastros: [...prev.valores_cadastros, '']
     }));
   };
@@ -222,6 +234,8 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
         ...prev,
         cadastros: prev.cadastros.filter((_, i) => i !== index),
         hidrometros: prev.hidrometros.filter((_, i) => i !== index),
+        consumos_m3: prev.consumos_m3.filter((_, i) => i !== index),
+        numeros_dias: prev.numeros_dias.filter((_, i) => i !== index),
         valores_cadastros: prev.valores_cadastros.filter((_, i) => i !== index)
       }));
     }
@@ -245,6 +259,20 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     setFormData(prev => ({
       ...prev,
       hidrometros: prev.hidrometros.map((hid, i) => i === index ? value : hid)
+    }));
+  };
+
+  const handleConsumoChange = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      consumos_m3: prev.consumos_m3.map((c, i) => i === index ? value : c)
+    }));
+  };
+
+  const handleNumeroDiasChange = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      numeros_dias: prev.numeros_dias.map((n, i) => i === index ? value : n)
     }));
   };
 
@@ -279,6 +307,8 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
       user_id: user.id,
       cadastro: JSON.stringify(formData.cadastros.filter(c => c.trim() !== '')),
       hidrometros: JSON.stringify(formData.hidrometros),
+      consumos_m3: JSON.stringify(formData.consumos_m3.map(c => parseFloat(c) || 0)),
+      numeros_dias: JSON.stringify(formData.numeros_dias.map(n => parseInt(n) || 0)),
       proprietario: currentSchool.proprietario || '',
       nome_escola: currentSchool.nome_escola,
       endereco_completo: currentSchool.endereco_completo || '',
@@ -412,6 +442,8 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     setFormData({
       cadastros: [''],
       hidrometros: [''],
+      consumos_m3: [''],
+      numeros_dias: [''],
       valores_cadastros: [''],
       data_leitura_anterior: '',
       data_leitura_atual: '',
@@ -527,6 +559,25 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                             value={formData.hidrometros[index] || ''}
                             onChange={(e) => handleHidrometroChange(index, e.target.value)}
                             placeholder="Nº Hidrômetro"
+                          />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <Label className="text-xs text-muted-foreground">Consumo (m³)</Label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={formData.consumos_m3[index] || ''}
+                            onChange={(e) => handleConsumoChange(index, e.target.value)}
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <Label className="text-xs text-muted-foreground">Nº de dias</Label>
+                          <Input
+                            type="number"
+                            value={formData.numeros_dias[index] || ''}
+                            onChange={(e) => handleNumeroDiasChange(index, e.target.value)}
+                            placeholder="30"
                           />
                         </div>
                         <div className="flex-1 space-y-1">

@@ -483,6 +483,7 @@ export type Database = {
           bairro: string | null
           cadastro: string
           consumo_m3: number | null
+          consumos_m3: Json | null
           created_at: string
           data_leitura_anterior: string | null
           data_leitura_atual: string | null
@@ -497,6 +498,7 @@ export type Database = {
           nome_escola: string
           numero: string | null
           numero_dias: number | null
+          numeros_dias: Json | null
           ocorrencias_pendencias: string | null
           proprietario: string | null
           responsavel: string | null
@@ -510,6 +512,7 @@ export type Database = {
           bairro?: string | null
           cadastro: string
           consumo_m3?: number | null
+          consumos_m3?: Json | null
           created_at?: string
           data_leitura_anterior?: string | null
           data_leitura_atual?: string | null
@@ -524,6 +527,7 @@ export type Database = {
           nome_escola: string
           numero?: string | null
           numero_dias?: number | null
+          numeros_dias?: Json | null
           ocorrencias_pendencias?: string | null
           proprietario?: string | null
           responsavel?: string | null
@@ -537,6 +541,7 @@ export type Database = {
           bairro?: string | null
           cadastro?: string
           consumo_m3?: number | null
+          consumos_m3?: Json | null
           created_at?: string
           data_leitura_anterior?: string | null
           data_leitura_atual?: string | null
@@ -551,6 +556,7 @@ export type Database = {
           nome_escola?: string
           numero?: string | null
           numero_dias?: number | null
+          numeros_dias?: Json | null
           ocorrencias_pendencias?: string | null
           proprietario?: string | null
           responsavel?: string | null
