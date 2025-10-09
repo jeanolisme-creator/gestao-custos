@@ -34,6 +34,9 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     hidrometros: [''],
     consumos_m3: [''],
     numeros_dias: [''],
+    datas_leitura_anterior: [''],
+    datas_leitura_atual: [''],
+    datas_vencimento: [''],
     valores_cadastros: [''],
     proprietario: '',
     nome_escola: '',
@@ -123,6 +126,11 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
       const consumosArray = editData.consumos_m3 ? JSON.parse(editData.consumos_m3) : [''];
       const numerosDiasArray = editData.numeros_dias ? JSON.parse(editData.numeros_dias) : [''];
       
+      // Parse datas arrays
+      const datasLeituraAnteriorArray = editData.datas_leitura_anterior ? JSON.parse(editData.datas_leitura_anterior) : [''];
+      const datasLeituraAtualArray = editData.datas_leitura_atual ? JSON.parse(editData.datas_leitura_atual) : [''];
+      const datasVencimentoArray = editData.datas_vencimento ? JSON.parse(editData.datas_vencimento) : [''];
+      
       const valoresFormatted = cadastrosArray.map((_, index) => {
         const valor = valoresArray[index];
         return valor ? formatCurrency(valor) : '';
@@ -136,6 +144,9 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
         hidrometros: hidrometrosArray,
         consumos_m3: consumosArray.map((c: any) => c?.toString() || ''),
         numeros_dias: numerosDiasArray.map((n: any) => n?.toString() || ''),
+        datas_leitura_anterior: datasLeituraAnteriorArray,
+        datas_leitura_atual: datasLeituraAtualArray,
+        datas_vencimento: datasVencimentoArray,
         valores_cadastros: valoresFormatted,
         proprietario: editData.proprietario || '',
         nome_escola: editData.nome_escola || '',
@@ -187,6 +198,9 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
       hidrometros: [''],
       consumos_m3: [''],
       numeros_dias: [''],
+      datas_leitura_anterior: [''],
+      datas_leitura_atual: [''],
+      datas_vencimento: [''],
       valores_cadastros: [''],
       proprietario: '',
       nome_escola: '',
@@ -212,6 +226,9 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
       hidrometros: [...prev.hidrometros, ''],
       consumos_m3: [...prev.consumos_m3, ''],
       numeros_dias: [...prev.numeros_dias, ''],
+      datas_leitura_anterior: [...prev.datas_leitura_anterior, ''],
+      datas_leitura_atual: [...prev.datas_leitura_atual, ''],
+      datas_vencimento: [...prev.datas_vencimento, ''],
       valores_cadastros: [...prev.valores_cadastros, '']
     }));
   };
@@ -224,6 +241,9 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
         hidrometros: prev.hidrometros.filter((_, i) => i !== index),
         consumos_m3: prev.consumos_m3.filter((_, i) => i !== index),
         numeros_dias: prev.numeros_dias.filter((_, i) => i !== index),
+        datas_leitura_anterior: prev.datas_leitura_anterior.filter((_, i) => i !== index),
+        datas_leitura_atual: prev.datas_leitura_atual.filter((_, i) => i !== index),
+        datas_vencimento: prev.datas_vencimento.filter((_, i) => i !== index),
         valores_cadastros: prev.valores_cadastros.filter((_, i) => i !== index)
       }));
     }
@@ -264,6 +284,27 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     }));
   };
 
+  const handleDataLeituraAnteriorChange = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      datas_leitura_anterior: prev.datas_leitura_anterior.map((d, i) => i === index ? value : d)
+    }));
+  };
+
+  const handleDataLeituraAtualChange = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      datas_leitura_atual: prev.datas_leitura_atual.map((d, i) => i === index ? value : d)
+    }));
+  };
+
+  const handleDataVencimentoChange = (index: number, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      datas_vencimento: prev.datas_vencimento.map((d, i) => i === index ? value : d)
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -275,6 +316,9 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
       hidrometros: JSON.stringify(formData.hidrometros),
       consumos_m3: JSON.stringify(formData.consumos_m3.map(c => parseFloat(c) || 0)),
       numeros_dias: JSON.stringify(formData.numeros_dias.map(n => parseInt(n) || 0)),
+      datas_leitura_anterior: JSON.stringify(formData.datas_leitura_anterior),
+      datas_leitura_atual: JSON.stringify(formData.datas_leitura_atual),
+      datas_vencimento: JSON.stringify(formData.datas_vencimento),
       proprietario: formData.proprietario,
       nome_escola: formData.nome_escola,
       endereco_completo: formData.endereco_completo,
@@ -484,18 +528,18 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
               <div className="space-y-3">
                 {formData.cadastros.map((cadastro, index) => (
                   <div key={index} className="flex flex-col gap-2 p-3 border rounded-lg bg-muted/30">
-                    <div className="flex gap-2">
-                      <div className="flex-1 space-y-1">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Cadastro {index + 1}</Label>
                         <Input
                           value={cadastro}
                           onChange={(e) => handleCadastroChange(index, e.target.value)}
-                          placeholder={`Número do cadastro ${index + 1}`}
+                          placeholder={`Nº cadastro ${index + 1}`}
                           required={index === 0}
                           disabled={viewMode}
                         />
                       </div>
-                      <div className="flex-1 space-y-1">
+                      <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Hidrômetro</Label>
                         <Input
                           value={formData.hidrometros[index] || ''}
@@ -504,7 +548,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
                           disabled={viewMode}
                         />
                       </div>
-                      <div className="flex-1 space-y-1">
+                      <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Consumo (m³)</Label>
                         <Input
                           type="number"
@@ -515,7 +559,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
                           disabled={viewMode}
                         />
                       </div>
-                      <div className="flex-1 space-y-1">
+                      <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Nº de dias</Label>
                         <Input
                           type="number"
@@ -525,7 +569,34 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
                           disabled={viewMode}
                         />
                       </div>
-                      <div className="flex-1 space-y-1">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Data Leitura Anterior</Label>
+                        <Input
+                          type="date"
+                          value={formData.datas_leitura_anterior[index] || ''}
+                          onChange={(e) => handleDataLeituraAnteriorChange(index, e.target.value)}
+                          disabled={viewMode}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Data Leitura Atual</Label>
+                        <Input
+                          type="date"
+                          value={formData.datas_leitura_atual[index] || ''}
+                          onChange={(e) => handleDataLeituraAtualChange(index, e.target.value)}
+                          disabled={viewMode}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Data de Vencimento</Label>
+                        <Input
+                          type="date"
+                          value={formData.datas_vencimento[index] || ''}
+                          onChange={(e) => handleDataVencimentoChange(index, e.target.value)}
+                          disabled={viewMode}
+                        />
+                      </div>
+                      <div className="space-y-1">
                         <Label className="text-xs text-muted-foreground">Valor (R$)</Label>
                         <CurrencyInput
                           value={formData.valores_cadastros[index] || ''}
@@ -534,18 +605,18 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
                           disabled={viewMode}
                         />
                       </div>
-                      {!viewMode && formData.cadastros.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleRemoveCadastro(index)}
-                          className="mt-6"
-                        >
-                          Remover
-                        </Button>
-                      )}
                     </div>
+                    {!viewMode && formData.cadastros.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleRemoveCadastro(index)}
+                        className="self-end"
+                      >
+                        Remover
+                      </Button>
+                    )}
                   </div>
                 ))}
                 

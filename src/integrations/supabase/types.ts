@@ -488,6 +488,9 @@ export type Database = {
           data_leitura_anterior: string | null
           data_leitura_atual: string | null
           data_vencimento: string | null
+          datas_leitura_anterior: Json | null
+          datas_leitura_atual: Json | null
+          datas_vencimento: Json | null
           descricao_servicos: string | null
           endereco_completo: string | null
           hidrometro: string | null
@@ -517,6 +520,9 @@ export type Database = {
           data_leitura_anterior?: string | null
           data_leitura_atual?: string | null
           data_vencimento?: string | null
+          datas_leitura_anterior?: Json | null
+          datas_leitura_atual?: Json | null
+          datas_vencimento?: Json | null
           descricao_servicos?: string | null
           endereco_completo?: string | null
           hidrometro?: string | null
@@ -546,6 +552,9 @@ export type Database = {
           data_leitura_anterior?: string | null
           data_leitura_atual?: string | null
           data_vencimento?: string | null
+          datas_leitura_anterior?: Json | null
+          datas_leitura_atual?: Json | null
+          datas_vencimento?: Json | null
           descricao_servicos?: string | null
           endereco_completo?: string | null
           hidrometro?: string | null
