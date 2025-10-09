@@ -30,12 +30,12 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   
   const [formData, setFormData] = useState({
     mes_referencia: '',
-    cadastros: [''], // Changed to array to support multiple cadastros
+    cadastros: [''],
+    valores_cadastros: [''],
     proprietario: '',
     nome_escola: '',
     data_leitura_anterior: '',
     data_leitura_atual: '',
-    valor_gasto: '',
     data_vencimento: '',
     endereco_completo: '',
     numero: '',
@@ -48,6 +48,12 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     macroregiao: '',
     ocorrencias_pendencias: ''
   });
+
+  // Calculate total value from all cadastros
+  const valorTotal = formData.valores_cadastros.reduce((sum, valor) => {
+    const numericValue = parseFloat(valor.replace(/[R$\s.]/g, '').replace(',', '.')) || 0;
+    return sum + numericValue;
+  }, 0);
   
   const [showSchoolSearch, setShowSchoolSearch] = useState(false);
   const [searchSchoolTerm, setSearchSchoolTerm] = useState('');
@@ -90,15 +96,39 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
       } catch {
         cadastrosArray = editData.cadastro ? [editData.cadastro] : [''];
       }
+
+      // Parse valores_cadastros
+      let valoresArray = [];
+      try {
+        if (editData.valores_cadastros) {
+          const parsed = JSON.parse(editData.valores_cadastros as string);
+          valoresArray = Array.isArray(parsed) ? parsed : [];
+        }
+      } catch {
+        valoresArray = [];
+      }
+
+      // Format currency values
+      const formatCurrency = (value: number | null) => {
+        if (!value) return '';
+        return `R$ ${value.toFixed(2).replace('.', ',')}`;
+      };
+
+      const valoresFormatted = cadastrosArray.map((_, index) => {
+        const valor = valoresArray[index];
+        return valor ? formatCurrency(valor) : '';
+      });
+
+      const valorServicos = editData.valor_servicos ? formatCurrency(editData.valor_servicos) : '';
       
       setFormData({
         mes_referencia: editData.mes_referencia || '',
         cadastros: cadastrosArray,
+        valores_cadastros: valoresFormatted,
         proprietario: editData.proprietario || '',
         nome_escola: editData.nome_escola || '',
         data_leitura_anterior: editData.data_leitura_anterior || '',
         data_leitura_atual: editData.data_leitura_atual || '',
-        valor_gasto: editData.valor_gasto?.toString() || '',
         data_vencimento: editData.data_vencimento || '',
         endereco_completo: editData.endereco_completo || '',
         numero: editData.numero || '',
@@ -107,7 +137,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
         numero_dias: editData.numero_dias?.toString() || '',
         hidrometro: editData.hidrometro || '',
         descricao_servicos: editData.descricao_servicos || '',
-        valor_servicos: editData.valor_servicos?.toString() || '',
+        valor_servicos: valorServicos,
         macroregiao: editData.macroregiao || '',
         ocorrencias_pendencias: editData.ocorrencias_pendencias || ''
       });
@@ -143,11 +173,11 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     setFormData({
       mes_referencia: '',
       cadastros: [''],
+      valores_cadastros: [''],
       proprietario: '',
       nome_escola: '',
       data_leitura_anterior: '',
       data_leitura_atual: '',
-      valor_gasto: '',
       data_vencimento: '',
       endereco_completo: '',
       numero: '',
@@ -165,7 +195,8 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   const handleAddCadastro = () => {
     setFormData(prev => ({
       ...prev,
-      cadastros: [...prev.cadastros, '']
+      cadastros: [...prev.cadastros, ''],
+      valores_cadastros: [...prev.valores_cadastros, '']
     }));
   };
 
@@ -173,7 +204,8 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     if (formData.cadastros.length > 1) {
       setFormData(prev => ({
         ...prev,
-        cadastros: prev.cadastros.filter((_, i) => i !== index)
+        cadastros: prev.cadastros.filter((_, i) => i !== index),
+        valores_cadastros: prev.valores_cadastros.filter((_, i) => i !== index)
       }));
     }
   };
@@ -182,6 +214,13 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     setFormData(prev => ({
       ...prev,
       cadastros: prev.cadastros.map((cad, i) => i === index ? value : cad)
+    }));
+  };
+
+  const handleValorCadastroChange = (index: number, formatted: string) => {
+    setFormData(prev => ({
+      ...prev,
+      valores_cadastros: prev.valores_cadastros.map((val, i) => i === index ? formatted : val)
     }));
   };
 
@@ -205,11 +244,17 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
       mes_ano_referencia: formData.mes_referencia || new Date().toISOString().slice(0, 7)
     };
     
-    // Convert numeric fields
-    if (formData.valor_gasto) {
-      const numericValue = parseFloat(formData.valor_gasto.replace(/[R$\s.]/g, '').replace(',', '.'));
-      submitData.valor_gasto = numericValue;
-    }
+    // Convert valores_cadastros to numeric array and store as JSON
+    const valoresNumeric = formData.valores_cadastros.map(valor => {
+      const numericValue = parseFloat(valor.replace(/[R$\s.]/g, '').replace(',', '.'));
+      return numericValue || 0;
+    });
+    submitData.valores_cadastros = JSON.stringify(valoresNumeric);
+    
+    // Calculate total from valores_cadastros
+    submitData.valor_gasto = valoresNumeric.reduce((sum, val) => sum + val, 0);
+    
+    // Convert valor_servicos
     if (formData.valor_servicos) {
       const numericValue = parseFloat(formData.valor_servicos.replace(/[R$\s.]/g, '').replace(',', '.'));
       submitData.valor_servicos = numericValue;
@@ -382,7 +427,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
 
             <div className="space-y-2 md:col-span-2">
               <div className="flex items-center justify-between">
-                <Label>Cadastro(s) *</Label>
+                <Label>Cadastro(s) e Valores *</Label>
                 {!viewMode && (
                   <Button
                     type="button"
@@ -394,28 +439,54 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
                   </Button>
                 )}
               </div>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {formData.cadastros.map((cadastro, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      value={cadastro}
-                      onChange={(e) => handleCadastroChange(index, e.target.value)}
-                      placeholder={`Cadastro ${index + 1}`}
-                      required={index === 0}
-                      disabled={viewMode}
-                    />
-                    {!viewMode && formData.cadastros.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleRemoveCadastro(index)}
-                      >
-                        Remover
-                      </Button>
-                    )}
+                  <div key={index} className="flex flex-col gap-2 p-3 border rounded-lg bg-muted/30">
+                    <div className="flex gap-2">
+                      <div className="flex-1 space-y-1">
+                        <Label className="text-xs text-muted-foreground">Cadastro {index + 1}</Label>
+                        <Input
+                          value={cadastro}
+                          onChange={(e) => handleCadastroChange(index, e.target.value)}
+                          placeholder={`Número do cadastro ${index + 1}`}
+                          required={index === 0}
+                          disabled={viewMode}
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1">
+                        <Label className="text-xs text-muted-foreground">Valor (R$)</Label>
+                        <CurrencyInput
+                          value={formData.valores_cadastros[index] || ''}
+                          onValueChange={(formatted) => handleValorCadastroChange(index, formatted)}
+                          placeholder="R$ 0,00"
+                          disabled={viewMode}
+                        />
+                      </div>
+                      {!viewMode && formData.cadastros.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleRemoveCadastro(index)}
+                          className="mt-6"
+                        >
+                          Remover
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
+                
+                {/* Valor Total */}
+                <div className="flex justify-end items-center gap-2 pt-2 border-t">
+                  <Label className="font-semibold">Valor Total:</Label>
+                  <span className="text-lg font-bold text-primary">
+                    {new Intl.NumberFormat('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL',
+                    }).format(valorTotal)}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -529,17 +600,6 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
                 type="number"
                 value={formData.numero_dias}
                 onChange={(e) => handleInputChange('numero_dias', e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="valor_gasto">Valor (R$)</Label>
-              <CurrencyInput
-                id="valor_gasto"
-                value={formData.valor_gasto}
-                onValueChange={(formatted, numeric) => handleInputChange('valor_gasto', formatted)}
-                placeholder="R$ 0,00"
-                disabled={viewMode}
               />
             </div>
 
