@@ -536,10 +536,7 @@ export function WaterReports() {
         </div>
         
         <div className="overflow-x-auto">
-          {reportType === 'consolidated' || reportType === 'by-school' 
-            ? renderConsolidatedTable()
-            : renderDetailedTable()
-          }
+          {renderDetailedTable()}
         </div>
 
         {reportData.length === 0 && (
