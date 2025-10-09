@@ -86,6 +86,7 @@ export function WaterReports() {
 
       if (error) throw error;
 
+      console.log("Registros carregados:", records?.length || 0);
       setData(records || []);
       
       // Extract unique school names
@@ -159,12 +160,17 @@ export function WaterReports() {
         school.totalConsumption += parseFloat(record.consumo_m3 || 0);
         school.totalService += parseFloat(record.valor_servicos || 0);
         
-        // Parse cadastros and valores_cadastros from JSON
-        const cadastrosArray = record.cadastro ? JSON.parse(record.cadastro) : [];
-        const valoresArray = record.valores_cadastros ? JSON.parse(record.valores_cadastros as string) : [];
+        // Parse cadastros and valores_cadastros from JSON with error handling
+        try {
+          const cadastrosArray = record.cadastro ? JSON.parse(record.cadastro) : [];
+          const valoresArray = record.valores_cadastros ? JSON.parse(record.valores_cadastros as string) : [];
+          
+          school.cadastros.push(...cadastrosArray);
+          school.valores.push(...valoresArray);
+        } catch (error) {
+          console.error("Error parsing cadastros/valores for record:", record.id, error);
+        }
         
-        school.cadastros.push(...cadastrosArray);
-        school.valores.push(...valoresArray);
         school.records.push(record);
       });
 
@@ -623,8 +629,20 @@ export function WaterReports() {
         {reportData.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Nenhum dado encontrado</p>
-            <p className="text-sm">Ajuste os filtros para ver os resultados</p>
+            <p className="font-medium">Nenhum dado encontrado</p>
+            {data.length > 0 ? (
+              <p className="text-sm mt-2">
+                {data.length} registro(s) carregado(s), mas nenhum corresponde aos filtros aplicados.
+                <br />
+                Tente ajustar os filtros (ano, mês, escola) para ver os resultados.
+              </p>
+            ) : (
+              <p className="text-sm mt-2">
+                Nenhum registro de água cadastrado ainda.
+                <br />
+                Cadastre registros primeiro para visualizá-los aqui.
+              </p>
+            )}
           </div>
         )}
       </Card>
