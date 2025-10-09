@@ -637,27 +637,6 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="consumo_m3">Consumo (m³)</Label>
-                <Input
-                  id="consumo_m3"
-                  type="number"
-                  step="0.01"
-                  value={formData.consumo_m3}
-                  onChange={(e) => handleInputChange('consumo_m3', e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="numero_dias">Nº de Dias</Label>
-                <Input
-                  id="numero_dias"
-                  type="number"
-                  value={formData.numero_dias}
-                  onChange={(e) => handleInputChange('numero_dias', e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="valor_servicos">Valor dos Serviços (R$)</Label>
                 <CurrencyInput
                   id="valor_servicos"
