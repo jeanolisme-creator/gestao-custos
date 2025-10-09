@@ -79,7 +79,7 @@ export default function Dashboard({ data }: DashboardProps) {
   }, [user, currentSystem]);
   
   // Use real data if available, otherwise use mock data
-  const systemData = realData.length > 0 ? realData : generateMockSystemData(currentSystem, 50);
+  const systemData = realData;
   const currentMonth = 'dezembro';
   const monthlyTotals = getSystemMonthlyTotals(systemData);
   const currentMonthData = aggregateSystemData(systemData, currentMonth);

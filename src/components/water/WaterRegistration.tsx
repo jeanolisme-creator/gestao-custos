@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -71,28 +71,34 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [recentRecords, setRecentRecords] = useState<any[]>([]);
 
-  // Fetch all records
-  useEffect(() => {
-    const fetchRecentRecords = async () => {
-      if (!user) return;
-      
-      const { data, error } = await supabase
-        .from('school_records')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(100);
-      
-      if (!error && data) {
-        console.log('Registros recentes carregados:', data.length);
-        setRecentRecords(data);
-      } else if (error) {
-        console.error('Erro ao carregar registros:', error);
-      }
-    };
-    
-    fetchRecentRecords();
+  // Fetch and subscribe to recent records
+  const fetchRecentRecords = useCallback(async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('school_records')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) {
+      console.error('Erro ao carregar registros:', error);
+      return;
+    }
+    console.log('Registros recentes carregados:', data?.length || 0);
+    setRecentRecords(data || []);
   }, [user]);
+
+  useEffect(() => {
+    fetchRecentRecords();
+    if (!user) return;
+    const channel = supabase
+      .channel('water_recent_records')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'school_records', filter: `user_id=eq.${user.id}` }, () => {
+        fetchRecentRecords();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user, fetchRecentRecords]);
 
   // Check for pending schools
   useEffect(() => {
@@ -404,6 +410,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
         description: editData ? "O registro foi atualizado." : "O novo registro de água foi adicionado."
       });
       resetForm();
+      await fetchRecentRecords();
       onSuccess?.();
     }
   };
