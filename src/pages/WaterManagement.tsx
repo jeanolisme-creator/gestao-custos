@@ -248,79 +248,81 @@ export default function WaterManagement() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Gestão de Água</h1>
-          <p className="text-muted-foreground">
-            Gerenciamento completo de registros de água
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => {
-              toast({
-                title: "Em desenvolvimento",
-                description: "Funcionalidade de importação CSV em breve",
-              });
-            }}
-          >
-            <FileText className="mr-2 h-4 w-4" />
-            Importar CSV
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              toast({
-                title: "Em desenvolvimento",
-                description: "Funcionalidade de importação XLSX em breve",
-              });
-            }}
-          >
-            <FileSpreadsheet className="mr-2 h-4 w-4" />
-            Importar XLSX
-          </Button>
-          <Button
-            className="bg-blue-600 hover:bg-blue-700 text-white"
-            onClick={() => setMonthlyWizardOpen(true)}
-          >
-            <Calendar className="mr-2 h-4 w-4" />
-            Dados Mensais
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => handleExport("excel")}
-            disabled={records.length === 0}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            Excel
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => handleExport("csv")}
-            disabled={records.length === 0}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            CSV
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => handleExport("pdf")}
-            disabled={records.length === 0}
-          >
-            <Download className="mr-2 h-4 w-4" />
-            PDF
-          </Button>
-          <Button
-            onClick={() => {
-              setSelectedRecord(null);
-              setViewMode("create");
-              setIsDialogOpen(true);
-            }}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Registro
-          </Button>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Gestão de Água</h1>
+            <p className="text-muted-foreground">
+              Gerenciamento completo de registros de água
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                toast({
+                  title: "Em desenvolvimento",
+                  description: "Funcionalidade de importação CSV em breve",
+                });
+              }}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Importar CSV
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                toast({
+                  title: "Em desenvolvimento",
+                  description: "Funcionalidade de importação XLSX em breve",
+                });
+              }}
+            >
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+              Importar XLSX
+            </Button>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => setMonthlyWizardOpen(true)}
+            >
+              <Calendar className="mr-2 h-4 w-4" />
+              Dados Mensais
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleExport("excel")}
+              disabled={records.length === 0}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Excel
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleExport("csv")}
+              disabled={records.length === 0}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              CSV
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleExport("pdf")}
+              disabled={records.length === 0}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              PDF
+            </Button>
+            <Button
+              onClick={() => {
+                setSelectedRecord(null);
+                setViewMode("create");
+                setIsDialogOpen(true);
+              }}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Registro
+            </Button>
+          </div>
         </div>
       </div>
 
