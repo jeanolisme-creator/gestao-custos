@@ -84,12 +84,15 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
         .limit(100);
       
       if (!error && data) {
+        console.log('Registros recentes carregados:', data.length);
         setRecentRecords(data);
+      } else if (error) {
+        console.error('Erro ao carregar registros:', error);
       }
     };
     
     fetchRecentRecords();
-  }, [user, onSuccess]);
+  }, [user]);
 
   // Check for pending schools
   useEffect(() => {

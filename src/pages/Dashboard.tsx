@@ -26,6 +26,9 @@ import { SchoolData, aggregateBySchool, getMonthlyTotals, getSchoolTypeDistribut
 import { useSystem } from "@/contexts/SystemContext";
 import { generateMockSystemData, aggregateSystemData, getSystemMonthlyTotals, getSystemAlerts } from "@/utils/systemData";
 import logoSecretaria from "@/assets/logo-secretaria.jpg";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 import { WaterNavigation } from "@/components/water/WaterNavigation";
 import { WaterRegistration } from "@/components/water/WaterRegistration";
 import { WaterCharts } from "@/components/water/WaterCharts";
@@ -46,9 +49,38 @@ interface DashboardProps {
 
 export default function Dashboard({ data }: DashboardProps) {
   const { currentSystem, systemConfig } = useSystem();
+  const { user } = useAuth();
   const [currentTab, setCurrentTab] = useState('dashboard');
-  // Generate system-specific data
-  const systemData = generateMockSystemData(currentSystem, 50);
+  const [realData, setRealData] = useState<any[]>([]);
+  
+  // Fetch real data from Supabase
+  useEffect(() => {
+    const fetchRealData = async () => {
+      if (!user) return;
+      
+      let tableName: 'school_records' | 'energy_records' | 'fixed_line_records' | 'mobile_records' | null = null;
+      if (currentSystem === 'water') tableName = 'school_records';
+      else if (currentSystem === 'energy') tableName = 'energy_records';
+      else if (currentSystem === 'fixed-line') tableName = 'fixed_line_records';
+      
+      if (!tableName) return;
+      
+      const { data: records, error } = await supabase
+        .from(tableName)
+        .select('*')
+        .eq('user_id', user.id);
+      
+      if (!error && records) {
+        console.log(`Dados reais carregados do ${tableName}:`, records.length);
+        setRealData(records);
+      }
+    };
+    
+    fetchRealData();
+  }, [user, currentSystem]);
+  
+  // Use real data if available, otherwise use mock data
+  const systemData = realData.length > 0 ? realData : generateMockSystemData(currentSystem, 50);
   const currentMonth = 'dezembro';
   const monthlyTotals = getSystemMonthlyTotals(systemData);
   const currentMonthData = aggregateSystemData(systemData, currentMonth);

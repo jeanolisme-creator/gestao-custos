@@ -49,6 +49,7 @@ export function WaterCharts() {
       .eq('user_id', user?.id);
 
     if (!error && records) {
+      console.log('Dados carregados para gráficos:', records.length);
       setData(records);
       setFilteredData(records);
       const uniqueSchools = [...new Set(records.map(r => r.nome_escola))];
