@@ -281,6 +281,7 @@ export default function WaterManagement() {
             Importar XLSX
           </Button>
           <Button
+            className="bg-blue-600 hover:bg-blue-700 text-white"
             onClick={() => setMonthlyWizardOpen(true)}
           >
             <Calendar className="mr-2 h-4 w-4" />
