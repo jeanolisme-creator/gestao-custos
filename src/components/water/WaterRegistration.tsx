@@ -13,6 +13,7 @@ import { useSchools } from '@/hooks/useSchools';
 import { Search, FileText, FileSpreadsheet, Calendar, AlertCircle } from 'lucide-react';
 import { MonthlyDataWizard } from '@/components/water/MonthlyDataWizard';
 import { PendingSchools } from '@/components/water/PendingSchools';
+import { WaterImport } from '@/components/water/WaterImport';
 
 const macroregiaoOptions = ['HB', 'Vila Toninho', 'Schmidt', 'Represa', 'Bosque', 'Talhado', 'Central', 'Cidade da Criança', 'Pinheirinho', 'Ceu'];
 
@@ -55,6 +56,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   const [pendingMonth, setPendingMonth] = useState<string>();
   const [pendingSchoolIndex, setPendingSchoolIndex] = useState<number>();
   const [hasPendingSchools, setHasPendingSchools] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   // Check for pending schools
   useEffect(() => {
@@ -265,12 +267,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
               <Button
                 variant="outline"
                 type="button"
-                onClick={() =>
-                  toast({
-                    title: "Em desenvolvimento",
-                    description: "Funcionalidade de importação CSV em breve",
-                  })
-                }
+                onClick={() => setImportDialogOpen(true)}
               >
                 <FileText className="mr-2 h-4 w-4" />
                 Importar CSV
@@ -278,12 +275,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
               <Button
                 variant="outline"
                 type="button"
-                onClick={() =>
-                  toast({
-                    title: "Em desenvolvimento",
-                    description: "Funcionalidade de importação XLSX em breve",
-                  })
-                }
+                onClick={() => setImportDialogOpen(true)}
               >
                 <FileSpreadsheet className="mr-2 h-4 w-4" />
                 Importar XLSX
@@ -622,6 +614,11 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
           setPendingSchoolIndex(schoolIndex);
           setMonthlyWizardOpen(true);
         }}
+      />
+      <WaterImport
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onSuccess={onSuccess}
       />
     </Card>
   );
