@@ -6,11 +6,12 @@ import { CurrencyInput } from '@/components/ui/currency-input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useSchools } from '@/hooks/useSchools';
-import { Search, FileText, FileSpreadsheet, Calendar, AlertCircle } from 'lucide-react';
+import { Search, FileText, FileSpreadsheet, Calendar, AlertCircle, Clock } from 'lucide-react';
 import { MonthlyDataWizard } from '@/components/water/MonthlyDataWizard';
 import { PendingSchools } from '@/components/water/PendingSchools';
 import { WaterImport } from '@/components/water/WaterImport';
@@ -68,6 +69,27 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   const [pendingSchoolIndex, setPendingSchoolIndex] = useState<number>();
   const [hasPendingSchools, setHasPendingSchools] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [recentRecords, setRecentRecords] = useState<any[]>([]);
+
+  // Fetch recent records
+  useEffect(() => {
+    const fetchRecentRecords = async () => {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('school_records')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(5);
+      
+      if (!error && data) {
+        setRecentRecords(data);
+      }
+    };
+    
+    fetchRecentRecords();
+  }, [user, onSuccess]);
 
   // Check for pending schools
   useEffect(() => {
@@ -738,6 +760,44 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
           )}
         </form>
       </CardContent>
+
+      {!viewMode && !editData && recentRecords.length > 0 && (
+        <div className="px-6 pb-6">
+          <Accordion type="single" collapsible className="w-full">
+            <AccordionItem value="recent-records" className="border rounded-lg px-4">
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-primary" />
+                  <span className="font-semibold">Últimos Cadastros ({recentRecords.length})</span>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-3 pt-2">
+                  {recentRecords.map((record, index) => (
+                    <div key={record.id} className="p-3 border rounded-lg bg-muted/30 space-y-1">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1 flex-1">
+                          <div className="font-semibold text-sm">{record.nome_escola}</div>
+                          <div className="text-xs text-muted-foreground">
+                            Cadastro: {record.cadastro} | Mês/Ano: {record.mes_ano_referencia}
+                          </div>
+                          <div className="text-xs">
+                            Consumo: {record.consumo_m3}m³ | Valor: {new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            }).format(parseFloat(record.valor_gasto || 0))}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+      )}
+
       <MonthlyDataWizard
         open={monthlyWizardOpen}
         onOpenChange={(open) => {

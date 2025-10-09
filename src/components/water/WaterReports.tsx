@@ -338,14 +338,20 @@ export function WaterReports() {
             <TableHead>Total Cadastros</TableHead>
             <TableHead>Consumo Total (m³)</TableHead>
             <TableHead>Valor Total (R$)</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {(reportData as any[]).map((school, index) => (
             <>
-              <TableRow key={index} className="cursor-pointer hover:bg-muted/50" onClick={() => toggleRow(index)}>
+              <TableRow key={index} className="hover:bg-muted/50">
                 <TableCell>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 w-6 p-0"
+                    onClick={() => toggleRow(index)}
+                  >
                     {expandedRows.has(index) ? '▼' : '▶'}
                   </Button>
                 </TableCell>
@@ -359,19 +365,61 @@ export function WaterReports() {
                 <TableCell className="font-semibold">
                   {formatCurrency(school.totalValue || 0)}
                 </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEdit(school.records[0])}
+                      className="h-8 w-8"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteClick(school.records[0])}
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
               </TableRow>
               {expandedRows.has(index) && (
                 <TableRow key={`${index}-details`}>
-                  <TableCell colSpan={5} className="bg-muted/30 p-4">
+                  <TableCell colSpan={6} className="bg-muted/30 p-4">
                     <div className="space-y-2">
                       <h4 className="font-semibold text-sm mb-2">Detalhes dos Cadastros:</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {school.cadastros.map((cadastro: string, cadIndex: number) => (
                           <div key={cadIndex} className="flex justify-between items-center p-2 bg-background rounded border">
                             <span className="font-mono text-sm">{cadastro}</span>
-                            <span className="font-semibold text-primary">
-                              {formatCurrency(school.valores[cadIndex] || 0)}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-primary">
+                                {formatCurrency(school.valores[cadIndex] || 0)}
+                              </span>
+                              {school.records[cadIndex] && (
+                                <div className="flex gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleEdit(school.records[cadIndex])}
+                                    className="h-6 w-6"
+                                  >
+                                    <Pencil className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleDeleteClick(school.records[cadIndex])}
+                                    className="h-6 w-6 text-destructive hover:text-destructive"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
