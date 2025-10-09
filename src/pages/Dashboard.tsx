@@ -67,8 +67,7 @@ export default function Dashboard({ data }: DashboardProps) {
       
       const { data: records, error } = await supabase
         .from(tableName)
-        .select('*')
-        .eq('user_id', user.id);
+        .select('*');
       
       if (!error && records) {
         console.log(`Dados reais carregados do ${tableName}:`, records.length);
@@ -272,7 +271,7 @@ export default function Dashboard({ data }: DashboardProps) {
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <TopSchoolsChart data={systemData} />
-          <SchoolTypeDistribution data={data} month="dezembro" />
+          <SchoolTypeDistribution data={systemData} month="dezembro" />
         </div>
 
         {/* Additional Charts */}

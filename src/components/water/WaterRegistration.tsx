@@ -767,7 +767,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     </Card>
 
     {/* Seção de Cadastros Recentes */}
-    {!viewMode && !editData && recentRecords.length > 0 && (
+    {!viewMode && !editData && (
       <Card className="mt-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -779,48 +779,54 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 max-h-[500px] overflow-y-auto pr-2">
-            {recentRecords.map((record) => (
-              <div key={record.id} className="p-4 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-base">{record.nome_escola}</h4>
-                      <p className="text-sm text-muted-foreground">{record.endereco_completo}</p>
+          {recentRecords.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Nenhum registro encontrado.
+            </div>
+          ) : (
+            <div className="grid gap-3 max-h-[500px] overflow-y-auto pr-2">
+              {recentRecords.map((record) => (
+                <div key={record.id} className="p-4 border rounded-lg bg-card hover:bg-accent/50 transition-colors">
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-base">{record.nome_escola}</h4>
+                        <p className="text-sm text-muted-foreground">{record.endereco_completo}</p>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-semibold text-primary">
+                          {new Intl.NumberFormat('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                          }).format(parseFloat(record.valor_gasto || 0))}
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="font-semibold text-primary">
-                        {new Intl.NumberFormat('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        }).format(parseFloat(record.valor_gasto || 0))}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                      <div>
+                        <span className="text-muted-foreground">Cadastro:</span>
+                        <p className="font-medium">{record.cadastro}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Mês/Ano:</span>
+                        <p className="font-medium">{record.mes_ano_referencia}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Consumo:</span>
+                        <p className="font-medium">{record.consumo_m3}m³</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Data:</span>
+                        <p className="font-medium">
+                          {new Date(record.created_at).toLocaleDateString('pt-BR')}
+                        </p>
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Cadastro:</span>
-                      <p className="font-medium">{record.cadastro}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Mês/Ano:</span>
-                      <p className="font-medium">{record.mes_ano_referencia}</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Consumo:</span>
-                      <p className="font-medium">{record.consumo_m3}m³</p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Data:</span>
-                      <p className="font-medium">
-                        {new Date(record.created_at).toLocaleDateString('pt-BR')}
-                      </p>
-                    </div>
-                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     )}

@@ -45,8 +45,7 @@ export function WaterCharts() {
   const fetchData = async () => {
     const { data: records, error } = await supabase
       .from('school_records')
-      .select('*')
-      .eq('user_id', user?.id);
+      .select('*');
 
     if (!error && records) {
       console.log('Dados carregados para gráficos:', records.length);
