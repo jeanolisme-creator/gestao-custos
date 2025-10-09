@@ -10,7 +10,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useSchools } from '@/hooks/useSchools';
-import { Search } from 'lucide-react';
+import { Search, FileText, FileSpreadsheet, Calendar } from 'lucide-react';
+import { MonthlyDataWizard } from '@/components/water/MonthlyDataWizard';
 
 const macroregiaoOptions = ['HB', 'Vila Toninho', 'Schmidt', 'Represa', 'Bosque', 'Talhado', 'Central', 'Cidade da Criança', 'Pinheirinho', 'Ceu'];
 
@@ -48,6 +49,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   
   const [showSchoolSearch, setShowSchoolSearch] = useState(false);
   const [searchSchoolTerm, setSearchSchoolTerm] = useState('');
+  const [monthlyWizardOpen, setMonthlyWizardOpen] = useState(false);
 
   useEffect(() => {
     if (editData) {
@@ -190,12 +192,50 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   return (
     <Card>
       <CardHeader>
-        <CardTitle>
-          {viewMode ? "Visualizar Registro" : editData ? "Editar Registro" : "Novo Cadastro"} - Gestão de Água
-        </CardTitle>
-        <CardDescription>
-          {viewMode ? "Detalhes do registro de água" : "Preencha os dados do registro de água"}
-        </CardDescription>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle>
+              {viewMode ? "Visualizar Registro" : editData ? "Editar Registro" : "Novo Cadastro"} - Gestão de Água
+            </CardTitle>
+            <CardDescription>
+              {viewMode ? "Detalhes do registro de água" : "Preencha os dados do registro de água"}
+            </CardDescription>
+          </div>
+          {!viewMode && (
+            <div className="flex flex-wrap gap-2 justify-end">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() =>
+                  toast({
+                    title: "Em desenvolvimento",
+                    description: "Funcionalidade de importação CSV em breve",
+                  })
+                }
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Importar CSV
+              </Button>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() =>
+                  toast({
+                    title: "Em desenvolvimento",
+                    description: "Funcionalidade de importação XLSX em breve",
+                  })
+                }
+              >
+                <FileSpreadsheet className="mr-2 h-4 w-4" />
+                Importar XLSX
+              </Button>
+              <Button type="button" onClick={() => setMonthlyWizardOpen(true)}>
+                <Calendar className="mr-2 h-4 w-4" />
+                Dados Mensais
+              </Button>
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -465,6 +505,11 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
           )}
         </form>
       </CardContent>
+      <MonthlyDataWizard
+        open={monthlyWizardOpen}
+        onOpenChange={setMonthlyWizardOpen}
+        onSuccess={onSuccess}
+      />
     </Card>
   );
 }
