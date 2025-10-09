@@ -18,11 +18,13 @@ interface MonthlyDataWizardProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  initialMonth?: string;
+  initialSchoolIndex?: number;
 }
 
 const macroregiaoOptions = ['HB', 'Vila Toninho', 'Schmidt', 'Represa', 'Bosque', 'Talhado', 'Central', 'Cidade da Criança', 'Pinheirinho', 'Ceu'];
 
-export function MonthlyDataWizard({ open, onOpenChange, onSuccess }: MonthlyDataWizardProps) {
+export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth, initialSchoolIndex }: MonthlyDataWizardProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { schools } = useSchools();
@@ -31,6 +33,16 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess }: MonthlyData
   const [selectedMonth, setSelectedMonth] = useState('');
   const [currentSchoolIndex, setCurrentSchoolIndex] = useState(0);
   const [filledSchools, setFilledSchools] = useState<Set<number>>(new Set());
+
+  // Load initial values if provided
+  useEffect(() => {
+    if (open && initialMonth && initialSchoolIndex !== undefined) {
+      setSelectedMonth(initialMonth);
+      setCurrentSchoolIndex(initialSchoolIndex);
+      setStep('fill-data');
+      loadPendingSchools(initialMonth);
+    }
+  }, [open, initialMonth, initialSchoolIndex]);
   const [formData, setFormData] = useState({
     cadastro: '',
     data_leitura_anterior: '',
@@ -52,6 +64,9 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess }: MonthlyData
 
   useEffect(() => {
     if (currentSchool && step === 'fill-data') {
+      // Cache schools in localStorage for pending list
+      localStorage.setItem('cached_schools', JSON.stringify(schools));
+      
       // Reset form with current school data
       setFormData({
         cadastro: '',
@@ -67,7 +82,51 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess }: MonthlyData
         ocorrencias_pendencias: ''
       });
     }
-  }, [currentSchoolIndex, currentSchool, step]);
+  }, [currentSchoolIndex, currentSchool, step, schools]);
+
+  const loadPendingSchools = (month: string) => {
+    const stored = localStorage.getItem('water_pending_schools');
+    if (stored) {
+      const pendingData = JSON.parse(stored);
+      if (pendingData[month]) {
+        // Don't mark as filled if they're in pending list
+        const allSchools = new Set<number>();
+        schools.forEach((_, idx) => {
+          if (!pendingData[month].includes(idx)) {
+            allSchools.add(idx);
+          }
+        });
+        setFilledSchools(allSchools);
+      }
+    }
+  };
+
+  const savePendingSchools = (month: string, indices: number[]) => {
+    const stored = localStorage.getItem('water_pending_schools');
+    const pendingData = stored ? JSON.parse(stored) : {};
+    
+    if (indices.length === 0) {
+      delete pendingData[month];
+    } else {
+      pendingData[month] = indices;
+    }
+    
+    localStorage.setItem('water_pending_schools', JSON.stringify(pendingData));
+  };
+
+  const removePendingSchool = (month: string, schoolIndex: number) => {
+    const stored = localStorage.getItem('water_pending_schools');
+    if (stored) {
+      const pendingData = JSON.parse(stored);
+      if (pendingData[month]) {
+        pendingData[month] = pendingData[month].filter((idx: number) => idx !== schoolIndex);
+        if (pendingData[month].length === 0) {
+          delete pendingData[month];
+        }
+        localStorage.setItem('water_pending_schools', JSON.stringify(pendingData));
+      }
+    }
+  };
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -97,6 +156,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess }: MonthlyData
     
     setStep('fill-data');
     setCurrentSchoolIndex(0);
+    loadPendingSchools(selectedMonth);
   };
 
   const handleSaveAndNext = async () => {
@@ -150,8 +210,9 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess }: MonthlyData
       description: `Dados de ${currentSchool.nome_escola} salvos com sucesso`
     });
 
-    // Mark school as filled
+    // Mark school as filled and remove from pending
     setFilledSchools(prev => new Set(prev).add(currentSchoolIndex));
+    removePendingSchool(selectedMonth, currentSchoolIndex);
 
     // Move to next school or finish
     if (currentSchoolIndex < schools.length - 1) {
@@ -168,6 +229,19 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess }: MonthlyData
   };
 
   const handleSkipSchool = () => {
+    // Add to pending list
+    const stored = localStorage.getItem('water_pending_schools');
+    const pendingData = stored ? JSON.parse(stored) : {};
+    
+    if (!pendingData[selectedMonth]) {
+      pendingData[selectedMonth] = [];
+    }
+    
+    if (!pendingData[selectedMonth].includes(currentSchoolIndex)) {
+      pendingData[selectedMonth].push(currentSchoolIndex);
+      localStorage.setItem('water_pending_schools', JSON.stringify(pendingData));
+    }
+
     if (currentSchoolIndex < schools.length - 1) {
       setCurrentSchoolIndex(prev => prev + 1);
       toast({

@@ -10,8 +10,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useSchools } from '@/hooks/useSchools';
-import { Search, FileText, FileSpreadsheet, Calendar } from 'lucide-react';
+import { Search, FileText, FileSpreadsheet, Calendar, AlertCircle } from 'lucide-react';
 import { MonthlyDataWizard } from '@/components/water/MonthlyDataWizard';
+import { PendingSchools } from '@/components/water/PendingSchools';
 
 const macroregiaoOptions = ['HB', 'Vila Toninho', 'Schmidt', 'Represa', 'Bosque', 'Talhado', 'Central', 'Cidade da Criança', 'Pinheirinho', 'Ceu'];
 
@@ -50,6 +51,9 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   const [showSchoolSearch, setShowSchoolSearch] = useState(false);
   const [searchSchoolTerm, setSearchSchoolTerm] = useState('');
   const [monthlyWizardOpen, setMonthlyWizardOpen] = useState(false);
+  const [pendingDialogOpen, setPendingDialogOpen] = useState(false);
+  const [pendingMonth, setPendingMonth] = useState<string>();
+  const [pendingSchoolIndex, setPendingSchoolIndex] = useState<number>();
 
   useEffect(() => {
     if (editData) {
@@ -232,6 +236,14 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
               <Button type="button" onClick={() => setMonthlyWizardOpen(true)}>
                 <Calendar className="mr-2 h-4 w-4" />
                 Dados Mensais
+              </Button>
+              <Button 
+                type="button" 
+                variant="secondary"
+                onClick={() => setPendingDialogOpen(true)}
+              >
+                <AlertCircle className="mr-2 h-4 w-4" />
+                Pendências
               </Button>
             </div>
           )}
@@ -507,8 +519,25 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
       </CardContent>
       <MonthlyDataWizard
         open={monthlyWizardOpen}
-        onOpenChange={setMonthlyWizardOpen}
+        onOpenChange={(open) => {
+          setMonthlyWizardOpen(open);
+          if (!open) {
+            setPendingMonth(undefined);
+            setPendingSchoolIndex(undefined);
+          }
+        }}
         onSuccess={onSuccess}
+        initialMonth={pendingMonth}
+        initialSchoolIndex={pendingSchoolIndex}
+      />
+      <PendingSchools
+        open={pendingDialogOpen}
+        onOpenChange={setPendingDialogOpen}
+        onSelectPending={(month, schoolIndex) => {
+          setPendingMonth(month);
+          setPendingSchoolIndex(schoolIndex);
+          setMonthlyWizardOpen(true);
+        }}
       />
     </Card>
   );
