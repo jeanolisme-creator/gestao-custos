@@ -490,6 +490,7 @@ export type Database = {
           descricao_servicos: string | null
           endereco_completo: string | null
           hidrometro: string | null
+          hidrometros: Json | null
           id: string
           macroregiao: string | null
           mes_ano_referencia: string
@@ -516,6 +517,7 @@ export type Database = {
           descricao_servicos?: string | null
           endereco_completo?: string | null
           hidrometro?: string | null
+          hidrometros?: Json | null
           id?: string
           macroregiao?: string | null
           mes_ano_referencia: string
@@ -542,6 +544,7 @@ export type Database = {
           descricao_servicos?: string | null
           endereco_completo?: string | null
           hidrometro?: string | null
+          hidrometros?: Json | null
           id?: string
           macroregiao?: string | null
           mes_ano_referencia?: string
