@@ -466,6 +466,15 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
                         />
                       </div>
                       <div className="flex-1 space-y-1">
+                        <Label className="text-xs text-muted-foreground">Hidrômetro</Label>
+                        <Input
+                          value={formData.hidrometros[index] || ''}
+                          onChange={(e) => handleHidrometroChange(index, e.target.value)}
+                          placeholder="Nº Hidrômetro"
+                          disabled={viewMode}
+                        />
+                      </div>
+                      <div className="flex-1 space-y-1">
                         <Label className="text-xs text-muted-foreground">Valor (R$)</Label>
                         <CurrencyInput
                           value={formData.valores_cadastros[index] || ''}
