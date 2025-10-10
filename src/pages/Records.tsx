@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Droplets, Zap, Phone, Smartphone, Search, Upload } from 'lucide-react';
+import { Plus, Droplets, Zap, Phone, Smartphone, Search, Upload, Calendar, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -15,6 +15,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useSchools } from '@/hooks/useSchools';
+import { MonthlyDataWizard } from '@/components/energy/MonthlyDataWizard';
+import { PendingSchools } from '@/components/energy/PendingSchools';
 
 type SystemType = 'water' | 'energy' | 'fixed-line' | 'mobile';
 
@@ -101,6 +103,10 @@ export default function Records() {
   const [prefillSchool, setPrefillSchool] = useState<string>('');
   const [showSchoolSearch, setShowSchoolSearch] = useState(false);
   const [searchSchoolTerm, setSearchSchoolTerm] = useState('');
+  const [showMonthlyWizard, setShowMonthlyWizard] = useState(false);
+  const [showPending, setShowPending] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [pendingCount, setPendingCount] = useState(0);
   
   const { user } = useAuth();
   const { toast } = useToast();
@@ -252,6 +258,17 @@ export default function Records() {
     } else {
       setRecords(data || []);
     }
+    
+    // Check for pending schools if energy system
+    if (currentSystem === 'energy') {
+      const { data: pending } = await supabase
+        .from("energy_records")
+        .select("id")
+        .eq("cadastro_cliente", "PENDENTE");
+      
+      setPendingCount(pending?.length || 0);
+    }
+    
     setLoading(false);
   };
 
@@ -407,14 +424,34 @@ export default function Records() {
           </h1>
           <p className="text-muted-foreground">Gerencie os registros de {config.name.toLowerCase()}</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Registro
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="flex gap-2">
+          {currentSystem === 'energy' && (
+            <>
+              <Button
+                variant={pendingCount > 0 ? "default" : "outline"}
+                className={pendingCount > 0 ? "bg-yellow-500 hover:bg-yellow-600 text-white" : ""}
+                onClick={() => setShowPending(true)}
+              >
+                <AlertCircle className="mr-2 h-4 w-4" />
+                Pendências {pendingCount > 0 && `(${pendingCount})`}
+              </Button>
+              <Button
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+                onClick={() => setShowMonthlyWizard(true)}
+              >
+                <Calendar className="mr-2 h-4 w-4" />
+                Dados Mensais
+              </Button>
+            </>
+          )}
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Registro
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Novo Registro - {config.name}</DialogTitle>
               <DialogDescription>
@@ -539,6 +576,7 @@ export default function Records() {
           </DialogContent>
         </Dialog>
       </div>
+    </div>
 
       <Card>
         <CardHeader>
@@ -590,6 +628,77 @@ export default function Records() {
           )}
         </CardContent>
       </Card>
+      
+      {/* Monthly Wizard Dialog */}
+      {currentSystem === 'energy' && (
+        <>
+          <Dialog open={showMonthlyWizard} onOpenChange={setShowMonthlyWizard}>
+            <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
+              <DialogHeader>
+                <DialogTitle>Cadastro de Dados Mensais</DialogTitle>
+              </DialogHeader>
+              {!selectedMonth ? (
+                <div className="space-y-4 p-6">
+                  <Label>Selecione o Mês de Referência</Label>
+                  <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o mês..." />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[400px] overflow-y-auto">
+                      {[
+                        'Janeiro/2025', 'Fevereiro/2025', 'Março/2025', 'Abril/2025', 'Maio/2025', 'Junho/2025',
+                        'Julho/2025', 'Agosto/2025', 'Setembro/2025', 'Outubro/2025', 'Novembro/2025', 'Dezembro/2025',
+                        'Janeiro/2026', 'Fevereiro/2026', 'Março/2026', 'Abril/2026', 'Maio/2026', 'Junho/2026',
+                        'Julho/2026', 'Agosto/2026', 'Setembro/2026', 'Outubro/2026', 'Novembro/2026', 'Dezembro/2026',
+                        'Janeiro/2027', 'Fevereiro/2027', 'Março/2027', 'Abril/2027', 'Maio/2027', 'Junho/2027',
+                        'Julho/2027', 'Agosto/2027', 'Setembro/2027', 'Outubro/2027', 'Novembro/2027', 'Dezembro/2027'
+                      ].map(m => (
+                        <SelectItem key={m} value={m}>{m}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => {
+                      setShowMonthlyWizard(false);
+                      setSelectedMonth("");
+                    }}>Cancelar</Button>
+                    <Button 
+                      onClick={() => {
+                        if (selectedMonth) {
+                          // O wizard será mostrado automaticamente
+                        }
+                      }} 
+                      disabled={!selectedMonth}
+                    >
+                      Avançar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="overflow-y-auto">
+                  <MonthlyDataWizard 
+                    selectedMonth={selectedMonth} 
+                    onClose={() => {
+                      setShowMonthlyWizard(false);
+                      setSelectedMonth("");
+                      fetchRecords();
+                    }} 
+                  />
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={showPending} onOpenChange={setShowPending}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <PendingSchools onClose={() => {
+                setShowPending(false);
+                fetchRecords();
+              }} />
+            </DialogContent>
+          </Dialog>
+        </>
+      )}
     </div>
   );
 }
