@@ -366,16 +366,34 @@ export default function EnergyManagement() {
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione o mês..." />
                 </SelectTrigger>
-                <SelectContent>
-                  {['Janeiro/2025', 'Fevereiro/2025', 'Março/2025', 'Abril/2025', 'Maio/2025', 'Junho/2025',
-                    'Julho/2025', 'Agosto/2025', 'Setembro/2025', 'Outubro/2025', 'Novembro/2025', 'Dezembro/2025'].map(m => (
+                <SelectContent className="max-h-[400px] overflow-y-auto">
+                  {[
+                    'Janeiro/2025', 'Fevereiro/2025', 'Março/2025', 'Abril/2025', 'Maio/2025', 'Junho/2025',
+                    'Julho/2025', 'Agosto/2025', 'Setembro/2025', 'Outubro/2025', 'Novembro/2025', 'Dezembro/2025',
+                    'Janeiro/2026', 'Fevereiro/2026', 'Março/2026', 'Abril/2026', 'Maio/2026', 'Junho/2026',
+                    'Julho/2026', 'Agosto/2026', 'Setembro/2026', 'Outubro/2026', 'Novembro/2026', 'Dezembro/2026',
+                    'Janeiro/2027', 'Fevereiro/2027', 'Março/2027', 'Abril/2027', 'Maio/2027', 'Junho/2027',
+                    'Julho/2027', 'Agosto/2027', 'Setembro/2027', 'Outubro/2027', 'Novembro/2027', 'Dezembro/2027'
+                  ].map(m => (
                     <SelectItem key={m} value={m}>{m}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setShowMonthlyWizard(false)}>Cancelar</Button>
-                <Button onClick={() => selectedMonth && toast({ title: "Iniciando", description: "Carregando escolas..." })} disabled={!selectedMonth}>Avançar</Button>
+                <Button variant="outline" onClick={() => {
+                  setShowMonthlyWizard(false);
+                  setSelectedMonth("");
+                }}>Cancelar</Button>
+                <Button 
+                  onClick={() => {
+                    if (selectedMonth) {
+                      // O wizard será mostrado automaticamente quando selectedMonth tiver valor
+                    }
+                  }} 
+                  disabled={!selectedMonth}
+                >
+                  Avançar
+                </Button>
               </div>
             </div>
           ) : (
