@@ -703,7 +703,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">Hidrômetro</Label>
                           <Input
-                            value={formData.hidrometros[index] || ''}
+                            value={formData.hidrometros[index] ?? ''}
                             onChange={(e) => handleHidrometroChange(index, e.target.value)}
                             placeholder="Nº Hidrômetro"
                             disabled={isSchoolAlreadyFilled && !isEditing}
@@ -714,7 +714,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                           <Input
                             type="number"
                             step="0.01"
-                            value={formData.consumos_m3[index] || ''}
+                            value={formData.consumos_m3[index] ?? ''}
                             onChange={(e) => handleConsumoChange(index, e.target.value)}
                             placeholder="0.00"
                             disabled={isSchoolAlreadyFilled && !isEditing}
@@ -724,7 +724,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                           <Label className="text-xs text-muted-foreground">Nº de dias</Label>
                           <Input
                             type="number"
-                            value={formData.numeros_dias[index] || ''}
+                            value={formData.numeros_dias[index] ?? ''}
                             onChange={(e) => handleNumeroDiasChange(index, e.target.value)}
                             placeholder="30"
                             disabled={isSchoolAlreadyFilled && !isEditing}
@@ -734,7 +734,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                           <Label className="text-xs text-muted-foreground">Data Leitura Anterior</Label>
                           <Input
                             type="date"
-                            value={formData.datas_leitura_anterior[index] || ''}
+                            value={formData.datas_leitura_anterior[index] ?? ''}
                             onChange={(e) => handleDataLeituraAnteriorChange(index, e.target.value)}
                             disabled={isSchoolAlreadyFilled && !isEditing}
                           />
@@ -743,7 +743,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                           <Label className="text-xs text-muted-foreground">Data Leitura Atual</Label>
                           <Input
                             type="date"
-                            value={formData.datas_leitura_atual[index] || ''}
+                            value={formData.datas_leitura_atual[index] ?? ''}
                             onChange={(e) => handleDataLeituraAtualChange(index, e.target.value)}
                             disabled={isSchoolAlreadyFilled && !isEditing}
                           />
@@ -752,7 +752,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                           <Label className="text-xs text-muted-foreground">Data de Vencimento</Label>
                           <Input
                             type="date"
-                            value={formData.datas_vencimento[index] || ''}
+                            value={formData.datas_vencimento[index] ?? ''}
                             onChange={(e) => handleDataVencimentoChange(index, e.target.value)}
                             disabled={isSchoolAlreadyFilled && !isEditing}
                           />
@@ -760,7 +760,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">Valor (R$)</Label>
                           <CurrencyInput
-                            value={formData.valores_cadastros[index] || ''}
+                            value={formData.valores_cadastros[index] ?? ''}
                             onValueChange={(formatted) => handleValorCadastroChange(index, formatted)}
                             placeholder="R$ 0,00"
                             disabled={isSchoolAlreadyFilled && !isEditing}
