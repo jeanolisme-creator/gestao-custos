@@ -33,6 +33,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
   const [selectedMonth, setSelectedMonth] = useState('');
   const [currentSchoolIndex, setCurrentSchoolIndex] = useState(0);
   const [filledSchools, setFilledSchools] = useState<Set<number>>(new Set());
+  const [isEditing, setIsEditing] = useState(false);
 
   // Load initial values if provided
   useEffect(() => {
@@ -165,6 +166,11 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
         });
       } else {
         // Reset form with empty data
+        setFilledSchools(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(currentSchoolIndex);
+          return newSet;
+        });
         setFormData({
           cadastros: [''],
           hidrometros: [''],
@@ -184,6 +190,9 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
           ocorrencias_pendencias: ''
         });
       }
+      
+      // Reset editing state when school changes
+      setIsEditing(false);
     };
 
     loadExistingData();
@@ -493,6 +502,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     setSelectedMonth('');
     setCurrentSchoolIndex(0);
     setFilledSchools(new Set());
+    setIsEditing(false);
     setFormData({
       cadastros: [''],
       hidrometros: [''],
@@ -588,14 +598,16 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
               <div className="space-y-2 md:col-span-2">
                 <div className="flex items-center justify-between">
                   <Label>Cadastro(s) e Valores *</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddCadastro}
-                  >
-                    <span className="text-xs">+ Adicionar mais um número de cadastro</span>
-                  </Button>
+                  {(!isSchoolAlreadyFilled || isEditing) && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleAddCadastro}
+                    >
+                      <span className="text-xs">+ Adicionar mais um número de cadastro</span>
+                    </Button>
+                  )}
                 </div>
                 <div className="space-y-3">
                   {formData.cadastros.map((cadastro, index) => (
@@ -608,6 +620,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                             onChange={(e) => handleCadastroChange(index, e.target.value)}
                             placeholder={`Nº cadastro ${index + 1}`}
                             required={index === 0}
+                            disabled={isSchoolAlreadyFilled && !isEditing}
                           />
                         </div>
                         <div className="space-y-1">
@@ -616,6 +629,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                             value={formData.hidrometros[index] || ''}
                             onChange={(e) => handleHidrometroChange(index, e.target.value)}
                             placeholder="Nº Hidrômetro"
+                            disabled={isSchoolAlreadyFilled && !isEditing}
                           />
                         </div>
                         <div className="space-y-1">
@@ -626,6 +640,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                             value={formData.consumos_m3[index] || ''}
                             onChange={(e) => handleConsumoChange(index, e.target.value)}
                             placeholder="0.00"
+                            disabled={isSchoolAlreadyFilled && !isEditing}
                           />
                         </div>
                         <div className="space-y-1">
@@ -635,6 +650,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                             value={formData.numeros_dias[index] || ''}
                             onChange={(e) => handleNumeroDiasChange(index, e.target.value)}
                             placeholder="30"
+                            disabled={isSchoolAlreadyFilled && !isEditing}
                           />
                         </div>
                         <div className="space-y-1">
@@ -643,6 +659,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                             type="date"
                             value={formData.datas_leitura_anterior[index] || ''}
                             onChange={(e) => handleDataLeituraAnteriorChange(index, e.target.value)}
+                            disabled={isSchoolAlreadyFilled && !isEditing}
                           />
                         </div>
                         <div className="space-y-1">
@@ -651,6 +668,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                             type="date"
                             value={formData.datas_leitura_atual[index] || ''}
                             onChange={(e) => handleDataLeituraAtualChange(index, e.target.value)}
+                            disabled={isSchoolAlreadyFilled && !isEditing}
                           />
                         </div>
                         <div className="space-y-1">
@@ -659,6 +677,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                             type="date"
                             value={formData.datas_vencimento[index] || ''}
                             onChange={(e) => handleDataVencimentoChange(index, e.target.value)}
+                            disabled={isSchoolAlreadyFilled && !isEditing}
                           />
                         </div>
                         <div className="space-y-1">
@@ -667,10 +686,11 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                             value={formData.valores_cadastros[index] || ''}
                             onValueChange={(formatted) => handleValorCadastroChange(index, formatted)}
                             placeholder="R$ 0,00"
+                            disabled={isSchoolAlreadyFilled && !isEditing}
                           />
                         </div>
                       </div>
-                      {formData.cadastros.length > 1 && (
+                      {formData.cadastros.length > 1 && (!isSchoolAlreadyFilled || isEditing) && (
                         <Button
                           type="button"
                           variant="destructive"
@@ -704,6 +724,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                   value={formData.valor_servicos}
                   onValueChange={(formatted, numeric) => handleInputChange('valor_servicos', formatted)}
                   placeholder="R$ 0,00"
+                  disabled={isSchoolAlreadyFilled && !isEditing}
                 />
               </div>
 
@@ -713,6 +734,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                   id="descricao_servicos"
                   value={formData.descricao_servicos}
                   onChange={(e) => handleInputChange('descricao_servicos', e.target.value)}
+                  disabled={isSchoolAlreadyFilled && !isEditing}
                 />
               </div>
 
@@ -722,6 +744,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                   id="ocorrencias_pendencias"
                   value={formData.ocorrencias_pendencias}
                   onChange={(e) => handleInputChange('ocorrencias_pendencias', e.target.value)}
+                  disabled={isSchoolAlreadyFilled && !isEditing}
                 />
               </div>
             </div>
@@ -736,19 +759,22 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                     Voltar
                   </Button>
                 )}
-                <Button type="button" variant="outline" onClick={handleSkipSchool}>
-                  Pular Escola
-                </Button>
-              </div>
-              <div className="flex gap-2">
-                {isSchoolAlreadyFilled && (
-                  <Button type="button" variant="secondary" onClick={handleSaveAndNext}>
-                    Editar
+                {(!isSchoolAlreadyFilled || isEditing) && (
+                  <Button type="button" variant="outline" onClick={handleSkipSchool}>
+                    Pular Escola
                   </Button>
                 )}
-                <Button onClick={handleSaveAndNext}>
-                  {currentSchoolIndex < schools.length - 1 ? 'Próxima Escola' : 'Finalizar'}
-                </Button>
+              </div>
+              <div className="flex gap-2">
+                {isSchoolAlreadyFilled && !isEditing ? (
+                  <Button type="button" onClick={() => setIsEditing(true)}>
+                    Editar
+                  </Button>
+                ) : (
+                  <Button onClick={handleSaveAndNext}>
+                    {currentSchoolIndex < schools.length - 1 ? 'Salvar e Próxima' : 'Salvar e Finalizar'}
+                  </Button>
+                )}
               </div>
             </div>
           </div>
