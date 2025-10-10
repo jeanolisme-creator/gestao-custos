@@ -117,9 +117,18 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
           return valor ? formatCurrency(valor) : '';
         });
 
-        // Parse hidrometros - fallback to old hidrometro field if new doesn't exist
+        // Parse hidrometros - use hidrometros field (JSONB array) with fallback to old hidrometro field
         let hidrometrosArray = [''];
-        if (record.hidrometro) {
+        if (record.hidrometros) {
+          try {
+            hidrometrosArray = typeof record.hidrometros === 'string' 
+              ? JSON.parse(record.hidrometros) 
+              : record.hidrometros;
+          } catch {
+            hidrometrosArray = [''];
+          }
+        } else if (record.hidrometro) {
+          // Fallback to old single hidrometro field
           try {
             hidrometrosArray = JSON.parse(record.hidrometro as string);
           } catch {
@@ -347,12 +356,12 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     const submitData: any = { 
       user_id: user.id,
       cadastro: JSON.stringify(formData.cadastros.filter(c => c.trim() !== '')),
-      hidrometros: JSON.stringify(formData.hidrometros),
-      consumos_m3: JSON.stringify(formData.consumos_m3.map(c => parseFloat(c) || 0)),
-      numeros_dias: JSON.stringify(formData.numeros_dias.map(n => parseInt(n) || 0)),
-      datas_leitura_anterior: JSON.stringify(formData.datas_leitura_anterior),
-      datas_leitura_atual: JSON.stringify(formData.datas_leitura_atual),
-      datas_vencimento: JSON.stringify(formData.datas_vencimento),
+      hidrometros: formData.hidrometros, // JSONB field - Supabase handles serialization
+      consumos_m3: formData.consumos_m3.map(c => parseFloat(c) || 0), // JSONB field
+      numeros_dias: formData.numeros_dias.map(n => parseInt(n) || 0), // JSONB field
+      datas_leitura_anterior: formData.datas_leitura_anterior, // JSONB field
+      datas_leitura_atual: formData.datas_leitura_atual, // JSONB field
+      datas_vencimento: formData.datas_vencimento, // JSONB field
       proprietario: currentSchool.proprietario || '',
       nome_escola: currentSchool.nome_escola,
       endereco_completo: currentSchool.endereco_completo || '',

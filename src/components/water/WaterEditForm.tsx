@@ -54,13 +54,24 @@ export function WaterEditForm({ record, onSave, onCancel }: WaterEditFormProps) 
         }
       }
 
-      // Parse arrays
-      const hidrometrosArray = record.hidrometros ? JSON.parse(record.hidrometros) : [''];
-      const consumosArray = record.consumos_m3 ? JSON.parse(record.consumos_m3) : [''];
-      const numerosDiasArray = record.numeros_dias ? JSON.parse(record.numeros_dias) : [''];
-      const datasLeituraAnteriorArray = record.datas_leitura_anterior ? JSON.parse(record.datas_leitura_anterior) : [''];
-      const datasLeituraAtualArray = record.datas_leitura_atual ? JSON.parse(record.datas_leitura_atual) : [''];
-      const datasVencimentoArray = record.datas_vencimento ? JSON.parse(record.datas_vencimento) : [''];
+      // Parse arrays - handle both JSONB (already parsed) and JSON strings
+      const parseArrayField = (field: any, defaultValue: any[] = ['']) => {
+        if (!field) return defaultValue;
+        if (Array.isArray(field)) return field; // Already parsed JSONB
+        try {
+          const parsed = JSON.parse(field);
+          return Array.isArray(parsed) ? parsed : defaultValue;
+        } catch {
+          return defaultValue;
+        }
+      };
+
+      const hidrometrosArray = parseArrayField(record.hidrometros, ['']);
+      const consumosArray = parseArrayField(record.consumos_m3, ['']);
+      const numerosDiasArray = parseArrayField(record.numeros_dias, ['']);
+      const datasLeituraAnteriorArray = parseArrayField(record.datas_leitura_anterior, ['']);
+      const datasLeituraAtualArray = parseArrayField(record.datas_leitura_atual, ['']);
+      const datasVencimentoArray = parseArrayField(record.datas_vencimento, ['']);
       
       // Parse valores_cadastros
       let valoresArray = [];
@@ -127,13 +138,13 @@ export function WaterEditForm({ record, onSave, onCancel }: WaterEditFormProps) 
 
     const updatedData: any = {
       cadastro: JSON.stringify(formData.cadastros.filter(c => c.trim() !== '')),
-      hidrometros: JSON.stringify(formData.hidrometros),
-      consumos_m3: JSON.stringify(formData.consumos_m3.map(c => parseFloat(c) || 0)),
-      numeros_dias: JSON.stringify(formData.numeros_dias.map(n => parseInt(n) || 0)),
-      datas_leitura_anterior: JSON.stringify(formData.datas_leitura_anterior),
-      datas_leitura_atual: JSON.stringify(formData.datas_leitura_atual),
-      datas_vencimento: JSON.stringify(formData.datas_vencimento),
-      valores_cadastros: JSON.stringify(valoresNumeric),
+      hidrometros: formData.hidrometros, // JSONB field - Supabase handles serialization
+      consumos_m3: formData.consumos_m3.map(c => parseFloat(c) || 0), // JSONB field
+      numeros_dias: formData.numeros_dias.map(n => parseInt(n) || 0), // JSONB field
+      datas_leitura_anterior: formData.datas_leitura_anterior, // JSONB field
+      datas_leitura_atual: formData.datas_leitura_atual, // JSONB field
+      datas_vencimento: formData.datas_vencimento, // JSONB field
+      valores_cadastros: valoresNumeric, // JSONB field
       nome_escola: formData.nome_escola,
       responsavel: formData.responsavel,
       endereco_completo: formData.endereco_completo,
