@@ -208,52 +208,102 @@ export function WaterEditForm({ record, onSave, onCancel }: WaterEditFormProps) 
   };
 
   const updateHidrometro = (index: number, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      hidrometros: prev.hidrometros.map((h, i) => i === index ? value : h)
-    }));
+    setFormData(prev => {
+      const newHidrometros = [...prev.hidrometros];
+      // Ensure array has enough elements
+      while (newHidrometros.length <= index) {
+        newHidrometros.push('');
+      }
+      newHidrometros[index] = value;
+      return {
+        ...prev,
+        hidrometros: newHidrometros
+      };
+    });
   };
 
   const updateConsumo = (index: number, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      consumos_m3: prev.consumos_m3.map((c, i) => i === index ? value : c)
-    }));
+    setFormData(prev => {
+      const newConsumos = [...prev.consumos_m3];
+      while (newConsumos.length <= index) {
+        newConsumos.push('');
+      }
+      newConsumos[index] = value;
+      return {
+        ...prev,
+        consumos_m3: newConsumos
+      };
+    });
   };
 
   const updateNumeroDias = (index: number, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      numeros_dias: prev.numeros_dias.map((n, i) => i === index ? value : n)
-    }));
+    setFormData(prev => {
+      const newNumerosDias = [...prev.numeros_dias];
+      while (newNumerosDias.length <= index) {
+        newNumerosDias.push('');
+      }
+      newNumerosDias[index] = value;
+      return {
+        ...prev,
+        numeros_dias: newNumerosDias
+      };
+    });
   };
 
   const updateDataLeituraAnterior = (index: number, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      datas_leitura_anterior: prev.datas_leitura_anterior.map((d, i) => i === index ? value : d)
-    }));
+    setFormData(prev => {
+      const newDatas = [...prev.datas_leitura_anterior];
+      while (newDatas.length <= index) {
+        newDatas.push('');
+      }
+      newDatas[index] = value;
+      return {
+        ...prev,
+        datas_leitura_anterior: newDatas
+      };
+    });
   };
 
   const updateDataLeituraAtual = (index: number, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      datas_leitura_atual: prev.datas_leitura_atual.map((d, i) => i === index ? value : d)
-    }));
+    setFormData(prev => {
+      const newDatas = [...prev.datas_leitura_atual];
+      while (newDatas.length <= index) {
+        newDatas.push('');
+      }
+      newDatas[index] = value;
+      return {
+        ...prev,
+        datas_leitura_atual: newDatas
+      };
+    });
   };
 
   const updateDataVencimento = (index: number, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      datas_vencimento: prev.datas_vencimento.map((d, i) => i === index ? value : d)
-    }));
+    setFormData(prev => {
+      const newDatas = [...prev.datas_vencimento];
+      while (newDatas.length <= index) {
+        newDatas.push('');
+      }
+      newDatas[index] = value;
+      return {
+        ...prev,
+        datas_vencimento: newDatas
+      };
+    });
   };
 
   const updateValorCadastro = (index: number, formatted: string) => {
-    setFormData(prev => ({
-      ...prev,
-      valores_cadastros: prev.valores_cadastros.map((v, i) => i === index ? formatted : v)
-    }));
+    setFormData(prev => {
+      const newValores = [...prev.valores_cadastros];
+      while (newValores.length <= index) {
+        newValores.push('');
+      }
+      newValores[index] = formatted;
+      return {
+        ...prev,
+        valores_cadastros: newValores
+      };
+    });
   };
 
   return (
