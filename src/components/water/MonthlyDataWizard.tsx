@@ -96,11 +96,13 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
         return;
       }
 
-      if (existingRecords && existingRecords.length > 0) {
-        const record = existingRecords[0];
-        
-        // Mark as filled
-        setFilledSchools(prev => new Set(prev).add(currentSchoolIndex));
+    if (existingRecords && existingRecords.length > 0) {
+      const record = existingRecords[0];
+      
+      console.log('Carregando dados existentes:', record);
+      
+      // Mark as filled
+      setFilledSchools(prev => new Set(prev).add(currentSchoolIndex));
 
         // Format currency values
         const formatCurrency = (value: number | null) => {
@@ -118,52 +120,72 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
           return valor ? formatCurrency(valor) : '';
         });
 
-        // Parse hidrometros - use hidrometros field (JSONB array) with fallback to old hidrometro field
-        let hidrometrosArray = [''];
-        if (record.hidrometros) {
-          try {
-            hidrometrosArray = typeof record.hidrometros === 'string' 
-              ? JSON.parse(record.hidrometros) 
-              : record.hidrometros;
-          } catch {
-            hidrometrosArray = [''];
-          }
-        } else if (record.hidrometro) {
-          // Fallback to old single hidrometro field
-          try {
-            hidrometrosArray = JSON.parse(record.hidrometro as string);
-          } catch {
-            hidrometrosArray = [record.hidrometro as string];
-          }
+      // Parse hidrometros - JSONB fields come as arrays or strings
+      let hidrometrosArray = [''];
+      if (record.hidrometros) {
+        try {
+          // JSONB fields can be already parsed arrays or JSON strings
+          hidrometrosArray = Array.isArray(record.hidrometros) 
+            ? record.hidrometros 
+            : JSON.parse(record.hidrometros as string);
+        } catch {
+          hidrometrosArray = [''];
         }
+      } else if (record.hidrometro) {
+        // Fallback to old single hidrometro field
+        try {
+          hidrometrosArray = Array.isArray(record.hidrometro)
+            ? record.hidrometro
+            : JSON.parse(record.hidrometro as string);
+        } catch {
+          hidrometrosArray = [record.hidrometro as string];
+        }
+      }
 
-        // Parse consumos_m3 and numeros_dias arrays
-        const consumosArray = record.consumos_m3 ? JSON.parse(record.consumos_m3 as string) : [''];
-        const numerosDiasArray = record.numeros_dias ? JSON.parse(record.numeros_dias as string) : [''];
+      // Parse consumos_m3, numeros_dias - JSONB fields
+      const consumosArray = record.consumos_m3 
+        ? (Array.isArray(record.consumos_m3) ? record.consumos_m3 : JSON.parse(record.consumos_m3 as string))
+        : [''];
+      const numerosDiasArray = record.numeros_dias 
+        ? (Array.isArray(record.numeros_dias) ? record.numeros_dias : JSON.parse(record.numeros_dias as string))
+        : [''];
+      
+      // Parse datas arrays - JSONB fields
+      const datasLeituraAnteriorArray = record.datas_leitura_anterior 
+        ? (Array.isArray(record.datas_leitura_anterior) ? record.datas_leitura_anterior : JSON.parse(record.datas_leitura_anterior as string))
+        : [''];
+      const datasLeituraAtualArray = record.datas_leitura_atual 
+        ? (Array.isArray(record.datas_leitura_atual) ? record.datas_leitura_atual : JSON.parse(record.datas_leitura_atual as string))
+        : [''];
+      const datasVencimentoArray = record.datas_vencimento 
+        ? (Array.isArray(record.datas_vencimento) ? record.datas_vencimento : JSON.parse(record.datas_vencimento as string))
+        : [''];
         
-        // Parse datas arrays
-        const datasLeituraAnteriorArray = record.datas_leitura_anterior ? JSON.parse(record.datas_leitura_anterior as string) : [''];
-        const datasLeituraAtualArray = record.datas_leitura_atual ? JSON.parse(record.datas_leitura_atual as string) : [''];
-        const datasVencimentoArray = record.datas_vencimento ? JSON.parse(record.datas_vencimento as string) : [''];
-        
-        setFormData({
-          cadastros,
-          hidrometros: hidrometrosArray,
-          consumos_m3: consumosArray.map((c: any) => c?.toString() || ''),
-          numeros_dias: numerosDiasArray.map((n: any) => n?.toString() || ''),
-          datas_leitura_anterior: datasLeituraAnteriorArray,
-          datas_leitura_atual: datasLeituraAtualArray,
-          datas_vencimento: datasVencimentoArray,
-          valores_cadastros: valoresFormatted,
-          data_leitura_anterior: record.data_leitura_anterior || '',
-          data_leitura_atual: record.data_leitura_atual || '',
-          data_vencimento: record.data_vencimento || '',
-          consumo_m3: record.consumo_m3?.toString() || '',
-          numero_dias: record.numero_dias?.toString() || '',
-          descricao_servicos: record.descricao_servicos || '',
-          valor_servicos: formatCurrency(record.valor_servicos),
-          ocorrencias_pendencias: record.ocorrencias_pendencias || ''
-        });
+      setFormData({
+        cadastros,
+        hidrometros: hidrometrosArray,
+        consumos_m3: consumosArray.map((c: any) => c?.toString() || ''),
+        numeros_dias: numerosDiasArray.map((n: any) => n?.toString() || ''),
+        datas_leitura_anterior: datasLeituraAnteriorArray,
+        datas_leitura_atual: datasLeituraAtualArray,
+        datas_vencimento: datasVencimentoArray,
+        valores_cadastros: valoresFormatted,
+        data_leitura_anterior: record.data_leitura_anterior || '',
+        data_leitura_atual: record.data_leitura_atual || '',
+        data_vencimento: record.data_vencimento || '',
+        consumo_m3: record.consumo_m3?.toString() || '',
+        numero_dias: record.numero_dias?.toString() || '',
+        descricao_servicos: record.descricao_servicos || '',
+        valor_servicos: formatCurrency(record.valor_servicos),
+        ocorrencias_pendencias: record.ocorrencias_pendencias || ''
+      });
+      
+      console.log('FormData carregado:', {
+        cadastros,
+        hidrometros: hidrometrosArray,
+        consumos_m3: consumosArray,
+        valores_cadastros: valoresFormatted
+      });
       } else {
         // Reset form with empty data
         setFilledSchools(prev => {
