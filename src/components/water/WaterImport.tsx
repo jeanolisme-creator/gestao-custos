@@ -29,8 +29,18 @@ interface WaterRecord {
   valor_servicos?: number;
   numero_dias?: number;
   data_vencimento?: string;
+  data_leitura_anterior?: string;
+  data_leitura_atual?: string;
   descricao_servicos?: string;
   ocorrencias_pendencias?: string;
+  // Array fields for multiple cadastros
+  hidrometros?: string; // JSON array
+  consumos_m3?: string; // JSON array
+  numeros_dias?: string; // JSON array
+  datas_leitura_anterior?: string; // JSON array
+  datas_leitura_atual?: string; // JSON array
+  datas_vencimento?: string; // JSON array
+  valores_cadastros?: string; // JSON array
 }
 
 export function WaterImport({ open, onOpenChange, onSuccess }: WaterImportProps) {
@@ -98,6 +108,12 @@ export function WaterImport({ open, onOpenChange, onSuccess }: WaterImportProps)
       'vencimento': 'data_vencimento',
       'data_vencimento': 'data_vencimento',
       'data vencimento': 'data_vencimento',
+      'leitura anterior': 'data_leitura_anterior',
+      'data_leitura_anterior': 'data_leitura_anterior',
+      'data leitura anterior': 'data_leitura_anterior',
+      'leitura atual': 'data_leitura_atual',
+      'data_leitura_atual': 'data_leitura_atual',
+      'data leitura atual': 'data_leitura_atual',
       'serviços': 'descricao_servicos',
       'servicos': 'descricao_servicos',
       'descricao_servicos': 'descricao_servicos',
@@ -163,6 +179,15 @@ export function WaterImport({ open, onOpenChange, onSuccess }: WaterImportProps)
       return undefined;
     };
 
+    // Parse values for arrays
+    const hidrometro = normalizedRow.hidrometro || '';
+    const consumo_m3 = parseNumber(normalizedRow.consumo_m3) || 0;
+    const numero_dias = normalizedRow.numero_dias ? parseInt(normalizedRow.numero_dias) : 0;
+    const data_leitura_anterior = parseDate(normalizedRow.data_leitura_anterior) || '';
+    const data_leitura_atual = parseDate(normalizedRow.data_leitura_atual) || '';
+    const data_vencimento = parseDate(normalizedRow.data_vencimento) || '';
+    const valor_gasto = parseNumber(normalizedRow.valor_gasto) || 0;
+
     return {
       mes_ano_referencia: normalizedRow.mes_ano_referencia,
       cadastro: JSON.stringify(cadastros),
@@ -172,12 +197,26 @@ export function WaterImport({ open, onOpenChange, onSuccess }: WaterImportProps)
       numero: normalizedRow.numero || undefined,
       bairro: normalizedRow.bairro || undefined,
       macroregiao: normalizedRow.macroregiao || undefined,
-      hidrometro: normalizedRow.hidrometro || undefined,
-      consumo_m3: parseNumber(normalizedRow.consumo_m3),
-      valor_gasto: parseNumber(normalizedRow.valor_gasto),
+      
+      // Campos singulares (compatibilidade)
+      hidrometro: hidrometro || undefined,
+      consumo_m3: consumo_m3 || undefined,
+      numero_dias: numero_dias || undefined,
+      data_leitura_anterior: data_leitura_anterior || undefined,
+      data_leitura_atual: data_leitura_atual || undefined,
+      data_vencimento: data_vencimento || undefined,
+      
+      // Arrays de dados (para múltiplos cadastros)
+      hidrometros: JSON.stringify([hidrometro]),
+      consumos_m3: JSON.stringify([consumo_m3]),
+      numeros_dias: JSON.stringify([numero_dias]),
+      datas_leitura_anterior: JSON.stringify([data_leitura_anterior]),
+      datas_leitura_atual: JSON.stringify([data_leitura_atual]),
+      datas_vencimento: JSON.stringify([data_vencimento]),
+      valores_cadastros: JSON.stringify([valor_gasto]),
+      
+      valor_gasto: valor_gasto || undefined,
       valor_servicos: parseNumber(normalizedRow.valor_servicos),
-      numero_dias: normalizedRow.numero_dias ? parseInt(normalizedRow.numero_dias) : undefined,
-      data_vencimento: parseDate(normalizedRow.data_vencimento),
       descricao_servicos: normalizedRow.descricao_servicos || undefined,
       ocorrencias_pendencias: normalizedRow.ocorrencias_pendencias || undefined
     };

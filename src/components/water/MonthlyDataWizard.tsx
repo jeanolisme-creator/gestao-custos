@@ -364,6 +364,14 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
       mes_ano_referencia: selectedMonth
     };
     
+    // Preencher campos singulares com o primeiro valor dos arrays
+    if (formData.hidrometros[0]) submitData.hidrometro = formData.hidrometros[0];
+    if (formData.consumos_m3[0]) submitData.consumo_m3 = parseFloat(formData.consumos_m3[0]) || null;
+    if (formData.numeros_dias[0]) submitData.numero_dias = parseInt(formData.numeros_dias[0]) || null;
+    if (formData.datas_leitura_anterior[0]) submitData.data_leitura_anterior = formData.datas_leitura_anterior[0];
+    if (formData.datas_leitura_atual[0]) submitData.data_leitura_atual = formData.datas_leitura_atual[0];
+    if (formData.datas_vencimento[0]) submitData.data_vencimento = formData.datas_vencimento[0];
+    
     // Convert valores_cadastros to numeric array and store as JSON
     const valoresNumeric = formData.valores_cadastros.map(valor => {
       const numericValue = parseFloat(valor.replace(/[R$\s.]/g, '').replace(',', '.'));
@@ -379,13 +387,6 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
       const numericValue = parseFloat(formData.valor_servicos.replace(/[R$\s.]/g, '').replace(',', '.'));
       submitData.valor_servicos = numericValue;
     }
-    if (formData.consumo_m3) submitData.consumo_m3 = parseFloat(formData.consumo_m3);
-    if (formData.numero_dias) submitData.numero_dias = parseInt(formData.numero_dias);
-    
-    // Date fields
-    if (formData.data_vencimento) submitData.data_vencimento = formData.data_vencimento;
-    if (formData.data_leitura_anterior) submitData.data_leitura_anterior = formData.data_leitura_anterior;
-    if (formData.data_leitura_atual) submitData.data_leitura_atual = formData.data_leitura_atual;
 
     // Check if record already exists
     const { data: existingRecords } = await supabase
