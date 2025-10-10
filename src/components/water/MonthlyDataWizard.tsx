@@ -83,21 +83,22 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
       localStorage.setItem('cached_schools', JSON.stringify(schools));
 
       // Check if this school already has data for this month
-      const { data: existingRecord, error } = await supabase
+      const { data: existingRecords, error } = await supabase
         .from('school_records')
         .select('*')
-        .eq('user_id', user?.id)
         .eq('nome_escola', currentSchool.nome_escola)
         .eq('mes_ano_referencia', selectedMonth)
-        .maybeSingle();
+        .order('updated_at', { ascending: false })
+        .limit(1);
 
       if (error) {
         console.error('Error loading existing data:', error);
         return;
       }
 
-      if (existingRecord) {
-        const record = existingRecord;
+      const record = existingRecords && existingRecords.length > 0 ? existingRecords[0] : null;
+
+      if (record) {
         
         console.log('Carregando dados existentes:', record);
         
