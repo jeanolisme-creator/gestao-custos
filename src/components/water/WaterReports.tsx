@@ -183,8 +183,8 @@ export function WaterReports() {
             totalValue: 0,
             totalConsumption: 0,
             totalService: 0,
-            cadastros: [],
-            valores: [],
+            cadastrosSet: new Set(),
+            cadastrosDetails: [],
             records: []
           });
         }
@@ -196,11 +196,19 @@ export function WaterReports() {
         
         // Parse cadastros and valores_cadastros from JSON with error handling
         try {
-          const cadastrosArray = record.cadastro ? JSON.parse(record.cadastro) : [];
-          const valoresArray = record.valores_cadastros ? JSON.parse(record.valores_cadastros as string) : [];
+          const cadastrosArray = Array.isArray(record.cadastro) ? record.cadastro : (record.cadastro ? JSON.parse(record.cadastro) : []);
+          const valoresArray = Array.isArray(record.valores_cadastros) ? record.valores_cadastros : (record.valores_cadastros ? JSON.parse(record.valores_cadastros as string) : []);
           
-          school.cadastros.push(...cadastrosArray);
-          school.valores.push(...valoresArray);
+          // Add unique cadastros to Set and store details for each cadastro
+          cadastrosArray.forEach((cadastro: string, idx: number) => {
+            school.cadastrosSet.add(cadastro);
+            school.cadastrosDetails.push({
+              cadastro: cadastro,
+              valor: valoresArray[idx] || 0,
+              mesAno: record.mes_ano_referencia,
+              record: record
+            });
+          });
         } catch (error) {
           console.error("Error parsing cadastros/valores for record:", record.id, error);
         }
@@ -358,7 +366,7 @@ export function WaterReports() {
                 <TableCell className="font-medium">{school.schoolName}</TableCell>
                 <TableCell>
                   <Badge variant="outline">
-                    {school.cadastros?.length || 0} cadastros
+                    {school.cadastrosSet?.size || 0} cadastros
                   </Badge>
                 </TableCell>
                 <TableCell>{school.totalConsumption?.toFixed(1) || '0.0'}m³</TableCell>
@@ -391,34 +399,35 @@ export function WaterReports() {
                   <TableCell colSpan={6} className="bg-muted/30 p-4">
                     <div className="space-y-2">
                       <h4 className="font-semibold text-sm mb-2">Detalhes dos Cadastros:</h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {school.cadastros.map((cadastro: string, cadIndex: number) => (
-                          <div key={cadIndex} className="flex justify-between items-center p-2 bg-background rounded border">
-                            <span className="font-mono text-sm">{cadastro}</span>
-                            <div className="flex items-center gap-2">
+                      <div className="grid grid-cols-1 gap-2">
+                        {school.cadastrosDetails.map((detail: any, cadIndex: number) => (
+                          <div key={cadIndex} className="flex justify-between items-center p-3 bg-background rounded border">
+                            <div className="flex flex-col gap-1">
+                              <span className="font-mono text-sm font-semibold">{detail.cadastro}</span>
+                              <span className="text-xs text-muted-foreground">{detail.mesAno}</span>
+                            </div>
+                            <div className="flex items-center gap-3">
                               <span className="font-semibold text-primary">
-                                {formatCurrency(school.valores[cadIndex] || 0)}
+                                {formatCurrency(detail.valor || 0)}
                               </span>
-                              {school.records[cadIndex] && (
-                                <div className="flex gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleEdit(school.records[cadIndex])}
-                                    className="h-6 w-6"
-                                  >
-                                    <Pencil className="h-3 w-3" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleDeleteClick(school.records[cadIndex])}
-                                    className="h-6 w-6 text-destructive hover:text-destructive"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              )}
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEdit(detail.record)}
+                                  className="h-7 w-7"
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDeleteClick(detail.record)}
+                                  className="h-7 w-7 text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         ))}
