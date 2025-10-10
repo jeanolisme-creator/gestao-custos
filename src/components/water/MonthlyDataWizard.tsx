@@ -183,6 +183,26 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
         datasLeituraAtualArray = padTo(datasLeituraAtualArray, '');
         datasVencimentoArray = padTo(datasVencimentoArray, '');
 
+        // Fallbacks for first item from singular fields when arrays are empty strings/null
+        if ((hidrometrosArray[0] === '' || hidrometrosArray[0] == null) && record.hidrometro) {
+          hidrometrosArray[0] = (record.hidrometro as string) || '';
+        }
+        if ((datasLeituraAnteriorArray[0] === '' || datasLeituraAnteriorArray[0] == null) && record.data_leitura_anterior) {
+          datasLeituraAnteriorArray[0] = (record.data_leitura_anterior as any) || '';
+        }
+        if ((datasLeituraAtualArray[0] === '' || datasLeituraAtualArray[0] == null) && record.data_leitura_atual) {
+          datasLeituraAtualArray[0] = (record.data_leitura_atual as any) || '';
+        }
+        if ((datasVencimentoArray[0] === '' || datasVencimentoArray[0] == null) && record.data_vencimento) {
+          datasVencimentoArray[0] = (record.data_vencimento as any) || '';
+        }
+        if ((consumosArray[0] === '' || consumosArray[0] == null) && record.consumo_m3 !== null && record.consumo_m3 !== undefined) {
+          consumosArray[0] = Number(record.consumo_m3);
+        }
+        if ((numerosDiasArray[0] === '' || numerosDiasArray[0] == null) && record.numero_dias !== null && record.numero_dias !== undefined) {
+          numerosDiasArray[0] = Number(record.numero_dias);
+        }
+
         // Format valores by aligning with target length; fallback to valor_gasto when arrays are empty
         let valoresFormatted = cadastros.map((_, index) => {
           const raw = valoresCadastrosRaw[index];
