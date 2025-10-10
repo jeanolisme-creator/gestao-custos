@@ -111,13 +111,28 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
         };
 
         // Load existing data into form
-        const cadastros = record.cadastro ? JSON.parse(record.cadastro) : [''];
-        const valoresCadastrosRaw = record.valores_cadastros ? JSON.parse(record.valores_cadastros as string) : [];
+        let cadastrosParsed: string[] = [''];
+        try {
+          if (record.cadastro) {
+            const parsed = JSON.parse(record.cadastro as string);
+            cadastrosParsed = Array.isArray(parsed)
+              ? parsed.map((c: any) => c?.toString() || '')
+              : [parsed?.toString() || ''];
+          }
+        } catch {
+          cadastrosParsed = [record.cadastro as string].filter(Boolean) as string[];
+        }
+        const cadastros = cadastrosParsed.length > 0 ? cadastrosParsed : [''];
+
+        const valoresCadastrosRaw = record.valores_cadastros
+          ? (Array.isArray(record.valores_cadastros) ? record.valores_cadastros : JSON.parse(record.valores_cadastros as string))
+          : [];
         
         // Ensure values array matches cadastros array length
         const valoresFormatted = cadastros.map((_, index) => {
           const valor = valoresCadastrosRaw[index];
-          return valor ? formatCurrency(valor) : '';
+          const v = typeof valor === 'string' ? parseFloat(valor.replace(/[R$\s.]/g, '').replace(',', '.')) : Number(valor);
+          return Number.isFinite(v) && v > 0 ? `R$ ${v.toFixed(2).replace('.', ',')}` : '';
         });
 
       // Parse hidrometros - JSONB fields come as arrays or strings
@@ -143,23 +158,38 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
       }
 
       // Parse consumos_m3, numeros_dias - JSONB fields
-      const consumosArray = record.consumos_m3 
+      let consumosArray = record.consumos_m3 
         ? (Array.isArray(record.consumos_m3) ? record.consumos_m3 : JSON.parse(record.consumos_m3 as string))
         : [''];
-      const numerosDiasArray = record.numeros_dias 
+      let numerosDiasArray = record.numeros_dias 
         ? (Array.isArray(record.numeros_dias) ? record.numeros_dias : JSON.parse(record.numeros_dias as string))
         : [''];
       
       // Parse datas arrays - JSONB fields
-      const datasLeituraAnteriorArray = record.datas_leitura_anterior 
+      let datasLeituraAnteriorArray = record.datas_leitura_anterior 
         ? (Array.isArray(record.datas_leitura_anterior) ? record.datas_leitura_anterior : JSON.parse(record.datas_leitura_anterior as string))
         : [''];
-      const datasLeituraAtualArray = record.datas_leitura_atual 
+      let datasLeituraAtualArray = record.datas_leitura_atual 
         ? (Array.isArray(record.datas_leitura_atual) ? record.datas_leitura_atual : JSON.parse(record.datas_leitura_atual as string))
         : [''];
-      const datasVencimentoArray = record.datas_vencimento 
+      let datasVencimentoArray = record.datas_vencimento 
         ? (Array.isArray(record.datas_vencimento) ? record.datas_vencimento : JSON.parse(record.datas_vencimento as string))
         : [''];
+
+      // Normalize all arrays to match cadastros count (at least 1)
+      const targetLen = cadastros.length;
+      const padTo = (arr: any[], fill = '') => {
+        const a = Array.isArray(arr) ? [...arr] : [];
+        while (a.length < targetLen) a.push(fill);
+        if (a.length > targetLen) a.length = targetLen;
+        return a;
+      };
+      hidrometrosArray = padTo(hidrometrosArray, '');
+      consumosArray = padTo(consumosArray, '');
+      numerosDiasArray = padTo(numerosDiasArray, '');
+      datasLeituraAnteriorArray = padTo(datasLeituraAnteriorArray, '');
+      datasLeituraAtualArray = padTo(datasLeituraAtualArray, '');
+      datasVencimentoArray = padTo(datasVencimentoArray, '');
         
       setFormData({
         cadastros,
