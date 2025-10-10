@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Download, FileText, Search, Filter } from "lucide-react";
+import { Download, FileText, Search, Filter, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,18 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { EnergyRegistration } from "./EnergyRegistration";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const reportTypes = [
   { value: 'by-school', label: 'Por Nome da Escola' },
@@ -50,6 +62,10 @@ export function EnergyReports() {
   const [data, setData] = useState<any[]>([]);
   const [schools, setSchools] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<any>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
