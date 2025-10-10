@@ -12,6 +12,9 @@ import { useToast } from '@/hooks/use-toast';
 import { useSchools } from '@/hooks/useSchools';
 import { Plus, Trash2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { MonthlyDataWizard } from './MonthlyDataWizard';
+import { PendingSchools } from './PendingSchools';
 
 const macroregiaoOptions = ['HB', 'Vila Toninho', 'Schmidt', 'Represa', 'Bosque', 'Talhado', 'Central', 'Cidade da Criança', 'Pinheirinho', 'Ceu'];
 
@@ -75,6 +78,30 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
   
   const [searchSchoolTerm, setSearchSchoolTerm] = useState('');
   const [recentRecords, setRecentRecords] = useState<any[]>([]);
+  // Monthly Wizard & Pending controls
+  const [monthDialogOpen, setMonthDialogOpen] = useState(false);
+  const [selectedMonthWizard, setSelectedMonthWizard] = useState('');
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [pendingDialogOpen, setPendingDialogOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  const fetchPendingCount = useCallback(async () => {
+    try {
+      const { count, error } = await supabase
+        .from('energy_records')
+        .select('*', { count: 'exact', head: true })
+        .eq('cadastro_cliente', 'PENDENTE');
+      if (error) throw error;
+      setPendingCount(count || 0);
+    } catch (e) {
+      console.error('Erro ao carregar pendências:', e);
+      setPendingCount(0);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPendingCount();
+  }, [fetchPendingCount]);
 
   const fetchRecentRecords = useCallback(async () => {
     try {
@@ -295,13 +322,34 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle>
-            {viewMode ? "Visualizar Registro" : editData ? "Editar Registro" : "Novo Cadastro"} - Gestão de Energia
-          </CardTitle>
-          <CardDescription>
-            {viewMode ? "Detalhes do registro de energia" : "Preencha os dados do registro de energia"}
-          </CardDescription>
+        <CardHeader className="flex flex-col md:flex-row md:items-start md:justify-between gap-2">
+          <div>
+            <CardTitle>
+              {viewMode ? "Visualizar Registro" : editData ? "Editar Registro" : "Novo Cadastro"} - Gestão de Energia
+            </CardTitle>
+            <CardDescription>
+              {viewMode ? "Detalhes do registro de energia" : "Preencha os dados do registro de energia"}
+            </CardDescription>
+          </div>
+          {!viewMode && (
+            <div className="flex items-center gap-2 self-start md:self-auto">
+              <Button
+                type="button"
+                variant={pendingCount > 0 ? "default" : "secondary"}
+                className={pendingCount > 0 ? "bg-[hsl(var(--warning))] text-[hsl(var(--warning-foreground))] hover:bg-[hsl(var(--warning-hover))]" : undefined}
+                onClick={() => setPendingDialogOpen(true)}
+              >
+                Pendências{pendingCount > 0 ? ` (${pendingCount})` : ''}
+              </Button>
+              <Button
+                type="button"
+                onClick={() => setMonthDialogOpen(true)}
+                className="bg-[hsl(var(--water-primary))] text-[hsl(var(--primary-foreground))] hover:bg-[hsl(var(--water-primary))]/90"
+              >
+                Dados Mensais
+              </Button>
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -657,6 +705,75 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
           </form>
         </CardContent>
       </Card>
+
+      {/* Dialog: Selecionar Mês e Wizard */}
+      <Dialog open={monthDialogOpen} onOpenChange={setMonthDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Selecionar Mês Referência</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Label>Mês Referência</Label>
+            <Select value={selectedMonthWizard} onValueChange={setSelectedMonthWizard}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o mês..." />
+              </SelectTrigger>
+              <SelectContent>
+                {monthOptions.map((m) => (
+                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" type="button" onClick={() => setMonthDialogOpen(false)}>Cancelar</Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  if (selectedMonthWizard) {
+                    setMonthDialogOpen(false);
+                    setWizardOpen(true);
+                  }
+                }}
+                disabled={!selectedMonthWizard}
+              >
+                Avançar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={wizardOpen} onOpenChange={setWizardOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Dados Mensais {selectedMonthWizard ? `- ${selectedMonthWizard}` : ''}</DialogTitle>
+          </DialogHeader>
+          {selectedMonthWizard && (
+            <MonthlyDataWizard
+              selectedMonth={selectedMonthWizard}
+              onClose={() => {
+                setWizardOpen(false);
+                fetchPendingCount();
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Pendências */}
+      <Dialog open={pendingDialogOpen} onOpenChange={setPendingDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Pendências</DialogTitle>
+          </DialogHeader>
+          <PendingSchools
+            onClose={() => {
+              setPendingDialogOpen(false);
+              fetchPendingCount();
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Cadastros Recentes */}
       {!viewMode && !editData && (
