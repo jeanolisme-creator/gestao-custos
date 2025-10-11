@@ -337,6 +337,12 @@ export function WaterReports() {
   };
 
   const renderConsolidatedTable = () => {
+    // Calculate totals
+    const totals = (reportData as any[]).reduce((acc, school) => ({
+      totalConsumption: acc.totalConsumption + (school.totalConsumption || 0),
+      totalValue: acc.totalValue + (school.totalValue || 0)
+    }), { totalConsumption: 0, totalValue: 0 });
+
     return (
       <Table>
         <TableHeader>
@@ -444,6 +450,16 @@ export function WaterReports() {
               )}
             </>
           ))}
+          {reportData.length > 0 && (
+            <TableRow className="bg-primary/5 border-t-2 border-primary">
+              <TableCell colSpan={3} className="font-bold text-lg">TOTAL GERAL</TableCell>
+              <TableCell className="font-bold text-lg">{totals.totalConsumption.toFixed(1)}m³</TableCell>
+              <TableCell className="font-bold text-lg text-primary">
+                {formatCurrency(totals.totalValue)}
+              </TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     );
