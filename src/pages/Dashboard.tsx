@@ -71,7 +71,20 @@ export default function Dashboard({ data }: DashboardProps) {
       
       if (!error && records) {
         console.log(`Dados reais carregados do ${tableName}:`, records.length);
-        setRealData(records);
+        
+        // Transform data to UnifiedRecord format
+        const transformedRecords = records.map((record: any) => ({
+          ...record,
+          system_type: currentSystem,
+          valor_gasto: Number(record.valor_gasto || 0),
+          valor_servicos: Number(record.valor_servicos || 0),
+          consumo_m3: record.consumo_m3 ? Number(record.consumo_m3) : undefined,
+          consumo_kwh: record.consumo_kwh ? Number(record.consumo_kwh) : undefined,
+          demanda_kwh: record.demanda_kwh ? Number(record.demanda_kwh) : undefined,
+        }));
+        
+        console.log(`Dados transformados:`, transformedRecords.slice(0, 2));
+        setRealData(transformedRecords);
       }
     };
     
