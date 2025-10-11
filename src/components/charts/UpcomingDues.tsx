@@ -11,6 +11,7 @@ interface UpcomingDuesProps {
 export function UpcomingDues({ data }: UpcomingDuesProps) {
   // Check if data is unified system data or old school data
   const isSystemData = data.length > 0 && 'system_type' in data[0];
+  const isSupabaseData = data.length > 0 && 'mes_ano_referencia' in data[0];
   
   const schools = isSystemData 
     ? aggregateSystemData(data as UnifiedRecord[])
@@ -25,8 +26,14 @@ export function UpcomingDues({ data }: UpcomingDuesProps) {
       }))
     )
     .sort((a, b) => {
-      const dateA = new Date(a.vencto.split('/').reverse().join('-'));
-      const dateB = new Date(b.vencto.split('/').reverse().join('-'));
+      let dateA, dateB;
+      if (isSupabaseData) {
+        dateA = new Date(a.data_vencimento);
+        dateB = new Date(b.data_vencimento);
+      } else {
+        dateA = new Date(a.vencto.split('/').reverse().join('-'));
+        dateB = new Date(b.vencto.split('/').reverse().join('-'));
+      }
       return dateA.getTime() - dateB.getTime();
     })
     .slice(0, 10);
@@ -40,7 +47,9 @@ export function UpcomingDues({ data }: UpcomingDuesProps) {
   };
 
   const getDaysUntilDue = (dueDate: string) => {
-    const due = new Date(dueDate.split('/').reverse().join('-'));
+    const due = isSupabaseData 
+      ? new Date(dueDate) 
+      : new Date(dueDate.split('/').reverse().join('-'));
     const today = new Date();
     const diffTime = due.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -51,6 +60,14 @@ export function UpcomingDues({ data }: UpcomingDuesProps) {
     if (days <= 2) return 'high';
     if (days <= 5) return 'medium';
     return 'low';
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (isSupabaseData) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('pt-BR');
+    }
+    return dateStr;
   };
 
   return (
@@ -77,9 +94,13 @@ export function UpcomingDues({ data }: UpcomingDuesProps) {
             <p className="text-xs">Todas as faturas estão em dia</p>
           </div>
         ) : (
-          upcomingDues.map((due, index) => {
-            const daysUntilDue = getDaysUntilDue(due.vencto);
+          upcomingDues.map((due: any, index) => {
+            const dueDate = isSupabaseData ? due.data_vencimento : due.vencto;
+            const daysUntilDue = getDaysUntilDue(dueDate);
             const priority = getDuePriority(daysUntilDue);
+            const valor = isSupabaseData 
+              ? (Number(due.valor_gasto || 0) + Number(due.valor_servicos || 0))
+              : (due.valor + due.valorServ);
             
             return (
               <div
@@ -103,14 +124,14 @@ export function UpcomingDues({ data }: UpcomingDuesProps) {
                       {(due.schoolName || 'Escola').replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '')}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Vencimento: {due.vencto}
+                      Vencimento: {formatDate(dueDate)}
                     </p>
                   </div>
                 </div>
                 
                 <div className="text-right space-y-1">
                   <p className="font-semibold text-sm text-foreground">
-                    {formatCurrency(due.valor + due.valorServ)}
+                    {formatCurrency(valor)}
                   </p>
                   <Badge 
                     variant={

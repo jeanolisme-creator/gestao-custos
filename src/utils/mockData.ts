@@ -120,39 +120,95 @@ export const getSchoolsByName = (data: SchoolData[]) => {
   return schoolGroups;
 };
 
-export const aggregateBySchool = (data: SchoolData[], month?: string) => {
-  const filtered = month ? data.filter(d => d.mes === month) : data;
-  const schoolGroups = getSchoolsByName(filtered);
+export const aggregateBySchool = (data: any[], month?: string) => {
+  // Check if data is from Supabase (has mes_ano_referencia) or mock data (has mes)
+  const isSupabaseData = data.length > 0 && 'mes_ano_referencia' in data[0];
   
-  return Array.from(schoolGroups.entries()).map(([schoolName, records]) => ({
-    schoolName,
-    totalValue: records.reduce((sum, r) => sum + r.valor + r.valorServ, 0),
-    totalConsumption: records.reduce((sum, r) => sum + r.consumo, 0),
-    totalService: records.reduce((sum, r) => sum + r.valorServ, 0),
-    records: records.length,
-    cadastros: [...new Set(records.map(r => r.cadastro))],
-    upcomingDues: records.filter(r => {
-      if (!r.vencto || typeof r.vencto !== 'string') return false;
-      try {
-        const dueDate = new Date(r.vencto.split('/').reverse().join('-'));
-        const today = new Date();
-        const diffTime = dueDate.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays <= 7 && diffDays >= 0;
-      } catch (error) {
-        console.warn('Error parsing date:', r.vencto, error);
-        return false;
-      }
-    })
-  }));
+  let filtered = data;
+  if (month) {
+    if (isSupabaseData) {
+      filtered = data.filter((d: any) => 
+        d.mes_ano_referencia?.toLowerCase().includes(month.toLowerCase())
+      );
+    } else {
+      filtered = data.filter((d: any) => d.mes === month);
+    }
+  }
+  
+  // Group by school name
+  const schoolGroups = new Map<string, any[]>();
+  filtered.forEach((record: any) => {
+    const schoolName = isSupabaseData ? record.nome_escola : record.unidade;
+    if (!schoolGroups.has(schoolName)) {
+      schoolGroups.set(schoolName, []);
+    }
+    schoolGroups.get(schoolName)!.push(record);
+  });
+  
+  return Array.from(schoolGroups.entries()).map(([schoolName, records]) => {
+    if (isSupabaseData) {
+      return {
+        schoolName,
+        totalValue: records.reduce((sum, r) => sum + Number(r.valor_gasto || 0), 0),
+        totalConsumption: records.reduce((sum, r) => sum + Number(r.consumo_m3 || 0), 0),
+        totalService: records.reduce((sum, r) => sum + Number(r.valor_servicos || 0), 0),
+        records: records.length,
+        cadastros: [...new Set(records.map(r => r.cadastro))],
+        upcomingDues: records.filter(r => {
+          if (!r.data_vencimento) return false;
+          try {
+            const dueDate = new Date(r.data_vencimento);
+            const today = new Date();
+            const diffTime = dueDate.getTime() - today.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays <= 7 && diffDays >= 0;
+          } catch (error) {
+            return false;
+          }
+        })
+      };
+    } else {
+      return {
+        schoolName,
+        totalValue: records.reduce((sum, r) => sum + r.valor + r.valorServ, 0),
+        totalConsumption: records.reduce((sum, r) => sum + r.consumo, 0),
+        totalService: records.reduce((sum, r) => sum + r.valorServ, 0),
+        records: records.length,
+        cadastros: [...new Set(records.map(r => r.cadastro))],
+        upcomingDues: records.filter(r => {
+          if (!r.vencto || typeof r.vencto !== 'string') return false;
+          try {
+            const dueDate = new Date(r.vencto.split('/').reverse().join('-'));
+            const today = new Date();
+            const diffTime = dueDate.getTime() - today.getTime();
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays <= 7 && diffDays >= 0;
+          } catch (error) {
+            return false;
+          }
+        })
+      };
+    }
+  });
 };
 
-export const getMonthlyTotals = (data: SchoolData[]) => {
+export const getMonthlyTotals = (data: any[]) => {
   const months = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 
                   'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
   
+  // Check if data is from Supabase
+  const isSupabaseData = data.length > 0 && 'mes_ano_referencia' in data[0];
+  
   return months.map(month => {
-    const monthData = data.filter(d => d.mes === month);
+    let monthData: any[];
+    if (isSupabaseData) {
+      monthData = data.filter((d: any) => 
+        d.mes_ano_referencia?.toLowerCase().includes(month.toLowerCase())
+      );
+    } else {
+      monthData = data.filter((d: any) => d.mes === month);
+    }
+    
     const aggregated = aggregateBySchool(monthData);
     
     return {
@@ -165,8 +221,21 @@ export const getMonthlyTotals = (data: SchoolData[]) => {
   });
 };
 
-export const getSchoolTypeDistribution = (data: SchoolData[], month?: string) => {
-  const filtered = month ? data.filter(d => d.mes === month) : data;
+export const getSchoolTypeDistribution = (data: any[], month?: string) => {
+  // Check if data is from Supabase
+  const isSupabaseData = data.length > 0 && 'mes_ano_referencia' in data[0];
+  
+  let filtered = data;
+  if (month) {
+    if (isSupabaseData) {
+      filtered = data.filter((d: any) => 
+        d.mes_ano_referencia?.toLowerCase().includes(month.toLowerCase())
+      );
+    } else {
+      filtered = data.filter((d: any) => d.mes === month);
+    }
+  }
+  
   const aggregated = aggregateBySchool(filtered);
   
   const distribution = schoolTypes.map(type => {
@@ -189,7 +258,7 @@ export const getSchoolTypeDistribution = (data: SchoolData[], month?: string) =>
   return distribution;
 };
 
-export const getAlerts = (data: SchoolData[], thresholdPercent: number = 20) => {
+export const getAlerts = (data: any[], thresholdPercent: number = 20) => {
   const currentMonth = 'dezembro'; // Current month for demo
   const previousMonth = 'novembro';
   
