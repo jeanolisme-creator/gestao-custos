@@ -845,9 +845,16 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
               </div>
               <div className="flex gap-2">
                 {isSchoolAlreadyFilled && !isEditing ? (
-                  <Button type="button" onClick={() => setIsEditing(true)}>
-                    Editar
-                  </Button>
+                  <>
+                    <Button type="button" variant="outline" onClick={() => setIsEditing(true)}>
+                      Editar
+                    </Button>
+                    {currentSchoolIndex < schools.length - 1 && (
+                      <Button type="button" onClick={() => setCurrentSchoolIndex(prev => prev + 1)}>
+                        Próximo
+                      </Button>
+                    )}
+                  </>
                 ) : (
                   <Button onClick={handleSaveAndNext}>
                     {currentSchoolIndex < schools.length - 1 ? 'Salvar e Próxima' : 'Salvar e Finalizar'}

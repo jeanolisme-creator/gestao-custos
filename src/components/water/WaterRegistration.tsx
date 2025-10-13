@@ -70,6 +70,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   const [hasPendingSchools, setHasPendingSchools] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [recentRecords, setRecentRecords] = useState<any[]>([]);
+  const [internalEditData, setInternalEditData] = useState<any>(null);
 
   // Fetch and subscribe to recent records
   const fetchRecentRecords = useCallback(async () => {
@@ -120,23 +121,24 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
   }, [monthlyWizardOpen, pendingDialogOpen]);
 
   useEffect(() => {
-    if (editData) {
+    const dataToEdit = internalEditData || editData;
+    if (dataToEdit) {
       // Parse cadastros if stored as JSON array, otherwise convert to array
       let cadastrosArray = [''];
       try {
-        if (editData.cadastro) {
-          const parsed = JSON.parse(editData.cadastro);
-          cadastrosArray = Array.isArray(parsed) ? parsed : [editData.cadastro];
+        if (dataToEdit.cadastro) {
+          const parsed = JSON.parse(dataToEdit.cadastro);
+          cadastrosArray = Array.isArray(parsed) ? parsed : [dataToEdit.cadastro];
         }
       } catch {
-        cadastrosArray = editData.cadastro ? [editData.cadastro] : [''];
+        cadastrosArray = dataToEdit.cadastro ? [dataToEdit.cadastro] : [''];
       }
 
       // Parse valores_cadastros
       let valoresArray = [];
       try {
-        if (editData.valores_cadastros) {
-          const parsed = JSON.parse(editData.valores_cadastros as string);
+        if (dataToEdit.valores_cadastros) {
+          const parsed = JSON.parse(dataToEdit.valores_cadastros as string);
           valoresArray = Array.isArray(parsed) ? parsed : [];
         }
       } catch {
@@ -150,26 +152,26 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
       };
 
       // Parse hidrometros from JSON if exists
-      const hidrometrosArray = editData.hidrometros ? JSON.parse(editData.hidrometros) : [''];
+      const hidrometrosArray = dataToEdit.hidrometros ? JSON.parse(dataToEdit.hidrometros) : [''];
       
       // Parse consumos_m3 and numeros_dias arrays
-      const consumosArray = editData.consumos_m3 ? JSON.parse(editData.consumos_m3) : [''];
-      const numerosDiasArray = editData.numeros_dias ? JSON.parse(editData.numeros_dias) : [''];
+      const consumosArray = dataToEdit.consumos_m3 ? JSON.parse(dataToEdit.consumos_m3) : [''];
+      const numerosDiasArray = dataToEdit.numeros_dias ? JSON.parse(dataToEdit.numeros_dias) : [''];
       
       // Parse datas arrays
-      const datasLeituraAnteriorArray = editData.datas_leitura_anterior ? JSON.parse(editData.datas_leitura_anterior) : [''];
-      const datasLeituraAtualArray = editData.datas_leitura_atual ? JSON.parse(editData.datas_leitura_atual) : [''];
-      const datasVencimentoArray = editData.datas_vencimento ? JSON.parse(editData.datas_vencimento) : [''];
+      const datasLeituraAnteriorArray = dataToEdit.datas_leitura_anterior ? JSON.parse(dataToEdit.datas_leitura_anterior) : [''];
+      const datasLeituraAtualArray = dataToEdit.datas_leitura_atual ? JSON.parse(dataToEdit.datas_leitura_atual) : [''];
+      const datasVencimentoArray = dataToEdit.datas_vencimento ? JSON.parse(dataToEdit.datas_vencimento) : [''];
       
       const valoresFormatted = cadastrosArray.map((_, index) => {
         const valor = valoresArray[index];
         return valor ? formatCurrency(valor) : '';
       });
 
-      const valorServicos = editData.valor_servicos ? formatCurrency(editData.valor_servicos) : '';
+      const valorServicos = dataToEdit.valor_servicos ? formatCurrency(dataToEdit.valor_servicos) : '';
       
       setFormData({
-        mes_referencia: editData.mes_referencia || '',
+        mes_referencia: dataToEdit.mes_referencia || dataToEdit.mes_ano_referencia || '',
         cadastros: cadastrosArray,
         hidrometros: hidrometrosArray,
         consumos_m3: consumosArray.map((c: any) => c?.toString() || ''),
@@ -178,23 +180,23 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
         datas_leitura_atual: datasLeituraAtualArray,
         datas_vencimento: datasVencimentoArray,
         valores_cadastros: valoresFormatted,
-        proprietario: editData.proprietario || '',
-        nome_escola: editData.nome_escola || '',
-        data_leitura_anterior: editData.data_leitura_anterior || '',
-        data_leitura_atual: editData.data_leitura_atual || '',
-        data_vencimento: editData.data_vencimento || '',
-        endereco_completo: editData.endereco_completo || '',
-        numero: editData.numero || '',
-        bairro: editData.bairro || '',
-        consumo_m3: editData.consumo_m3?.toString() || '',
-        numero_dias: editData.numero_dias?.toString() || '',
-        descricao_servicos: editData.descricao_servicos || '',
+        proprietario: dataToEdit.proprietario || '',
+        nome_escola: dataToEdit.nome_escola || '',
+        data_leitura_anterior: dataToEdit.data_leitura_anterior || '',
+        data_leitura_atual: dataToEdit.data_leitura_atual || '',
+        data_vencimento: dataToEdit.data_vencimento || '',
+        endereco_completo: dataToEdit.endereco_completo || '',
+        numero: dataToEdit.numero || '',
+        bairro: dataToEdit.bairro || '',
+        consumo_m3: dataToEdit.consumo_m3?.toString() || '',
+        numero_dias: dataToEdit.numero_dias?.toString() || '',
+        descricao_servicos: dataToEdit.descricao_servicos || '',
         valor_servicos: valorServicos,
-        macroregiao: editData.macroregiao || '',
-        ocorrencias_pendencias: editData.ocorrencias_pendencias || ''
+        macroregiao: dataToEdit.macroregiao || '',
+        ocorrencias_pendencias: dataToEdit.ocorrencias_pendencias || ''
       });
     }
-  }, [editData]);
+  }, [editData, internalEditData]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -340,6 +342,8 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     
     if (!user) return;
 
+    const dataToEdit = internalEditData || editData;
+
     const submitData: any = { 
       user_id: user.id,
       cadastro: JSON.stringify(formData.cadastros.filter(c => c.trim() !== '')),
@@ -385,11 +389,11 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     }
 
     let error;
-    if (editData) {
+    if (dataToEdit) {
       const result = await supabase
         .from('school_records')
         .update(submitData)
-        .eq('id', editData.id);
+        .eq('id', dataToEdit.id);
       error = result.error;
     } else {
       const result = await supabase
@@ -401,15 +405,16 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     if (error) {
       toast({
         variant: "destructive",
-        title: editData ? "Erro ao atualizar registro" : "Erro ao criar registro",
+        title: dataToEdit ? "Erro ao atualizar registro" : "Erro ao criar registro",
         description: error.message
       });
     } else {
       toast({
-        title: editData ? "Registro atualizado com sucesso!" : "Registro criado com sucesso!",
-        description: editData ? "O registro foi atualizado." : "O novo registro de água foi adicionado."
+        title: dataToEdit ? "Registro atualizado com sucesso!" : "Registro criado com sucesso!",
+        description: dataToEdit ? "O registro foi atualizado." : "O novo registro de água foi adicionado."
       });
       resetForm();
+      setInternalEditData(null);
       await fetchRecentRecords();
       onSuccess?.();
     }
@@ -422,7 +427,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
           <div className="flex items-start justify-between gap-4">
             <div>
               <CardTitle>
-                {viewMode ? "Visualizar Registro" : editData ? "Editar Registro" : "Novo Cadastro"} - Gestão de Água
+                {viewMode ? "Visualizar Registro" : (internalEditData || editData) ? "Editar Registro" : "Novo Cadastro"} - Gestão de Água
               </CardTitle>
               <CardDescription>
                 {viewMode ? "Detalhes do registro de água" : "Preencha os dados do registro de água"}
@@ -828,6 +833,45 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
                           {new Date(record.created_at).toLocaleDateString('pt-BR')}
                         </p>
                       </div>
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2 border-t mt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setInternalEditData(record);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={async () => {
+                          if (window.confirm('Deseja realmente excluir este registro?')) {
+                            const { error } = await supabase
+                              .from('school_records')
+                              .delete()
+                              .eq('id', record.id);
+                            
+                            if (error) {
+                              toast({
+                                variant: "destructive",
+                                title: "Erro ao excluir",
+                                description: error.message
+                              });
+                            } else {
+                              toast({
+                                title: "Registro excluído com sucesso!"
+                              });
+                              fetchRecentRecords();
+                            }
+                          }
+                        }}
+                      >
+                        Excluir
+                      </Button>
                     </div>
                   </div>
                 </div>
