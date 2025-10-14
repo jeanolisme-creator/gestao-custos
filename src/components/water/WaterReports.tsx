@@ -218,8 +218,8 @@ export function WaterReports() {
 
       let result = Array.from(schoolMap.values());
 
-      // Apply value range filter
-      if (minValue || maxValue) {
+      // Apply value range filter only for value-range report type
+      if (reportType === 'value-range' && (minValue || maxValue)) {
         result = result.filter(school => {
           const totalValue = school.totalValue;
           const min = minValue ? parseFloat(minValue) : 0;
@@ -228,8 +228,8 @@ export function WaterReports() {
         });
       }
 
-      // Apply comparative filter
-      if (selectedSchools.length > 0) {
+      // Apply comparative filter only for comparative report type
+      if (reportType === 'comparative' && selectedSchools.length > 0) {
         result = result.filter(school => selectedSchools.includes(school.schoolName));
       }
 
@@ -465,65 +465,83 @@ export function WaterReports() {
     );
   };
 
-  const renderDetailedTable = () => (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Cadastro</TableHead>
-          <TableHead>Escola</TableHead>
-          <TableHead>Endereço</TableHead>
-          <TableHead>Mês/Ano</TableHead>
-          <TableHead>Consumo (m³)</TableHead>
-          <TableHead>Valor (R$)</TableHead>
-          <TableHead>Vencimento</TableHead>
-          <TableHead>Ocorrências</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {(reportData as any[]).slice(0, 50).map((record, index) => (
-          <TableRow key={index}>
-            <TableCell className="font-mono text-sm">{record.cadastro}</TableCell>
-            <TableCell className="font-medium">{record.nome_escola}</TableCell>
-            <TableCell className="text-sm text-muted-foreground">
-              {record.endereco_completo || 'N/A'}
-            </TableCell>
-            <TableCell>{record.mes_ano_referencia}</TableCell>
-            <TableCell>{parseFloat(record.consumo_m3 || 0).toFixed(1)}m³</TableCell>
-            <TableCell>{formatCurrency(parseFloat(record.valor_gasto || 0))}</TableCell>
-            <TableCell>{record.data_vencimento || 'N/A'}</TableCell>
-            <TableCell>
-              {record.ocorrencias_pendencias && (
-                <Badge variant="destructive" className="text-xs">
-                  {record.ocorrencias_pendencias}
-                </Badge>
-              )}
-            </TableCell>
-            <TableCell className="text-right">
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleEdit(record)}
-                  className="h-8 w-8"
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDeleteClick(record)}
-                  className="h-8 w-8 text-destructive hover:text-destructive"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </TableCell>
+  const renderDetailedTable = () => {
+    // Calculate totals for detailed table
+    const totals = (reportData as any[]).reduce((acc, record) => ({
+      totalConsumption: acc.totalConsumption + parseFloat(record.consumo_m3 || 0),
+      totalValue: acc.totalValue + parseFloat(record.valor_gasto || 0)
+    }), { totalConsumption: 0, totalValue: 0 });
+
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Cadastro</TableHead>
+            <TableHead>Escola</TableHead>
+            <TableHead>Endereço</TableHead>
+            <TableHead>Mês/Ano</TableHead>
+            <TableHead>Consumo (m³)</TableHead>
+            <TableHead>Valor (R$)</TableHead>
+            <TableHead>Vencimento</TableHead>
+            <TableHead>Ocorrências</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
+        </TableHeader>
+        <TableBody>
+          {(reportData as any[]).slice(0, 50).map((record, index) => (
+            <TableRow key={index}>
+              <TableCell className="font-mono text-sm">{record.cadastro}</TableCell>
+              <TableCell className="font-medium">{record.nome_escola}</TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {record.endereco_completo || 'N/A'}
+              </TableCell>
+              <TableCell>{record.mes_ano_referencia}</TableCell>
+              <TableCell>{parseFloat(record.consumo_m3 || 0).toFixed(1)}m³</TableCell>
+              <TableCell>{formatCurrency(parseFloat(record.valor_gasto || 0))}</TableCell>
+              <TableCell>{record.data_vencimento || 'N/A'}</TableCell>
+              <TableCell>
+                {record.ocorrencias_pendencias && (
+                  <Badge variant="destructive" className="text-xs">
+                    {record.ocorrencias_pendencias}
+                  </Badge>
+                )}
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEdit(record)}
+                    className="h-8 w-8"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDeleteClick(record)}
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+          {reportData.length > 0 && (
+            <TableRow className="bg-primary/5 border-t-2 border-primary">
+              <TableCell colSpan={4} className="font-bold text-lg">TOTAL GERAL</TableCell>
+              <TableCell className="font-bold text-lg">{totals.totalConsumption.toFixed(1)}m³</TableCell>
+              <TableCell className="font-bold text-lg text-primary">
+                {formatCurrency(totals.totalValue)}
+              </TableCell>
+              <TableCell colSpan={3}></TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    );
+  };
 
   if (loading) {
     return (
@@ -661,19 +679,17 @@ export function WaterReports() {
         {reportType === 'comparative' && (
           <div className="mt-4 pt-4 border-t">
             <label className="text-sm font-medium text-foreground mb-2 block">
-              Selecionar Escolas para Comparativo (até 15)
+              Selecionar Escolas para Comparativo
             </label>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-              {schools.slice(0, 15).map((school) => (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 max-h-60 overflow-y-auto p-2 border rounded">
+              {schools.map((school) => (
                 <label key={school} className="flex items-center space-x-2 text-sm">
                   <input
                     type="checkbox"
                     checked={selectedSchools.includes(school)}
                     onChange={(e) => {
                       if (e.target.checked) {
-                        if (selectedSchools.length < 15) {
-                          setSelectedSchools([...selectedSchools, school]);
-                        }
+                        setSelectedSchools([...selectedSchools, school]);
                       } else {
                         setSelectedSchools(selectedSchools.filter(s => s !== school));
                       }
@@ -681,13 +697,13 @@ export function WaterReports() {
                     className="rounded"
                   />
                   <span className="truncate" title={school}>
-                    {school.slice(0, 20)}
+                    {school}
                   </span>
                 </label>
               ))}
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              {selectedSchools.length}/15 escolas selecionadas
+              {selectedSchools.length} escola(s) selecionada(s)
             </p>
           </div>
         )}
