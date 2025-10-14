@@ -152,16 +152,94 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
       };
 
       // Parse hidrometros from JSON if exists
-      const hidrometrosArray = dataToEdit.hidrometros ? JSON.parse(dataToEdit.hidrometros) : [''];
+      let hidrometrosArray = [''];
+      try {
+        if (dataToEdit.hidrometros) {
+          if (Array.isArray(dataToEdit.hidrometros)) {
+            hidrometrosArray = dataToEdit.hidrometros;
+          } else {
+            const parsed = JSON.parse(dataToEdit.hidrometros);
+            hidrometrosArray = Array.isArray(parsed) ? parsed : [dataToEdit.hidrometros];
+          }
+        }
+      } catch {
+        hidrometrosArray = dataToEdit.hidrometros ? [dataToEdit.hidrometros] : [''];
+      }
       
-      // Parse consumos_m3 and numeros_dias arrays
-      const consumosArray = dataToEdit.consumos_m3 ? JSON.parse(dataToEdit.consumos_m3) : [''];
-      const numerosDiasArray = dataToEdit.numeros_dias ? JSON.parse(dataToEdit.numeros_dias) : [''];
+      // Parse consumos_m3 array
+      let consumosArray: any[] = [''];
+      try {
+        if (dataToEdit.consumos_m3) {
+          if (Array.isArray(dataToEdit.consumos_m3)) {
+            consumosArray = dataToEdit.consumos_m3;
+          } else {
+            const parsed = JSON.parse(dataToEdit.consumos_m3);
+            consumosArray = Array.isArray(parsed) ? parsed : [dataToEdit.consumos_m3];
+          }
+        }
+      } catch {
+        consumosArray = dataToEdit.consumos_m3 ? [dataToEdit.consumos_m3] : [''];
+      }
+
+      // Parse numeros_dias array
+      let numerosDiasArray: any[] = [''];
+      try {
+        if (dataToEdit.numeros_dias) {
+          if (Array.isArray(dataToEdit.numeros_dias)) {
+            numerosDiasArray = dataToEdit.numeros_dias;
+          } else {
+            const parsed = JSON.parse(dataToEdit.numeros_dias);
+            numerosDiasArray = Array.isArray(parsed) ? parsed : [dataToEdit.numeros_dias];
+          }
+        }
+      } catch {
+        numerosDiasArray = dataToEdit.numeros_dias ? [dataToEdit.numeros_dias] : [''];
+      }
       
-      // Parse datas arrays
-      const datasLeituraAnteriorArray = dataToEdit.datas_leitura_anterior ? JSON.parse(dataToEdit.datas_leitura_anterior) : [''];
-      const datasLeituraAtualArray = dataToEdit.datas_leitura_atual ? JSON.parse(dataToEdit.datas_leitura_atual) : [''];
-      const datasVencimentoArray = dataToEdit.datas_vencimento ? JSON.parse(dataToEdit.datas_vencimento) : [''];
+      // Parse datas_leitura_anterior array
+      let datasLeituraAnteriorArray = [''];
+      try {
+        if (dataToEdit.datas_leitura_anterior) {
+          if (Array.isArray(dataToEdit.datas_leitura_anterior)) {
+            datasLeituraAnteriorArray = dataToEdit.datas_leitura_anterior;
+          } else {
+            const parsed = JSON.parse(dataToEdit.datas_leitura_anterior);
+            datasLeituraAnteriorArray = Array.isArray(parsed) ? parsed : [dataToEdit.datas_leitura_anterior];
+          }
+        }
+      } catch {
+        datasLeituraAnteriorArray = dataToEdit.datas_leitura_anterior ? [dataToEdit.datas_leitura_anterior] : [''];
+      }
+
+      // Parse datas_leitura_atual array
+      let datasLeituraAtualArray = [''];
+      try {
+        if (dataToEdit.datas_leitura_atual) {
+          if (Array.isArray(dataToEdit.datas_leitura_atual)) {
+            datasLeituraAtualArray = dataToEdit.datas_leitura_atual;
+          } else {
+            const parsed = JSON.parse(dataToEdit.datas_leitura_atual);
+            datasLeituraAtualArray = Array.isArray(parsed) ? parsed : [dataToEdit.datas_leitura_atual];
+          }
+        }
+      } catch {
+        datasLeituraAtualArray = dataToEdit.datas_leitura_atual ? [dataToEdit.datas_leitura_atual] : [''];
+      }
+
+      // Parse datas_vencimento array
+      let datasVencimentoArray = [''];
+      try {
+        if (dataToEdit.datas_vencimento) {
+          if (Array.isArray(dataToEdit.datas_vencimento)) {
+            datasVencimentoArray = dataToEdit.datas_vencimento;
+          } else {
+            const parsed = JSON.parse(dataToEdit.datas_vencimento);
+            datasVencimentoArray = Array.isArray(parsed) ? parsed : [dataToEdit.datas_vencimento];
+          }
+        }
+      } catch {
+        datasVencimentoArray = dataToEdit.datas_vencimento ? [dataToEdit.datas_vencimento] : [''];
+      }
       
       const valoresFormatted = cadastrosArray.map((_, index) => {
         const valor = valoresArray[index];
