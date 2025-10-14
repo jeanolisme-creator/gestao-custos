@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Download, FileText, Search, Filter, Pencil, Trash2 } from "lucide-react";
+import { Download, FileText, Search, Filter, Pencil, Trash2, Printer, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -256,6 +256,21 @@ export function WaterReports() {
     toast({
       title: "Exportando para PDF",
       description: "O arquivo será baixado em instantes",
+    });
+  };
+
+  const handlePrint = () => {
+    window.print();
+    toast({
+      title: "Imprimir",
+      description: "Abrindo janela de impressão",
+    });
+  };
+
+  const handleSendEmail = () => {
+    toast({
+      title: "Enviar por email",
+      description: "Funcionalidade em desenvolvimento",
     });
   };
 
@@ -710,7 +725,7 @@ export function WaterReports() {
       </Card>
 
       {/* Export Buttons */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center flex-wrap gap-4">
         <Button onClick={exportToCSV} variant="outline">
           <Download className="h-4 w-4 mr-2" />
           Exportar CSV
@@ -718,6 +733,14 @@ export function WaterReports() {
         <Button onClick={exportToPDF} variant="outline">
           <FileText className="h-4 w-4 mr-2" />
           Exportar PDF
+        </Button>
+        <Button onClick={handlePrint} variant="outline">
+          <Printer className="h-4 w-4 mr-2" />
+          Imprimir
+        </Button>
+        <Button onClick={handleSendEmail} variant="outline">
+          <Mail className="h-4 w-4 mr-2" />
+          Enviar por email
         </Button>
       </div>
 
