@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
   Select,
   SelectContent,
@@ -246,17 +248,138 @@ export function WaterReports() {
   console.log("reportData length:", reportData.length);
 
   const exportToCSV = () => {
-    toast({
-      title: "Exportando para CSV",
-      description: "O arquivo será baixado em instantes",
-    });
+    try {
+      let csvContent = "";
+      const reportTitle = reportTypes.find(t => t.value === reportType)?.label || "Relatório";
+      
+      if (reportType === 'consolidated' || reportType === 'by-school' || 
+          reportType === 'value-range' || reportType === 'comparative') {
+        // Consolidated report format
+        csvContent = "Escola,Total Cadastros,Consumo Total (m³),Valor Total (R$)\n";
+        
+        let totalConsumption = 0;
+        let totalValue = 0;
+        
+        (reportData as any[]).forEach((school) => {
+          csvContent += `"${school.schoolName}",${school.cadastrosSet?.size || 0},${school.totalConsumption?.toFixed(1) || '0.0'},${school.totalValue?.toFixed(2) || '0.00'}\n`;
+          totalConsumption += school.totalConsumption || 0;
+          totalValue += school.totalValue || 0;
+        });
+        
+        csvContent += `\nTOTAL GERAL,,${totalConsumption.toFixed(1)},${totalValue.toFixed(2)}\n`;
+      } else {
+        // Detailed report format
+        csvContent = "Cadastro,Escola,Mês/Ano,Consumo (m³),Valor (R$)\n";
+        
+        let totalConsumption = 0;
+        let totalValue = 0;
+        
+        (reportData as any[]).forEach((record) => {
+          csvContent += `"${record.cadastro}","${record.nome_escola}","${record.mes_ano_referencia}",${parseFloat(record.consumo_m3 || 0).toFixed(1)},${parseFloat(record.valor_gasto || 0).toFixed(2)}\n`;
+          totalConsumption += parseFloat(record.consumo_m3 || 0);
+          totalValue += parseFloat(record.valor_gasto || 0);
+        });
+        
+        csvContent += `\nTOTAL GERAL,,,${totalConsumption.toFixed(1)},${totalValue.toFixed(2)}\n`;
+      }
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `relatorio_agua_${reportType}_${selectedYear}_${selectedMonth}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Exportado com sucesso",
+        description: "O arquivo CSV foi baixado",
+      });
+    } catch (error) {
+      console.error("Erro ao exportar CSV:", error);
+      toast({
+        title: "Erro ao exportar",
+        description: "Não foi possível exportar o arquivo CSV",
+        variant: "destructive",
+      });
+    }
   };
 
   const exportToPDF = () => {
-    toast({
-      title: "Exportando para PDF",
-      description: "O arquivo será baixado em instantes",
-    });
+    try {
+      const doc = new jsPDF();
+      const reportTitle = reportTypes.find(t => t.value === reportType)?.label || "Relatório";
+      
+      // Header
+      doc.setFontSize(18);
+      doc.text(`Relatório de Água - ${reportTitle}`, 14, 20);
+      doc.setFontSize(11);
+      doc.text(`Período: ${selectedMonth === 'todos' ? 'Anual' : selectedMonth} - ${selectedYear}`, 14, 28);
+      
+      if (reportType === 'consolidated' || reportType === 'by-school' || 
+          reportType === 'value-range' || reportType === 'comparative') {
+        // Consolidated report format
+        const tableData = (reportData as any[]).map((school) => [
+          school.schoolName,
+          school.cadastrosSet?.size || 0,
+          `${school.totalConsumption?.toFixed(1) || '0.0'}m³`,
+          `R$ ${school.totalValue?.toFixed(2) || '0.00'}`
+        ]);
+        
+        // Calculate totals
+        const totalConsumption = (reportData as any[]).reduce((sum, s) => sum + (s.totalConsumption || 0), 0);
+        const totalValue = (reportData as any[]).reduce((sum, s) => sum + (s.totalValue || 0), 0);
+        
+        autoTable(doc, {
+          head: [['Escola', 'Total Cadastros', 'Consumo Total', 'Valor Total']],
+          body: tableData,
+          foot: [['TOTAL GERAL', '', `${totalConsumption.toFixed(1)}m³`, `R$ ${totalValue.toFixed(2)}`]],
+          startY: 35,
+          theme: 'grid',
+          headStyles: { fillColor: [41, 128, 185] },
+          footStyles: { fillColor: [52, 152, 219], fontStyle: 'bold' },
+        });
+      } else {
+        // Detailed report format
+        const tableData = (reportData as any[]).map((record) => [
+          record.cadastro,
+          record.nome_escola,
+          record.mes_ano_referencia,
+          `${parseFloat(record.consumo_m3 || 0).toFixed(1)}m³`,
+          `R$ ${parseFloat(record.valor_gasto || 0).toFixed(2)}`
+        ]);
+        
+        // Calculate totals
+        const totalConsumption = (reportData as any[]).reduce((sum, r) => sum + parseFloat(r.consumo_m3 || 0), 0);
+        const totalValue = (reportData as any[]).reduce((sum, r) => sum + parseFloat(r.valor_gasto || 0), 0);
+        
+        autoTable(doc, {
+          head: [['Cadastro', 'Escola', 'Mês/Ano', 'Consumo', 'Valor']],
+          body: tableData,
+          foot: [['TOTAL GERAL', '', '', `${totalConsumption.toFixed(1)}m³`, `R$ ${totalValue.toFixed(2)}`]],
+          startY: 35,
+          theme: 'grid',
+          headStyles: { fillColor: [41, 128, 185] },
+          footStyles: { fillColor: [52, 152, 219], fontStyle: 'bold' },
+        });
+      }
+      
+      doc.save(`relatorio_agua_${reportType}_${selectedYear}_${selectedMonth}.pdf`);
+      
+      toast({
+        title: "Exportado com sucesso",
+        description: "O arquivo PDF foi baixado",
+      });
+    } catch (error) {
+      console.error("Erro ao exportar PDF:", error);
+      toast({
+        title: "Erro ao exportar",
+        description: "Não foi possível exportar o arquivo PDF",
+        variant: "destructive",
+      });
+    }
   };
 
   const handlePrint = () => {
