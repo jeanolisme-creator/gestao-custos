@@ -74,6 +74,21 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     return sum + numericValue;
   }, 0);
 
+  // Function to get previous month
+  const getPreviousMonth = (monthYear: string): string => {
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const [month, year] = monthYear.split('/');
+    const monthIndex = monthNames.indexOf(month);
+    
+    if (monthIndex === -1) return '';
+    
+    const prevMonthIndex = monthIndex === 0 ? 11 : monthIndex - 1;
+    const prevYear = monthIndex === 0 ? (parseInt(year) - 1).toString() : year;
+    
+    return `${monthNames[prevMonthIndex]}/${prevYear}`;
+  };
+
   // Load existing data if school was already filled
   useEffect(() => {
     const loadExistingData = async () => {
@@ -96,14 +111,42 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
         return;
       }
 
-      const record = existingRecords && existingRecords.length > 0 ? existingRecords[0] : null;
+      let record = existingRecords && existingRecords.length > 0 ? existingRecords[0] : null;
+      let isFromPreviousMonth = false;
+
+      // If no data for current month, try to get data from previous month
+      if (!record) {
+        const previousMonth = getPreviousMonth(selectedMonth);
+        if (previousMonth) {
+          const { data: previousRecords } = await supabase
+            .from('school_records')
+            .select('*')
+            .eq('nome_escola', currentSchool.nome_escola)
+            .eq('mes_ano_referencia', previousMonth)
+            .order('updated_at', { ascending: false })
+            .limit(1);
+
+          if (previousRecords && previousRecords.length > 0) {
+            record = previousRecords[0];
+            isFromPreviousMonth = true;
+          }
+        }
+      }
 
       if (record) {
         
         console.log('Carregando dados existentes:', record);
         
-        // Mark as filled
-        setFilledSchools(prev => new Set(prev).add(currentSchoolIndex));
+        // Mark as filled only if data is from current month (not previous month)
+        if (!isFromPreviousMonth) {
+          setFilledSchools(prev => new Set(prev).add(currentSchoolIndex));
+        } else {
+          setFilledSchools(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(currentSchoolIndex);
+            return newSet;
+          });
+        }
 
         // Format currency values
         const formatCurrency = (value: number | null) => {
@@ -217,24 +260,47 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
           valoresFormatted[0] = `R$ ${Number(record.valor_gasto).toFixed(2).replace('.', ',')}`;
         }
 
-        setFormData({
-          cadastros,
-          hidrometros: hidrometrosArray.map((h: any) => (h ?? '').toString()),
-          consumos_m3: consumosArray.map((c: any) => (c ?? '').toString()),
-          numeros_dias: numerosDiasArray.map((n: any) => (n ?? '').toString()),
-          datas_leitura_anterior: datasLeituraAnteriorArray.map((d: any) => (d ?? '').toString()),
-          datas_leitura_atual: datasLeituraAtualArray.map((d: any) => (d ?? '').toString()),
-          datas_vencimento: datasVencimentoArray.map((d: any) => (d ?? '').toString()),
-          valores_cadastros: valoresFormatted,
-          data_leitura_anterior: record.data_leitura_anterior || '',
-          data_leitura_atual: record.data_leitura_atual || '',
-          data_vencimento: record.data_vencimento || '',
-          consumo_m3: record.consumo_m3?.toString() || '',
-          numero_dias: record.numero_dias?.toString() || '',
-          descricao_servicos: record.descricao_servicos || '',
-          valor_servicos: formatCurrency(record.valor_servicos),
-          ocorrencias_pendencias: record.ocorrencias_pendencias || ''
-        });
+        // If data is from previous month, only copy cadastros and hidrometros
+        if (isFromPreviousMonth) {
+          setFormData({
+            cadastros,
+            hidrometros: hidrometrosArray.map((h: any) => (h ?? '').toString()),
+            consumos_m3: cadastros.map(() => ''),
+            numeros_dias: cadastros.map(() => ''),
+            datas_leitura_anterior: cadastros.map(() => ''),
+            datas_leitura_atual: cadastros.map(() => ''),
+            datas_vencimento: cadastros.map(() => ''),
+            valores_cadastros: cadastros.map(() => ''),
+            data_leitura_anterior: '',
+            data_leitura_atual: '',
+            data_vencimento: '',
+            consumo_m3: '',
+            numero_dias: '',
+            descricao_servicos: '',
+            valor_servicos: '',
+            ocorrencias_pendencias: ''
+          });
+        } else {
+          // Load all data from current month
+          setFormData({
+            cadastros,
+            hidrometros: hidrometrosArray.map((h: any) => (h ?? '').toString()),
+            consumos_m3: consumosArray.map((c: any) => (c ?? '').toString()),
+            numeros_dias: numerosDiasArray.map((n: any) => (n ?? '').toString()),
+            datas_leitura_anterior: datasLeituraAnteriorArray.map((d: any) => (d ?? '').toString()),
+            datas_leitura_atual: datasLeituraAtualArray.map((d: any) => (d ?? '').toString()),
+            datas_vencimento: datasVencimentoArray.map((d: any) => (d ?? '').toString()),
+            valores_cadastros: valoresFormatted,
+            data_leitura_anterior: record.data_leitura_anterior || '',
+            data_leitura_atual: record.data_leitura_atual || '',
+            data_vencimento: record.data_vencimento || '',
+            consumo_m3: record.consumo_m3?.toString() || '',
+            numero_dias: record.numero_dias?.toString() || '',
+            descricao_servicos: record.descricao_servicos || '',
+            valor_servicos: formatCurrency(record.valor_servicos),
+            ocorrencias_pendencias: record.ocorrencias_pendencias || ''
+          });
+        }
         
         console.log('FormData carregado:', {
           cadastros,
