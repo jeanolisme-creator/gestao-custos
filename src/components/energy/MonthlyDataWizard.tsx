@@ -232,7 +232,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
       // Avançar para próxima escola
       if (currentIndex < schools.length - 1) {
         setCurrentIndex(currentIndex + 1);
-        resetForm();
+        setIsEditing(false);
       } else {
         toast({
           title: "Concluído",
@@ -295,6 +295,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
   const handleNext = () => {
     if (currentIndex < schools.length - 1) {
       setCurrentIndex(currentIndex + 1);
+      setIsEditing(false);
     }
   };
 
