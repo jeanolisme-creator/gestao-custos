@@ -404,9 +404,19 @@ export function WaterReports() {
 
   const handleEditSave = async (updatedData: any) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Erro ao atualizar",
+          description: "Usuário não autenticado",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from("school_records")
-        .update(updatedData)
+        .update({ ...updatedData, user_id: user.id })
         .eq("id", recordToEdit.id);
 
       if (error) throw error;
@@ -418,12 +428,12 @@ export function WaterReports() {
 
       setEditDialogOpen(false);
       setRecordToEdit(null);
-      fetchData(); // Recarrega os dados
-    } catch (error) {
+      fetchData();
+    } catch (error: any) {
       console.error("Error updating record:", error);
       toast({
         title: "Erro ao atualizar",
-        description: "Não foi possível atualizar o registro",
+        description: error?.message || "Não foi possível atualizar o registro",
         variant: "destructive",
       });
     }
