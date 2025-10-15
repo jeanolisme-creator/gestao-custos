@@ -34,8 +34,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
   const [schools, setSchools] = useState<School[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [alreadyFilled, setAlreadyFilled] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [recordId, setRecordId] = useState<string | null>(null);
   
   // Form data
   const [cadastros, setCadastros] = useState<Array<{
@@ -115,8 +114,8 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
       if (error && error.code !== 'PGRST116') throw error;
       
       if (data) {
-        setAlreadyFilled(true);
-        // Preencher os dados existentes
+        setRecordId(data.id);
+        // Preencher os dados existentes para edição
         const existingCadastros = [{
           cadastro: data.cadastro_cliente || "",
           medidor: data.relogio || "",
@@ -135,7 +134,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
         setDescricaoServicos(data.descricao_servicos || "");
         setOcorrenciasPendencias(data.ocorrencias_pendencias || "");
       } else {
-        setAlreadyFilled(false);
+        setRecordId(null);
         resetForm();
       }
     } catch (error) {
@@ -160,7 +159,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
     }]);
     setDescricaoServicos("");
     setOcorrenciasPendencias("");
-    setIsEditing(false);
+    setRecordId(null);
   };
 
   const calculateTotal = () => {
@@ -201,12 +200,11 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
         ocorrencias_pendencias: ocorrenciasPendencias,
       };
 
-      if (alreadyFilled) {
+      if (recordId) {
         const { error } = await supabase
           .from("energy_records")
           .update(submitData)
-          .eq("nome_escola", school.nome_escola)
-          .eq("mes_ano_referencia", selectedMonth);
+          .eq("id", recordId);
 
         if (error) throw error;
       } else {
@@ -327,10 +325,10 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
 
   return (
     <div className="space-y-6">
-      {alreadyFilled && !isEditing && (
+      {recordId && (
         <Alert>
           <AlertDescription>
-            ⚠️ Escola já preenchida anteriormente
+            ℹ️ Editando dados salvos anteriormente - {selectedMonth}
           </AlertDescription>
         </Alert>
       )}
@@ -404,7 +402,6 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].cadastro = e.target.value;
                       setCadastros(newCadastros);
                     }}
-                    disabled={alreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -416,7 +413,6 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].medidor = e.target.value;
                       setCadastros(newCadastros);
                     }}
-                    disabled={alreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -429,7 +425,6 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].consumo_kwh = e.target.value;
                       setCadastros(newCadastros);
                     }}
-                    disabled={alreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -442,7 +437,6 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].numero_dias = e.target.value;
                       setCadastros(newCadastros);
                     }}
-                    disabled={alreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -454,7 +448,6 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].utilizado = e.target.value;
                       setCadastros(newCadastros);
                     }}
-                    disabled={alreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -467,7 +460,6 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].demanda_kwh = e.target.value;
                       setCadastros(newCadastros);
                     }}
-                    disabled={alreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -479,7 +471,6 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].tipo_instalacao = value;
                       setCadastros(newCadastros);
                     }}
-                    disabled={alreadyFilled && !isEditing}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione..." />
@@ -500,7 +491,6 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].data_leitura_anterior = e.target.value;
                       setCadastros(newCadastros);
                     }}
-                    disabled={alreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -513,7 +503,6 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].data_leitura_atual = e.target.value;
                       setCadastros(newCadastros);
                     }}
-                    disabled={alreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -526,7 +515,6 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].data_vencimento = e.target.value;
                       setCadastros(newCadastros);
                     }}
-                    disabled={alreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -538,7 +526,6 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].valor = value;
                       setCadastros(newCadastros);
                     }}
-                    disabled={alreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -550,18 +537,15 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].retencao_irrf = value;
                       setCadastros(newCadastros);
                     }}
-                    disabled={alreadyFilled && !isEditing}
                   />
                 </div>
               </div>
             </Card>
           ))}
 
-          {(!alreadyFilled || isEditing) && (
-            <Button variant="outline" onClick={addCadastro}>
-              + Adicionar mais um número de cadastro
-            </Button>
-          )}
+          <Button variant="outline" onClick={addCadastro}>
+            + Adicionar mais um número de cadastro
+          </Button>
 
           {/* Valor Total */}
           <div className="p-4 bg-primary/10 rounded-lg">
@@ -579,7 +563,6 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                 value={descricaoServicos}
                 onChange={(e) => setDescricaoServicos(e.target.value)}
                 placeholder="Descreva os serviços..."
-                disabled={alreadyFilled && !isEditing}
               />
             </div>
             <div>
@@ -588,7 +571,6 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                 value={ocorrenciasPendencias}
                 onChange={(e) => setOcorrenciasPendencias(e.target.value)}
                 placeholder="Descreva ocorrências ou pendências..."
-                disabled={alreadyFilled && !isEditing}
               />
             </div>
           </div>
@@ -601,17 +583,10 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
             </Button>
 
             <div className="flex gap-2">
-              {alreadyFilled && !isEditing ? (
-                <Button onClick={() => setIsEditing(true)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar
-                </Button>
-              ) : (
-                <Button onClick={handleSaveAndNext}>
-                  Próxima Escola
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              )}
+              <Button onClick={handleSaveAndNext}>
+                {recordId ? "Salvar e Próxima" : "Próxima Escola"}
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
             </div>
           </div>
         </div>

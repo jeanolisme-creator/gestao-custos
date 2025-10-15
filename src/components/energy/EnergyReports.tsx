@@ -77,16 +77,14 @@ export function EnergyReports() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
       const { data: records, error } = await supabase
         .from("energy_records")
         .select("*")
-        .eq("user_id", user.id);
+        .order("nome_escola");
 
       if (error) throw error;
 
+      console.log("Dados reais carregados do energy_records:", records?.length);
       setData(records || []);
       
       const uniqueSchools = Array.from(new Set(records?.map(r => r.nome_escola) || []));
