@@ -40,6 +40,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     datas_vencimento: [''],
     valores_cadastros: [''],
     proprietario: '',
+    responsavel: '',
     nome_escola: '',
     data_leitura_anterior: '',
     data_leitura_atual: '',
@@ -259,6 +260,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
         datas_vencimento: datasVencimentoArray,
         valores_cadastros: valoresFormatted,
         proprietario: dataToEdit.proprietario || '',
+        responsavel: dataToEdit.responsavel || '',
         nome_escola: dataToEdit.nome_escola || '',
         data_leitura_anterior: dataToEdit.data_leitura_anterior || '',
         data_leitura_atual: dataToEdit.data_leitura_atual || '',
@@ -313,6 +315,7 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
       datas_vencimento: [''],
       valores_cadastros: [''],
       proprietario: '',
+      responsavel: '',
       nome_escola: '',
       data_leitura_anterior: '',
       data_leitura_atual: '',
@@ -425,13 +428,14 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     const submitData: any = { 
       user_id: user.id,
       cadastro: JSON.stringify(formData.cadastros.filter(c => c.trim() !== '')),
-      hidrometros: JSON.stringify(formData.hidrometros),
-      consumos_m3: JSON.stringify(formData.consumos_m3.map(c => parseFloat(c) || 0)),
-      numeros_dias: JSON.stringify(formData.numeros_dias.map(n => parseInt(n) || 0)),
-      datas_leitura_anterior: JSON.stringify(formData.datas_leitura_anterior),
-      datas_leitura_atual: JSON.stringify(formData.datas_leitura_atual),
-      datas_vencimento: JSON.stringify(formData.datas_vencimento),
+      hidrometros: formData.hidrometros,
+      consumos_m3: formData.consumos_m3.map(c => parseFloat(c) || 0),
+      numeros_dias: formData.numeros_dias.map(n => parseInt(n) || 0),
+      datas_leitura_anterior: formData.datas_leitura_anterior,
+      datas_leitura_atual: formData.datas_leitura_atual,
+      datas_vencimento: formData.datas_vencimento,
       proprietario: formData.proprietario,
+      responsavel: formData.responsavel,
       nome_escola: formData.nome_escola,
       endereco_completo: formData.endereco_completo,
       numero: formData.numero,
@@ -450,12 +454,12 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
     if (formData.datas_leitura_atual[0]) submitData.data_leitura_atual = formData.datas_leitura_atual[0];
     if (formData.datas_vencimento[0]) submitData.data_vencimento = formData.datas_vencimento[0];
     
-    // Convert valores_cadastros to numeric array and store as JSON
+    // Convert valores_cadastros to numeric array
     const valoresNumeric = formData.valores_cadastros.map(valor => {
       const numericValue = parseFloat(valor.replace(/[R$\s.]/g, '').replace(',', '.'));
       return numericValue || 0;
     });
-    submitData.valores_cadastros = JSON.stringify(valoresNumeric);
+    submitData.valores_cadastros = valoresNumeric;
     
     // Calculate total from valores_cadastros
     submitData.valor_gasto = valoresNumeric.reduce((sum, val) => sum + val, 0);
