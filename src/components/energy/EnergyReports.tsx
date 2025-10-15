@@ -67,6 +67,7 @@ export function EnergyReports() {
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const { toast } = useToast();
 
   useEffect(() => {
@@ -147,6 +148,8 @@ export function EnergyReports() {
             totalConsumption: 0,
             totalService: 0,
             cadastros: [],
+            cadastrosDetails: [],
+            records: []
           });
         }
         
@@ -155,6 +158,14 @@ export function EnergyReports() {
         school.totalConsumption += parseFloat(record.consumo_kwh || 0);
         school.totalService += parseFloat(record.valor_servicos || 0);
         school.cadastros.push(record.cadastro_cliente);
+        school.cadastrosDetails.push({
+          cadastro: record.cadastro_cliente,
+          mesAno: record.mes_ano_referencia,
+          consumo: parseFloat(record.consumo_kwh || 0),
+          valor: parseFloat(record.valor_gasto || 0),
+          record: record
+        });
+        school.records.push(record);
       });
 
       let result = Array.from(schoolMap.values());
@@ -228,123 +239,155 @@ export function EnergyReports() {
     }
   };
 
+  const toggleRow = (index: number) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    setExpandedRows(newExpanded);
+  };
+
   const renderConsolidatedTable = () => {
-    // Obter todos os registros detalhados dos cadastros
-    const detailedRecords = data.filter(record => {
-      const mesAno = record.mes_ano_referencia || '';
-      let matches = mesAno.includes(selectedYear);
-      
-      if (selectedMonth !== 'todos') {
-        matches = matches && mesAno.toLowerCase().includes(selectedMonth);
-      }
+    const totals = (reportData as any[]).reduce((acc, school) => ({
+      totalConsumption: acc.totalConsumption + (school.totalConsumption || 0),
+      totalValue: acc.totalValue + (school.totalValue || 0)
+    }), { totalConsumption: 0, totalValue: 0 });
 
-      if (selectedSchool !== 'all') {
-        matches = matches && record.nome_escola === selectedSchool;
-      }
-
-      if (searchTerm) {
-        matches = matches && (
-          record.nome_escola?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          record.cadastro_cliente?.includes(searchTerm)
-        );
-      }
-
-      return matches;
-    });
-
-    const totalConsumption = detailedRecords.reduce((sum, record) => sum + (parseFloat(record.consumo_kwh) || 0), 0);
-    const totalValue = detailedRecords.reduce((sum, record) => sum + (parseFloat(record.valor_gasto) || 0), 0);
-    
     return (
-      <div className="space-y-6">
-        {/* Resumo por escola */}
-        <div>
-          <h4 className="text-sm font-semibold mb-3 text-muted-foreground">Resumo por Escola</h4>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Escola</TableHead>
-                <TableHead>Cadastros</TableHead>
-                <TableHead>Consumo Total (KWh)</TableHead>
-                <TableHead>Valor Total (R$)</TableHead>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead></TableHead>
+            <TableHead>Escola</TableHead>
+            <TableHead>Total Cadastros</TableHead>
+            <TableHead>Consumo Total (KWh)</TableHead>
+            <TableHead>Valor Total (R$)</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {(reportData as any[]).map((school, index) => (
+            <>
+              <TableRow key={index} className="hover:bg-muted/50">
+                <TableCell>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 w-6 p-0"
+                    onClick={() => toggleRow(index)}
+                  >
+                    {expandedRows.has(index) ? '▼' : '▶'}
+                  </Button>
+                </TableCell>
+                <TableCell className="font-medium">{school.schoolName}</TableCell>
+                <TableCell>
+                  <Badge variant="outline">
+                    {school.cadastros?.length || 0} cadastros
+                  </Badge>
+                </TableCell>
+                <TableCell>{school.totalConsumption?.toFixed(1) || '0.0'} KWh</TableCell>
+                <TableCell className="font-semibold">
+                  {formatCurrency(school.totalValue || 0)}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEdit(school.records[0])}
+                      className="h-8 w-8"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setRecordToDelete(school.records[0].id);
+                        setDeleteDialogOpen(true);
+                      }}
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(reportData as any[]).map((school, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{school.schoolName}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline">
-                      {school.cadastros?.length || 0} cadastros
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{school.totalConsumption?.toFixed(1) || '0.0'} KWh</TableCell>
-                  <TableCell className="font-semibold">
-                    {formatCurrency(school.totalValue || 0)}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Detalhes dos cadastros */}
-        <div>
-          <h4 className="text-sm font-semibold mb-3 text-muted-foreground">Detalhes dos Cadastros</h4>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Cadastro</TableHead>
-                <TableHead>Escola</TableHead>
-                <TableHead>Mês/Ano</TableHead>
-                <TableHead>Consumo (KWh)</TableHead>
-                <TableHead>Valor (R$)</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {detailedRecords.map((record, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-mono text-sm">{record.cadastro_cliente}</TableCell>
-                  <TableCell className="font-medium">{record.nome_escola}</TableCell>
-                  <TableCell>{record.mes_ano_referencia}</TableCell>
-                  <TableCell>{parseFloat(record.consumo_kwh || 0).toFixed(1)} KWh</TableCell>
-                  <TableCell>{formatCurrency(parseFloat(record.valor_gasto || 0))}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex gap-2 justify-end">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleEdit(record)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                          setRecordToDelete(record.id);
-                          setDeleteDialogOpen(true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+              {expandedRows.has(index) && (
+                <TableRow key={`${index}-details`}>
+                  <TableCell colSpan={6} className="bg-muted/30 p-4">
+                    <div className="space-y-2">
+                      <h4 className="font-semibold text-sm mb-2">Detalhes dos Cadastros:</h4>
+                      <div className="grid grid-cols-1 gap-2">
+                        {school.cadastrosDetails.map((detail: any, cadIndex: number) => (
+                          <div key={cadIndex} className="flex justify-between items-center p-3 bg-background rounded border">
+                            <div className="flex flex-col gap-1">
+                              <span className="font-mono text-sm font-semibold">{detail.cadastro}</span>
+                              <span className="text-xs text-muted-foreground">{detail.mesAno}</span>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <div className="flex flex-col items-end gap-1">
+                                <span className="text-xs text-muted-foreground">{detail.consumo.toFixed(1)} KWh</span>
+                                <span className="font-semibold text-primary">
+                                  {formatCurrency(detail.valor || 0)}
+                                </span>
+                              </div>
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleEdit(detail.record)}
+                                  className="h-7 w-7"
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => {
+                                    setRecordToDelete(detail.record.id);
+                                    setDeleteDialogOpen(true);
+                                  }}
+                                  className="h-7 w-7 text-destructive hover:text-destructive"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex justify-between items-center pt-3 border-t mt-3">
+                        <span className="font-semibold">Soma Total:</span>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="text-sm text-muted-foreground">
+                            {school.totalConsumption?.toFixed(1) || '0.0'} KWh
+                          </span>
+                          <span className="text-lg font-bold text-primary">
+                            {formatCurrency(school.totalValue || 0)}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TableCell colSpan={3} className="font-bold">TOTAL GERAL</TableCell>
-                <TableCell className="font-bold">{totalConsumption.toFixed(1)} KWh</TableCell>
-                <TableCell className="font-bold">{formatCurrency(totalValue)}</TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-            </TableFooter>
-          </Table>
-        </div>
-      </div>
+              )}
+            </>
+          ))}
+          {reportData.length > 0 && (
+            <TableRow className="bg-primary/5 border-t-2 border-primary">
+              <TableCell colSpan={3} className="font-bold text-lg">TOTAL GERAL</TableCell>
+              <TableCell className="font-bold text-lg">{totals.totalConsumption.toFixed(1)} KWh</TableCell>
+              <TableCell className="font-bold text-lg text-primary">
+                {formatCurrency(totals.totalValue)}
+              </TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     );
   };
 
