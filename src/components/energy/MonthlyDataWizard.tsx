@@ -50,6 +50,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
     data_leitura_atual: string;
     data_vencimento: string;
     valor: string;
+    retencao_irrf: string;
   }>>([{
     cadastro: "",
     medidor: "",
@@ -61,7 +62,8 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
     data_leitura_anterior: "",
     data_leitura_atual: "",
     data_vencimento: "",
-    valor: ""
+    valor: "",
+    retencao_irrf: ""
   }]);
   
   const [descricaoServicos, setDescricaoServicos] = useState("");
@@ -126,7 +128,8 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
           data_leitura_anterior: "",
           data_leitura_atual: "",
           data_vencimento: data.data_vencimento || "",
-          valor: data.valor_gasto?.toString() || ""
+          valor: data.valor_gasto?.toString() || "",
+          retencao_irrf: data.retencao_irrf?.toString() || ""
         }];
         setCadastros(existingCadastros);
         setDescricaoServicos(data.descricao_servicos || "");
@@ -152,7 +155,8 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
       data_leitura_anterior: "",
       data_leitura_atual: "",
       data_vencimento: "",
-      valor: ""
+      valor: "",
+      retencao_irrf: ""
     }]);
     setDescricaoServicos("");
     setOcorrenciasPendencias("");
@@ -192,6 +196,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
         tipo_instalacao: cadastros[0].tipo_instalacao,
         data_vencimento: cadastros[0].data_vencimento || null,
         valor_gasto: valorTotal,
+        retencao_irrf: cadastros[0].retencao_irrf ? parseFloat(cadastros[0].retencao_irrf.replace(/[R$\s.]/g, '').replace(',', '.')) : null,
         descricao_servicos: descricaoServicos,
         ocorrencias_pendencias: ocorrenciasPendencias,
       };
@@ -293,7 +298,8 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
       data_leitura_anterior: "",
       data_leitura_atual: "",
       data_vencimento: "",
-      valor: ""
+      valor: "",
+      retencao_irrf: ""
     }]);
   };
 
@@ -466,15 +472,23 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                 </div>
                 <div>
                   <Label>Tipo de Instalação</Label>
-                  <Input
+                  <Select
                     value={cadastro.tipo_instalacao}
-                    onChange={(e) => {
+                    onValueChange={(value) => {
                       const newCadastros = [...cadastros];
-                      newCadastros[index].tipo_instalacao = e.target.value;
+                      newCadastros[index].tipo_instalacao = value;
                       setCadastros(newCadastros);
                     }}
                     disabled={alreadyFilled && !isEditing}
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="BAIXA">BAIXA</SelectItem>
+                      <SelectItem value="MÉDIA/ALTA">MÉDIA/ALTA</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <Label>Data Leitura Anterior</Label>
@@ -515,13 +529,25 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                     disabled={alreadyFilled && !isEditing}
                   />
                 </div>
-                <div className="md:col-span-2">
+                <div>
                   <Label>Valor (R$)</Label>
                   <CurrencyInput
                     value={cadastro.valor}
                     onValueChange={(value) => {
                       const newCadastros = [...cadastros];
                       newCadastros[index].valor = value;
+                      setCadastros(newCadastros);
+                    }}
+                    disabled={alreadyFilled && !isEditing}
+                  />
+                </div>
+                <div>
+                  <Label>Retenção IRRF (R$)</Label>
+                  <CurrencyInput
+                    value={cadastro.retencao_irrf}
+                    onValueChange={(value) => {
+                      const newCadastros = [...cadastros];
+                      newCadastros[index].retencao_irrf = value;
                       setCadastros(newCadastros);
                     }}
                     disabled={alreadyFilled && !isEditing}

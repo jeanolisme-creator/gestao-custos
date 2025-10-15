@@ -50,6 +50,7 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
     data_leitura_atual: string;
     data_vencimento: string;
     valor: string;
+    retencao_irrf: string;
   }>>([{
     cadastro: '',
     medidor: '',
@@ -61,7 +62,8 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
     data_leitura_anterior: '',
     data_leitura_atual: '',
     data_vencimento: '',
-    valor: ''
+    valor: '',
+    retencao_irrf: ''
   }]);
 
   const [formData, setFormData] = useState({
@@ -168,7 +170,8 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
         data_leitura_anterior: editData.data_leitura_anterior || '',
         data_leitura_atual: editData.data_leitura_atual || '',
         data_vencimento: editData.data_vencimento || '',
-        valor: editData.valor_gasto?.toString() || ''
+        valor: editData.valor_gasto?.toString() || '',
+        retencao_irrf: editData.retencao_irrf?.toString() || ''
       }]);
     }
   }, [editData]);
@@ -209,7 +212,8 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
       data_leitura_anterior: '',
       data_leitura_atual: '',
       data_vencimento: '',
-      valor: ''
+      valor: '',
+      retencao_irrf: ''
     }]);
   };
 
@@ -249,7 +253,8 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
       data_leitura_anterior: '',
       data_leitura_atual: '',
       data_vencimento: '',
-      valor: ''
+      valor: '',
+      retencao_irrf: ''
     }]);
   };
 
@@ -282,6 +287,7 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
     if (cadastros[0].consumo_kwh) submitData.consumo_kwh = parseFloat(cadastros[0].consumo_kwh);
     if (cadastros[0].demanda_kwh) submitData.demanda_kwh = parseFloat(cadastros[0].demanda_kwh);
     if (cadastros[0].numero_dias) submitData.numero_dias = parseInt(cadastros[0].numero_dias);
+    if (cadastros[0].retencao_irrf) submitData.retencao_irrf = parseFloat(cadastros[0].retencao_irrf.replace(/[R$\s.]/g, '').replace(',', '.'));
     
     // Date fields
     if (cadastros[0].data_vencimento) submitData.data_vencimento = cadastros[0].data_vencimento;
@@ -583,15 +589,23 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
 
                   <div className="space-y-2">
                     <Label>Tipo de Instalação</Label>
-                    <Input
+                    <Select
                       value={cadastro.tipo_instalacao}
-                      onChange={(e) => {
+                      onValueChange={(value) => {
                         const newCadastros = [...cadastros];
-                        newCadastros[index].tipo_instalacao = e.target.value;
+                        newCadastros[index].tipo_instalacao = value;
                         setCadastros(newCadastros);
                       }}
                       disabled={viewMode}
-                    />
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="BAIXA">BAIXA</SelectItem>
+                        <SelectItem value="MÉDIA/ALTA">MÉDIA/ALTA</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">
@@ -636,13 +650,26 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
                     />
                   </div>
 
-                  <div className="space-y-2 md:col-span-2">
+                  <div className="space-y-2">
                     <Label>Valor (R$) *</Label>
                     <CurrencyInput
                       value={cadastro.valor}
                       onValueChange={(value) => {
                         const newCadastros = [...cadastros];
                         newCadastros[index].valor = value;
+                        setCadastros(newCadastros);
+                      }}
+                      disabled={viewMode}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Retenção IRRF (R$)</Label>
+                    <CurrencyInput
+                      value={cadastro.retencao_irrf}
+                      onValueChange={(value) => {
+                        const newCadastros = [...cadastros];
+                        newCadastros[index].retencao_irrf = value;
                         setCadastros(newCadastros);
                       }}
                       disabled={viewMode}

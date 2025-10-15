@@ -91,6 +91,7 @@ export type Database = {
           proprietario: string | null
           relogio: string | null
           responsavel: string | null
+          retencao_irrf: number | null
           tipo_escola: string | null
           tipo_instalacao: string | null
           unidade: string | null
@@ -118,6 +119,7 @@ export type Database = {
           proprietario?: string | null
           relogio?: string | null
           responsavel?: string | null
+          retencao_irrf?: number | null
           tipo_escola?: string | null
           tipo_instalacao?: string | null
           unidade?: string | null
@@ -145,6 +147,7 @@ export type Database = {
           proprietario?: string | null
           relogio?: string | null
           responsavel?: string | null
+          retencao_irrf?: number | null
           tipo_escola?: string | null
           tipo_instalacao?: string | null
           unidade?: string | null
