@@ -77,6 +77,8 @@ export type Database = {
           cadastro_cliente: string
           consumo_kwh: number | null
           created_at: string
+          data_leitura_anterior: string | null
+          data_leitura_atual: string | null
           data_vencimento: string | null
           demanda_kwh: number | null
           descricao_servicos: string | null
@@ -105,6 +107,8 @@ export type Database = {
           cadastro_cliente: string
           consumo_kwh?: number | null
           created_at?: string
+          data_leitura_anterior?: string | null
+          data_leitura_atual?: string | null
           data_vencimento?: string | null
           demanda_kwh?: number | null
           descricao_servicos?: string | null
@@ -133,6 +137,8 @@ export type Database = {
           cadastro_cliente?: string
           consumo_kwh?: number | null
           created_at?: string
+          data_leitura_anterior?: string | null
+          data_leitura_atual?: string | null
           data_vencimento?: string | null
           demanda_kwh?: number | null
           descricao_servicos?: string | null

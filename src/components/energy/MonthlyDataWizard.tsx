@@ -116,6 +116,11 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
       if (data) {
         setRecordId(data.id);
         // Preencher os dados existentes para edição
+        const formatCurrency = (value: number | null) => {
+          if (!value) return "";
+          return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+
         const existingCadastros = [{
           cadastro: data.cadastro_cliente || "",
           medidor: data.relogio || "",
@@ -124,11 +129,11 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
           utilizado: data.responsavel || "",
           demanda_kwh: data.demanda_kwh?.toString() || "",
           tipo_instalacao: data.tipo_instalacao || "",
-          data_leitura_anterior: "",
-          data_leitura_atual: "",
+          data_leitura_anterior: data.data_leitura_anterior || "",
+          data_leitura_atual: data.data_leitura_atual || "",
           data_vencimento: data.data_vencimento || "",
-          valor: data.valor_gasto?.toString() || "",
-          retencao_irrf: data.retencao_irrf?.toString() || ""
+          valor: formatCurrency(data.valor_gasto),
+          retencao_irrf: formatCurrency(data.retencao_irrf)
         }];
         setCadastros(existingCadastros);
         setDescricaoServicos(data.descricao_servicos || "");
@@ -193,6 +198,8 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
         responsavel: cadastros[0].utilizado,
         demanda_kwh: parseFloat(cadastros[0].demanda_kwh) || null,
         tipo_instalacao: cadastros[0].tipo_instalacao,
+        data_leitura_anterior: cadastros[0].data_leitura_anterior || null,
+        data_leitura_atual: cadastros[0].data_leitura_atual || null,
         data_vencimento: cadastros[0].data_vencimento || null,
         valor_gasto: valorTotal,
         retencao_irrf: cadastros[0].retencao_irrf ? parseFloat(cadastros[0].retencao_irrf.replace(/[R$\s.]/g, '').replace(',', '.')) : null,
