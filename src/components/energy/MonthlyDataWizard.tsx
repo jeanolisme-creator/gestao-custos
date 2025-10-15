@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { CurrencyInput } from "@/components/ui/currency-input";
-import { ArrowLeft, ArrowRight, Edit, SkipForward } from "lucide-react";
+import { ArrowLeft, ArrowRight, Edit, SkipForward, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface School {
@@ -35,6 +35,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [recordId, setRecordId] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   
   // Form data
   const [cadastros, setCadastros] = useState<Array<{
@@ -165,6 +166,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
     setDescricaoServicos("");
     setOcorrenciasPendencias("");
     setRecordId(null);
+    setIsEditing(false);
   };
 
   const calculateTotal = () => {
@@ -287,7 +289,12 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
   const handlePrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
-      resetForm();
+    }
+  };
+
+  const handleNext = () => {
+    if (currentIndex < schools.length - 1) {
+      setCurrentIndex(currentIndex + 1);
     }
   };
 
@@ -330,12 +337,15 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
 
   const currentSchool = schools[currentIndex];
 
+  const isSchoolAlreadyFilled = !!recordId;
+
   return (
     <div className="space-y-6">
-      {recordId && (
-        <Alert>
-          <AlertDescription>
-            ℹ️ Editando dados salvos anteriormente - {selectedMonth}
+      {isSchoolAlreadyFilled && (
+        <Alert className="bg-yellow-100 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700">
+          <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
+          <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+            <strong>Escola já cadastrada anteriormente</strong> - Você pode editar os dados se necessário.
           </AlertDescription>
         </Alert>
       )}
@@ -409,6 +419,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].cadastro = e.target.value;
                       setCadastros(newCadastros);
                     }}
+                    disabled={isSchoolAlreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -420,6 +431,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].medidor = e.target.value;
                       setCadastros(newCadastros);
                     }}
+                    disabled={isSchoolAlreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -432,6 +444,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].consumo_kwh = e.target.value;
                       setCadastros(newCadastros);
                     }}
+                    disabled={isSchoolAlreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -444,6 +457,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].numero_dias = e.target.value;
                       setCadastros(newCadastros);
                     }}
+                    disabled={isSchoolAlreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -455,6 +469,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].utilizado = e.target.value;
                       setCadastros(newCadastros);
                     }}
+                    disabled={isSchoolAlreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -467,6 +482,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].demanda_kwh = e.target.value;
                       setCadastros(newCadastros);
                     }}
+                    disabled={isSchoolAlreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -478,6 +494,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].tipo_instalacao = value;
                       setCadastros(newCadastros);
                     }}
+                    disabled={isSchoolAlreadyFilled && !isEditing}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione..." />
@@ -498,6 +515,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].data_leitura_anterior = e.target.value;
                       setCadastros(newCadastros);
                     }}
+                    disabled={isSchoolAlreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -510,6 +528,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].data_leitura_atual = e.target.value;
                       setCadastros(newCadastros);
                     }}
+                    disabled={isSchoolAlreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -522,6 +541,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].data_vencimento = e.target.value;
                       setCadastros(newCadastros);
                     }}
+                    disabled={isSchoolAlreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -533,6 +553,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].valor = value;
                       setCadastros(newCadastros);
                     }}
+                    disabled={isSchoolAlreadyFilled && !isEditing}
                   />
                 </div>
                 <div>
@@ -544,6 +565,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                       newCadastros[index].retencao_irrf = value;
                       setCadastros(newCadastros);
                     }}
+                    disabled={isSchoolAlreadyFilled && !isEditing}
                   />
                 </div>
               </div>
@@ -570,6 +592,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                 value={descricaoServicos}
                 onChange={(e) => setDescricaoServicos(e.target.value)}
                 placeholder="Descreva os serviços..."
+                disabled={isSchoolAlreadyFilled && !isEditing}
               />
             </div>
             <div>
@@ -578,22 +601,46 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
                 value={ocorrenciasPendencias}
                 onChange={(e) => setOcorrenciasPendencias(e.target.value)}
                 placeholder="Descreva ocorrências ou pendências..."
+                disabled={isSchoolAlreadyFilled && !isEditing}
               />
             </div>
           </div>
 
           {/* Botões de ação */}
           <div className="flex items-center justify-between pt-4">
-            <Button variant="outline" onClick={handleSkip}>
-              <SkipForward className="h-4 w-4 mr-2" />
-              Pular Escola
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handlePrevious} disabled={currentIndex === 0}>
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Voltar
+              </Button>
+              {(!isSchoolAlreadyFilled || isEditing) && (
+                <Button variant="outline" onClick={handleSkip}>
+                  <SkipForward className="h-4 w-4 mr-2" />
+                  Pular Escola
+                </Button>
+              )}
+            </div>
 
             <div className="flex gap-2">
-              <Button onClick={handleSaveAndNext}>
-                {recordId ? "Salvar e Próxima" : "Próxima Escola"}
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
+              {isSchoolAlreadyFilled && !isEditing ? (
+                <>
+                  <Button variant="outline" onClick={() => setIsEditing(true)}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Editar
+                  </Button>
+                  {currentIndex < schools.length - 1 && (
+                    <Button onClick={handleNext}>
+                      Próxima Escola
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <Button onClick={handleSaveAndNext}>
+                  {currentIndex < schools.length - 1 ? 'Salvar e Próxima' : 'Salvar e Finalizar'}
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
