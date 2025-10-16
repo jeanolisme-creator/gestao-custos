@@ -319,43 +319,88 @@ export function EnergyReports() {
                     <div className="space-y-2">
                       <h4 className="font-semibold text-sm mb-2">Detalhes dos Cadastros:</h4>
                       <div className="grid grid-cols-1 gap-2">
-                        {school.cadastrosDetails.map((detail: any, cadIndex: number) => (
-                          <div key={cadIndex} className="flex justify-between items-center p-3 bg-background rounded border">
-                            <div className="flex flex-col gap-1">
-                              <span className="font-mono text-sm font-semibold">{detail.cadastro}</span>
-                              <span className="text-xs text-muted-foreground">{detail.mesAno}</span>
-                            </div>
-                            <div className="flex items-center gap-3">
-                              <div className="flex flex-col items-end gap-1">
-                                <span className="text-xs text-muted-foreground">{detail.consumo.toFixed(1)} KWh</span>
-                                <span className="font-semibold text-primary">
-                                  {formatCurrency(detail.valor || 0)}
-                                </span>
+                        {(() => {
+                          // Agrupar por cadastro para calcular totais quando há múltiplos registros do mesmo cadastro
+                          const cadastroGroups = school.cadastrosDetails.reduce((acc: any, detail: any) => {
+                            if (!acc[detail.cadastro]) {
+                              acc[detail.cadastro] = {
+                                cadastro: detail.cadastro,
+                                details: [],
+                                totalConsumo: 0,
+                                totalValor: 0
+                              };
+                            }
+                            acc[detail.cadastro].details.push(detail);
+                            acc[detail.cadastro].totalConsumo += detail.consumo || 0;
+                            acc[detail.cadastro].totalValor += detail.valor || 0;
+                            return acc;
+                          }, {});
+
+                          return Object.values(cadastroGroups).map((group: any, groupIndex: number) => (
+                            <div key={groupIndex} className="space-y-1">
+                              <div className="flex justify-between items-center p-3 bg-background rounded border">
+                                <div className="flex flex-col gap-1">
+                                  <span className="font-mono text-sm font-semibold">{group.cadastro}</span>
+                                  {group.details.length > 1 && (
+                                    <span className="text-xs text-muted-foreground">
+                                      {group.details.length} registros
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <div className="flex flex-col items-end gap-1">
+                                    <span className="text-xs text-muted-foreground">
+                                      {group.totalConsumo.toFixed(1)} KWh
+                                    </span>
+                                    <span className="font-semibold text-primary">
+                                      {formatCurrency(group.totalValor || 0)}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleEdit(detail.record)}
-                                  className="h-7 w-7"
-                                >
-                                  <Pencil className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => {
-                                    setRecordToDelete(detail.record.id);
-                                    setDeleteDialogOpen(true);
-                                  }}
-                                  className="h-7 w-7 text-destructive hover:text-destructive"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
+                              {group.details.length > 1 && (
+                                <div className="ml-4 space-y-1">
+                                  {group.details.map((detail: any, detailIndex: number) => (
+                                    <div key={detailIndex} className="flex justify-between items-center p-2 bg-muted/50 rounded border border-muted">
+                                      <span className="text-xs text-muted-foreground">{detail.mesAno}</span>
+                                      <div className="flex items-center gap-3">
+                                        <div className="flex flex-col items-end gap-0.5">
+                                          <span className="text-xs text-muted-foreground">
+                                            {(detail.consumo || 0).toFixed(1)} KWh
+                                          </span>
+                                          <span className="text-sm font-medium">
+                                            {formatCurrency(detail.valor || 0)}
+                                          </span>
+                                        </div>
+                                        <div className="flex gap-1">
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => handleEdit(detail.record)}
+                                            className="h-6 w-6"
+                                          >
+                                            <Pencil className="h-3 w-3" />
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => {
+                                              setRecordToDelete(detail.record.id);
+                                              setDeleteDialogOpen(true);
+                                            }}
+                                            className="h-6 w-6 text-destructive hover:text-destructive"
+                                          >
+                                            <Trash2 className="h-3 w-3" />
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                             </div>
-                          </div>
-                        ))}
+                          ));
+                        })()}
                       </div>
                       <div className="flex justify-between items-center pt-3 border-t mt-3">
                         <span className="font-semibold">Soma Total:</span>
