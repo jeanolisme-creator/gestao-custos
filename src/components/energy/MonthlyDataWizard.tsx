@@ -101,6 +101,20 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
     }
   };
 
+  const getPreviousMonth = (monthYear: string): string => {
+    const monthNames = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                        'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const [month, year] = monthYear.split('/');
+    const monthIndex = monthNames.indexOf(month);
+    
+    if (monthIndex === -1) return '';
+    
+    const prevMonthIndex = monthIndex === 0 ? 11 : monthIndex - 1;
+    const prevYear = monthIndex === 0 ? (parseInt(year) - 1).toString() : year;
+    
+    return `${monthNames[prevMonthIndex]}/${prevYear}`;
+  };
+
   const checkIfAlreadyFilled = async () => {
     if (!schools[currentIndex]) return;
     
@@ -114,31 +128,79 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
 
       if (error && error.code !== 'PGRST116') throw error;
       
-      if (data) {
-        setRecordId(data.id);
-        // Preencher os dados existentes para edição
+      let record = data;
+      let isFromPreviousMonth = false;
+
+      // Se não encontrou dados para o mês atual, buscar do mês anterior
+      if (!record) {
+        const previousMonth = getPreviousMonth(selectedMonth);
+        if (previousMonth) {
+          const { data: previousData } = await supabase
+            .from("energy_records")
+            .select("*")
+            .eq("nome_escola", schools[currentIndex].nome_escola)
+            .eq("mes_ano_referencia", previousMonth)
+            .maybeSingle();
+
+          if (previousData) {
+            record = previousData;
+            isFromPreviousMonth = true;
+          }
+        }
+      }
+      
+      if (record) {
+        // Marcar como preenchido apenas se for do mês atual
+        if (!isFromPreviousMonth) {
+          setRecordId(record.id);
+        } else {
+          setRecordId(null);
+        }
+
         const formatCurrency = (value: number | null) => {
           if (!value) return "";
           return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         };
 
-        const existingCadastros = [{
-          cadastro: data.cadastro_cliente || "",
-          medidor: data.relogio || "",
-          consumo_kwh: data.consumo_kwh?.toString() || "",
-          numero_dias: data.numero_dias?.toString() || "",
-          utilizado: data.responsavel || "",
-          demanda_kwh: data.demanda_kwh?.toString() || "",
-          tipo_instalacao: data.tipo_instalacao || "",
-          data_leitura_anterior: data.data_leitura_anterior || "",
-          data_leitura_atual: data.data_leitura_atual || "",
-          data_vencimento: data.data_vencimento || "",
-          valor: formatCurrency(data.valor_gasto),
-          retencao_irrf: formatCurrency(data.retencao_irrf)
-        }];
-        setCadastros(existingCadastros);
-        setDescricaoServicos(data.descricao_servicos || "");
-        setOcorrenciasPendencias(data.ocorrencias_pendencias || "");
+        // Se for do mês anterior, preencher apenas cadastro, medidor e tipo_instalacao
+        if (isFromPreviousMonth) {
+          const existingCadastros = [{
+            cadastro: record.cadastro_cliente || "",
+            medidor: record.relogio || "",
+            consumo_kwh: "",
+            numero_dias: "",
+            utilizado: "",
+            demanda_kwh: "",
+            tipo_instalacao: record.tipo_instalacao || "",
+            data_leitura_anterior: "",
+            data_leitura_atual: "",
+            data_vencimento: "",
+            valor: "",
+            retencao_irrf: ""
+          }];
+          setCadastros(existingCadastros);
+          setDescricaoServicos("");
+          setOcorrenciasPendencias("");
+        } else {
+          // Preencher todos os dados se for do mês atual
+          const existingCadastros = [{
+            cadastro: record.cadastro_cliente || "",
+            medidor: record.relogio || "",
+            consumo_kwh: record.consumo_kwh?.toString() || "",
+            numero_dias: record.numero_dias?.toString() || "",
+            utilizado: record.responsavel || "",
+            demanda_kwh: record.demanda_kwh?.toString() || "",
+            tipo_instalacao: record.tipo_instalacao || "",
+            data_leitura_anterior: record.data_leitura_anterior || "",
+            data_leitura_atual: record.data_leitura_atual || "",
+            data_vencimento: record.data_vencimento || "",
+            valor: formatCurrency(record.valor_gasto),
+            retencao_irrf: formatCurrency(record.retencao_irrf)
+          }];
+          setCadastros(existingCadastros);
+          setDescricaoServicos(record.descricao_servicos || "");
+          setOcorrenciasPendencias(record.ocorrencias_pendencias || "");
+        }
       } else {
         setRecordId(null);
         resetForm();
