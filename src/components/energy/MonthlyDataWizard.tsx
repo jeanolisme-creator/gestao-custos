@@ -76,8 +76,23 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
   useEffect(() => {
     if (schools.length > 0 && currentIndex < schools.length) {
       checkIfAlreadyFilled();
+      // Salvar o índice atual no localStorage
+      localStorage.setItem(`energy_last_index_${selectedMonth}`, currentIndex.toString());
     }
-  }, [currentIndex, schools]);
+  }, [currentIndex, schools, selectedMonth]);
+
+  // Carregar o último índice salvo ao abrir
+  useEffect(() => {
+    if (schools.length > 0) {
+      const savedIndex = localStorage.getItem(`energy_last_index_${selectedMonth}`);
+      if (savedIndex) {
+        const index = parseInt(savedIndex);
+        if (index >= 0 && index < schools.length) {
+          setCurrentIndex(index);
+        }
+      }
+    }
+  }, [schools, selectedMonth]);
 
   const fetchSchools = async () => {
     setLoading(true);
@@ -296,6 +311,8 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
         setCurrentIndex(currentIndex + 1);
         setIsEditing(false);
       } else {
+        // Limpar o índice salvo ao concluir todas as escolas
+        localStorage.removeItem(`energy_last_index_${selectedMonth}`);
         toast({
           title: "Concluído",
           description: "Todas as escolas foram processadas!",

@@ -42,8 +42,17 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
       setCurrentSchoolIndex(initialSchoolIndex);
       setStep('fill-data');
       loadPendingSchools(initialMonth);
+    } else if (open && selectedMonth && schools.length > 0) {
+      // Carregar o último índice salvo ao abrir
+      const savedIndex = localStorage.getItem(`water_last_index_${selectedMonth}`);
+      if (savedIndex) {
+        const index = parseInt(savedIndex);
+        if (index >= 0 && index < schools.length) {
+          setCurrentSchoolIndex(index);
+        }
+      }
     }
-  }, [open, initialMonth, initialSchoolIndex]);
+  }, [open, initialMonth, initialSchoolIndex, selectedMonth, schools]);
   const [formData, setFormData] = useState({
     cadastros: [''],
     hidrometros: [''],
@@ -96,6 +105,9 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
 
       // Cache schools in localStorage for pending list
       localStorage.setItem('cached_schools', JSON.stringify(schools));
+      
+      // Salvar o índice atual no localStorage
+      localStorage.setItem(`water_last_index_${selectedMonth}`, currentSchoolIndex.toString());
 
       // Check if this school already has data for this month
       const { data: existingRecords, error } = await supabase
@@ -597,7 +609,8 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
     if (currentSchoolIndex < schools.length - 1) {
       setCurrentSchoolIndex(prev => prev + 1);
     } else {
-      // Finished all schools
+      // Finished all schools - limpar o índice salvo
+      localStorage.removeItem(`water_last_index_${selectedMonth}`);
       toast({
         title: "Cadastro mensal concluído!",
         description: `Todos os registros do mês ${selectedMonth} foram salvos`
