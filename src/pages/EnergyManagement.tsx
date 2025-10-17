@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { EnergyRegistration } from "@/components/energy/EnergyRegistration";
 import { MonthlyDataWizard } from "@/components/energy/MonthlyDataWizard";
 import { PendingSchools } from "@/components/energy/PendingSchools";
-import { Download, Plus, Eye, Pencil, Trash2, ArrowUpDown, Calendar, AlertCircle, Upload, FileSpreadsheet } from "lucide-react";
+import { DataReview } from "@/components/energy/DataReview";
+import { Download, Plus, Eye, Pencil, Trash2, ArrowUpDown, Calendar, AlertCircle, Upload, FileSpreadsheet, ClipboardCheck } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { exportToExcel, exportToCSV, exportToPDF } from "@/utils/exportData";
 import {
@@ -48,6 +49,7 @@ export default function EnergyManagement() {
   const [showPending, setShowPending] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState("");
   const [pendingCount, setPendingCount] = useState(0);
+  const [dataReviewOpen, setDataReviewOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -285,6 +287,13 @@ export default function EnergyManagement() {
             Pendências {pendingCount > 0 && `(${pendingCount})`}
           </Button>
           <Button
+            variant="outline"
+            onClick={() => setDataReviewOpen(true)}
+          >
+            <ClipboardCheck className="mr-2 h-4 w-4" />
+            Conferência
+          </Button>
+          <Button
             className="bg-blue-500 hover:bg-blue-600"
             onClick={() => setShowMonthlyWizard(true)}
           >
@@ -419,6 +428,11 @@ export default function EnergyManagement() {
           }} />
         </DialogContent>
       </Dialog>
+
+      <DataReview
+        open={dataReviewOpen}
+        onOpenChange={setDataReviewOpen}
+      />
     </div>
   );
 }
