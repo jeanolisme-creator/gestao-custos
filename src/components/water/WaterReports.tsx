@@ -163,6 +163,64 @@ export function WaterReports() {
     return `${month.charAt(0).toUpperCase()}${month.slice(1)}/${d.getFullYear()}`;
   };
 
+  const ptMonths = [
+    'janeiro','fevereiro','março','abril','maio','junho',
+    'julho','agosto','setembro','outubro','novembro','dezembro'
+  ];
+  const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const monthIndexFromName = (name: string): number | null => {
+    if (!name) return null;
+    const n = normalize(name);
+    // Handle possible "marco" without cedilla and abbreviations
+    const aliases: Record<string, number> = {
+      'janeiro': 0, 'jan': 0,
+      'fevereiro': 1, 'fev': 1,
+      'março': 2, 'marco': 2, 'mar': 2,
+      'abril': 3, 'abr': 3,
+      'maio': 4, 'mai': 4,
+      'junho': 5, 'jun': 5,
+      'julho': 6, 'jul': 6,
+      'agosto': 7, 'ago': 7,
+      'setembro': 8, 'set': 8,
+      'outubro': 9, 'out': 9,
+      'novembro': 10, 'nov': 10,
+      'dezembro': 11, 'dez': 11,
+    };
+    if (n in aliases) return aliases[n];
+    // Try direct index
+    const idx = ptMonths.findIndex(m => normalize(m) === n);
+    return idx >= 0 ? idx : null;
+  };
+  const parseMesAnoReferencia = (value: any): { monthIndex: number, year: number } | null => {
+    if (!value) return null;
+    const s = String(value).trim();
+    if (!s) return null;
+    const parts = s.split(/[\/\-]/).map(p => p.trim());
+    if (parts.length >= 2) {
+      const left = parts[0];
+      const right = parts[1];
+      let monthIndex: number | null = null;
+      // numeric?
+      const num = parseInt(left, 10);
+      if (!isNaN(num)) {
+        monthIndex = Math.max(0, Math.min(11, num - 1));
+      } else {
+        monthIndex = monthIndexFromName(left);
+      }
+      const year = parseInt(right, 10);
+      if (monthIndex !== null && !isNaN(year)) return { monthIndex, year };
+    }
+    // Try full month name in string
+    for (let i = 0; i < ptMonths.length; i++) {
+      const m = ptMonths[i];
+      if (normalize(s).includes(normalize(m))) {
+        const yearMatch = s.match(/\d{4}/);
+        if (yearMatch) return { monthIndex: i, year: parseInt(yearMatch[0], 10) };
+      }
+    }
+    return null;
+  };
+
   const getReportData = () => {
     console.log("=== getReportData ===");
     console.log("Total records in data:", data.length);
@@ -196,27 +254,26 @@ export function WaterReports() {
     console.log("After year filter:", filteredData.length);
     
     if (selectedMonth !== 'todos') {
-      const monthLower = selectedMonth.toLowerCase();
+      const selectedIdx = monthIndexFromName(selectedMonth) ?? null;
       filteredData = filteredData.filter(record => {
-        const mesAno = record.mes_ano_referencia || '';
-        const refMonth = mesAno.split('/')[0]?.toLowerCase() || '';
+        const refParsed = parseMesAnoReferencia(record.mes_ano_referencia || '');
+        const refIdx = refParsed ? refParsed.monthIndex : null;
 
         const sd = parseBRDate(record.data_vencimento);
-        const singleDueMonth = sd
-          ? sd.toLocaleString('pt-BR', { month: 'long' }).toLowerCase()
-          : '';
-        let arrayDueMonths: string[] = [];
+        const singleDueIdx = sd ? sd.getMonth() : null;
+        let arrayDueIdxs: number[] = [];
         try {
           const arr = Array.isArray(record.datas_vencimento)
             ? record.datas_vencimento
             : (record.datas_vencimento ? JSON.parse(record.datas_vencimento as string) : []);
-          arrayDueMonths = (arr || [])
+          arrayDueIdxs = (arr || [])
             .map((d: string) => parseBRDate(d))
             .filter((d: Date | null): d is Date => !!d)
-            .map((d: Date) => d.toLocaleString('pt-BR', { month: 'long' }).toLowerCase());
+            .map((d: Date) => d.getMonth());
         } catch {}
 
-        return refMonth === monthLower || singleDueMonth === monthLower || arrayDueMonths.includes(monthLower);
+        if (selectedIdx === null) return true;
+        return refIdx === selectedIdx || singleDueIdx === selectedIdx || arrayDueIdxs.includes(selectedIdx);
       });
       console.log("After month filter:", filteredData.length);
     }
@@ -319,13 +376,20 @@ export function WaterReports() {
       
       // Detail-level month filter to keep only details matching selected month (by referência or vencimento)
       if (selectedMonth !== 'todos') {
-        const monthLower = selectedMonth.toLowerCase();
+        const selectedIdx = monthIndexFromName(selectedMonth) ?? null;
         result = result
           .map((school: any) => {
             const filteredDetails = (school.cadastrosDetails || []).filter((detail: any) => {
-              const refMonth = (detail.mesRef || detail.mesAno || '').split('/')[0]?.toLowerCase() || '';
-              const venMonth = (detail.mesVenc || '').split('/')[0]?.toLowerCase() || '';
-              return refMonth === monthLower || venMonth === monthLower;
+              const refParsed = parseMesAnoReferencia(detail.mesRef || detail.mesAno || '');
+              const refIdx = refParsed ? refParsed.monthIndex : null;
+              let venIdx: number | null = null;
+              if (detail.mesVenc) {
+                // detail.mesVenc is already a formatted string, parse month name back
+                const venParsed = parseMesAnoReferencia(detail.mesVenc);
+                venIdx = venParsed ? venParsed.monthIndex : null;
+              }
+              if (selectedIdx === null) return true;
+              return refIdx === selectedIdx || venIdx === selectedIdx;
             });
             const filteredTotalValue = filteredDetails.reduce((sum: number, d: any) => sum + (parseFloat(d.valor) || 0), 0);
             const filteredTotalConsumption = filteredDetails.reduce((sum: number, d: any) => sum + (parseFloat(d.consumo) || 0), 0);
