@@ -167,20 +167,22 @@ export function WaterReports() {
     // Aplicar filtro de busca apenas para nome de escola aqui
     // O filtro de cadastro será aplicado após a agregação
     if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
+      const term = searchTerm.trim();
+      const searchLower = term.toLowerCase();
       filteredData = filteredData.filter(record => {
         // Se for busca por nome de escola
         if (record.nome_escola?.toLowerCase().includes(searchLower)) {
           return true;
         }
-        // Se for busca por cadastro, incluir o registro mas filtrar depois
+        // Se for busca por cadastro (numérico), incluir o registro se contiver o cadastro exatamente
         try {
-          const cadastrosArray = Array.isArray(record.cadastro) 
-            ? record.cadastro 
+          const cadastrosArray = Array.isArray(record.cadastro)
+            ? record.cadastro
             : (record.cadastro ? JSON.parse(record.cadastro) : []);
-          return cadastrosArray.some((cad: string) => cad?.includes(searchTerm));
+          const normalized = (cadastrosArray || []).map((c: any) => c?.toString().trim());
+          return normalized.some((cad: string) => cad === term);
         } catch {
-          return record.cadastro?.includes(searchTerm);
+          return record.cadastro?.toString().trim() === term;
         }
       });
       console.log("After search filter:", filteredData.length);
@@ -247,8 +249,11 @@ export function WaterReports() {
         result = result.map(school => {
           console.log(`Processing school ${school.schoolName}, cadastrosDetails:`, school.cadastrosDetails.length);
           
+          const term = searchTerm.trim();
+          
           const filteredDetails = school.cadastrosDetails.filter((detail: any) => {
-            const matches = detail.cadastro?.toString().includes(searchTerm);
+            const cad = detail.cadastro?.toString().trim();
+            const matches = cad === term;
             if (matches) {
               console.log(`  Found match: cadastro ${detail.cadastro}, mes: ${detail.mesAno}, valor: ${detail.valor}`);
             }
