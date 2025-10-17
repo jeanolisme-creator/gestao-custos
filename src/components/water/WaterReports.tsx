@@ -241,10 +241,21 @@ export function WaterReports() {
       // Se houver searchTerm e não for busca por nome de escola, filtrar cadastros individuais
       if (searchTerm && !searchTerm.match(/[a-zA-Z]/)) {
         // É um número de cadastro - filtrar apenas os cadastros que correspondem
+        console.log("Filtering by cadastro number:", searchTerm);
+        console.log("Schools before filter:", result.length);
+        
         result = result.map(school => {
-          const filteredDetails = school.cadastrosDetails.filter((detail: any) => 
-            detail.cadastro?.includes(searchTerm)
-          );
+          console.log(`Processing school ${school.schoolName}, cadastrosDetails:`, school.cadastrosDetails.length);
+          
+          const filteredDetails = school.cadastrosDetails.filter((detail: any) => {
+            const matches = detail.cadastro?.toString().includes(searchTerm);
+            if (matches) {
+              console.log(`  Found match: cadastro ${detail.cadastro}, mes: ${detail.mesAno}, valor: ${detail.valor}`);
+            }
+            return matches;
+          });
+          
+          console.log(`  Filtered details for ${school.schoolName}:`, filteredDetails.length);
           
           // Recalcular totais baseado apenas nos cadastros filtrados
           const filteredTotalValue = filteredDetails.reduce((sum: number, detail: any) => 
@@ -265,6 +276,11 @@ export function WaterReports() {
             totalConsumption: filteredTotalConsumption
           };
         }).filter(school => school.cadastrosDetails.length > 0); // Remover escolas sem cadastros correspondentes
+        
+        console.log("Schools after filter:", result.length);
+        if (result.length > 0) {
+          console.log("Details in first school:", result[0].cadastrosDetails);
+        }
       }
 
       // Apply value range filter only for value-range report type
