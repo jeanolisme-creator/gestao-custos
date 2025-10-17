@@ -141,10 +141,22 @@ export function WaterReports() {
     console.log("Selected filters:", { selectedYear, selectedMonth, selectedSchool, reportType });
     
     let filteredData = data.filter(record => {
+      const year = selectedYear;
       const mesAno = record.mes_ano_referencia || '';
-      const matches = mesAno.includes(selectedYear);
+      const mesAnoHasYear = mesAno.includes(year);
+
+      const singleDueYear = record.data_vencimento ? new Date(record.data_vencimento).getFullYear().toString() : null;
+      let arrayDueYears: string[] = [];
+      try {
+        const arr = Array.isArray(record.datas_vencimento)
+          ? record.datas_vencimento
+          : (record.datas_vencimento ? JSON.parse(record.datas_vencimento as string) : []);
+        arrayDueYears = (arr || []).map((d: string) => new Date(d).getFullYear().toString());
+      } catch {}
+
+      const matches = mesAnoHasYear || singleDueYear === year || arrayDueYears.includes(year);
       if (!matches) {
-        console.log("Record filtered out by year:", record.nome_escola, mesAno, "doesn't include", selectedYear);
+        console.log("Record filtered out by year:", record.nome_escola, { mes_ano_referencia: mesAno, singleDueYear, arrayDueYears }, "doesn't include", year);
       }
       return matches;
     });
@@ -152,9 +164,23 @@ export function WaterReports() {
     console.log("After year filter:", filteredData.length);
     
     if (selectedMonth !== 'todos') {
+      const monthLower = selectedMonth.toLowerCase();
       filteredData = filteredData.filter(record => {
         const mesAno = record.mes_ano_referencia || '';
-        return mesAno.toLowerCase().includes(selectedMonth);
+        const refMonth = mesAno.split('/')[0]?.toLowerCase() || '';
+
+        const singleDueMonth = record.data_vencimento
+          ? new Date(record.data_vencimento).toLocaleString('pt-BR', { month: 'long' }).toLowerCase()
+          : '';
+        let arrayDueMonths: string[] = [];
+        try {
+          const arr = Array.isArray(record.datas_vencimento)
+            ? record.datas_vencimento
+            : (record.datas_vencimento ? JSON.parse(record.datas_vencimento as string) : []);
+          arrayDueMonths = (arr || []).map((d: string) => new Date(d).toLocaleString('pt-BR', { month: 'long' }).toLowerCase());
+        } catch {}
+
+        return refMonth === monthLower || singleDueMonth === monthLower || arrayDueMonths.includes(monthLower);
       });
       console.log("After month filter:", filteredData.length);
     }
@@ -219,15 +245,35 @@ export function WaterReports() {
           const cadastrosArray = Array.isArray(record.cadastro) ? record.cadastro : (record.cadastro ? JSON.parse(record.cadastro) : []);
           const valoresArray = Array.isArray(record.valores_cadastros) ? record.valores_cadastros : (record.valores_cadastros ? JSON.parse(record.valores_cadastros as string) : []);
           const consumosArray = Array.isArray(record.consumos_m3) ? record.consumos_m3 : (record.consumos_m3 ? JSON.parse(record.consumos_m3 as string) : []);
-          
-          // Add unique cadastros to Set and store details for each cadastro
+
+          // Datas de vencimento podem existir por índice (array) ou única
+          let datasVencimentoArray: string[] = [];
+          try {
+            datasVencimentoArray = Array.isArray(record.datas_vencimento)
+              ? record.datas_vencimento as string[]
+              : (record.datas_vencimento ? JSON.parse(record.datas_vencimento as string) : []);
+          } catch {}
+
+          // Add unique cadastros to Set and store details for each cadastro, com mês/ano por índice
           cadastrosArray.forEach((cadastro: string, idx: number) => {
             school.cadastrosSet.add(cadastro);
+
+            // Determinar Mês/Ano
+            let mesAnoForIndex = record.mes_ano_referencia as string;
+            const vencStr = datasVencimentoArray[idx] || record.data_vencimento;
+            if (vencStr) {
+              const d = new Date(vencStr as string);
+              if (!isNaN(d.getTime())) {
+                const monthName = d.toLocaleString('pt-BR', { month: 'long' });
+                mesAnoForIndex = `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)}/${d.getFullYear()}`;
+              }
+            }
+
             school.cadastrosDetails.push({
               cadastro: cadastro,
               consumo: parseFloat(consumosArray[idx] || 0),
               valor: valoresArray[idx] || 0,
-              mesAno: record.mes_ano_referencia,
+              mesAno: mesAnoForIndex,
               record: record
             });
           });
