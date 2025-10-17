@@ -295,13 +295,16 @@ export function WaterReports() {
             school.cadastrosSet.add(cadastro);
 
             const d = parseBRDate(vencimentosRaw[idx] ?? record.data_vencimento);
-            const mesAnoForIdx = d ? formatMesAnoFromDate(d) : (record.mes_ano_referencia || '');
+            const mesRef = record.mes_ano_referencia || '';
+            const mesVenc = d ? formatMesAnoFromDate(d) : '';
             
             school.cadastrosDetails.push({
               cadastro: cadastro,
               consumo: parseFloat(consumosArray[idx] || 0),
               valor: valoresArray[idx] || 0,
-              mesAno: mesAnoForIdx,
+              mesAno: mesRef, // backward compatibility
+              mesRef: mesRef,
+              mesVenc: mesVenc,
               record: record
             });
           });
@@ -313,7 +316,31 @@ export function WaterReports() {
       });
 
       let result = Array.from(schoolMap.values());
-
+      
+      // Detail-level month filter to keep only details matching selected month (by referência or vencimento)
+      if (selectedMonth !== 'todos') {
+        const monthLower = selectedMonth.toLowerCase();
+        result = result
+          .map((school: any) => {
+            const filteredDetails = (school.cadastrosDetails || []).filter((detail: any) => {
+              const refMonth = (detail.mesRef || detail.mesAno || '').split('/')[0]?.toLowerCase() || '';
+              const venMonth = (detail.mesVenc || '').split('/')[0]?.toLowerCase() || '';
+              return refMonth === monthLower || venMonth === monthLower;
+            });
+            const filteredTotalValue = filteredDetails.reduce((sum: number, d: any) => sum + (parseFloat(d.valor) || 0), 0);
+            const filteredTotalConsumption = filteredDetails.reduce((sum: number, d: any) => sum + (parseFloat(d.consumo) || 0), 0);
+            const filteredCadastrosSet = new Set(filteredDetails.map((d: any) => d.cadastro));
+            return {
+              ...school,
+              cadastrosDetails: filteredDetails,
+              cadastrosSet: filteredCadastrosSet,
+              totalValue: filteredTotalValue,
+              totalConsumption: filteredTotalConsumption
+            };
+          })
+          .filter((school: any) => (school.cadastrosDetails || []).length > 0);
+      }
+      
       // Se houver searchTerm e não for busca por nome de escola, filtrar cadastros individuais
       if (searchTerm && !searchTerm.match(/[a-zA-Z]/)) {
         // É um número de cadastro - filtrar apenas os cadastros que correspondem
@@ -740,7 +767,9 @@ export function WaterReports() {
                                   {group.details.map((detail: any, detailIndex: number) => (
                                     <div key={detailIndex} className="flex justify-between items-center p-2 bg-muted/50 rounded border border-muted">
                                       <div className="flex items-center gap-4">
-                                        <span className="text-xs text-muted-foreground min-w-[80px]">{detail.mesAno}</span>
+                                        <span className="text-xs text-muted-foreground min-w-[160px]">
+                                          Ref: {detail.mesRef || detail.mesAno || '—'} • Venc: {detail.mesVenc || '—'}
+                                        </span>
                                         <span className="text-xs text-muted-foreground min-w-[60px]">
                                           {(detail.consumo || 0).toFixed(1)} m³
                                         </span>
