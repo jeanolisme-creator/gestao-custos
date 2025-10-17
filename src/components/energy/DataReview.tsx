@@ -307,10 +307,6 @@ export function DataReview({ open, onOpenChange }: DataReviewProps) {
               onSuccess={() => {
                 setEditDialogOpen(false);
                 handleSearch();
-                toast({
-                  title: "Sucesso",
-                  description: "Registro atualizado com sucesso",
-                });
               }}
               editData={selectedRecord}
               viewMode={false}

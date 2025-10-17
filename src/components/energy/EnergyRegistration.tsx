@@ -296,9 +296,13 @@ export function EnergyRegistration({ onSuccess, editData, viewMode = false }: En
 
     let error;
     if (editData) {
+      // Remove user_id from update to avoid RLS issues
+      const updateData = { ...submitData };
+      delete updateData.user_id;
+      
       const result = await supabase
         .from('energy_records')
-        .update(submitData)
+        .update(updateData)
         .eq('id', editData.id);
       error = result.error;
     } else {

@@ -297,12 +297,19 @@ export function DataReview({ open, onOpenChange }: DataReviewProps) {
               record={selectedRecord}
               onSave={async (updatedData) => {
                 try {
+                  // Remove user_id from update if present to avoid RLS issues
+                  const updateData = { ...updatedData };
+                  delete updateData.user_id;
+                  
                   const { error } = await supabase
                     .from("school_records")
-                    .update(updatedData)
+                    .update(updateData)
                     .eq("id", selectedRecord.id);
 
-                  if (error) throw error;
+                  if (error) {
+                    console.error("Supabase error:", error);
+                    throw error;
+                  }
 
                   toast({
                     title: "Sucesso",
@@ -310,11 +317,11 @@ export function DataReview({ open, onOpenChange }: DataReviewProps) {
                   });
                   setEditDialogOpen(false);
                   handleSearch();
-                } catch (error) {
+                } catch (error: any) {
                   console.error("Error updating record:", error);
                   toast({
                     title: "Erro",
-                    description: "Não foi possível atualizar o registro",
+                    description: error?.message || "Não foi possível atualizar o registro",
                     variant: "destructive",
                   });
                 }
