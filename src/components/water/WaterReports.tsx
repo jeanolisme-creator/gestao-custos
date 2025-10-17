@@ -642,34 +642,32 @@ export function WaterReports() {
                                 <div className="ml-4 space-y-1">
                                   {group.details.map((detail: any, detailIndex: number) => (
                                     <div key={detailIndex} className="flex justify-between items-center p-2 bg-muted/50 rounded border border-muted">
-                                      <span className="text-xs text-muted-foreground">{detail.mesAno}</span>
-                                      <div className="flex items-center gap-3">
-                                        <div className="flex flex-col items-end gap-0.5">
-                                          <span className="text-xs text-muted-foreground">
-                                            {(detail.consumo || 0).toFixed(1)} m³
-                                          </span>
-                                          <span className="text-sm font-medium">
-                                            {formatCurrency(detail.valor || 0)}
-                                          </span>
-                                        </div>
-                                        <div className="flex gap-1">
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => handleEdit(detail.record)}
-                                            className="h-6 w-6"
-                                          >
-                                            <Pencil className="h-3 w-3" />
-                                          </Button>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => handleDeleteClick(detail.record)}
-                                            className="h-6 w-6 text-destructive hover:text-destructive"
-                                          >
-                                            <Trash2 className="h-3 w-3" />
-                                          </Button>
-                                        </div>
+                                      <div className="flex items-center gap-4">
+                                        <span className="text-xs text-muted-foreground min-w-[80px]">{detail.mesAno}</span>
+                                        <span className="text-xs text-muted-foreground min-w-[60px]">
+                                          {(detail.consumo || 0).toFixed(1)} m³
+                                        </span>
+                                        <span className="text-sm font-medium min-w-[80px]">
+                                          {formatCurrency(detail.valor || 0)}
+                                        </span>
+                                      </div>
+                                      <div className="flex gap-1">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => handleEdit(detail.record)}
+                                          className="h-6 w-6"
+                                        >
+                                          <Pencil className="h-3 w-3" />
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => handleDeleteClick(detail.record)}
+                                          className="h-6 w-6 text-destructive hover:text-destructive"
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
                                       </div>
                                     </div>
                                   ))}
