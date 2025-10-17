@@ -162,11 +162,25 @@ export function WaterReports() {
       console.log("After school filter:", filteredData.length);
     }
 
+    // Aplicar filtro de busca apenas para nome de escola aqui
+    // O filtro de cadastro será aplicado após a agregação
     if (searchTerm) {
-      filteredData = filteredData.filter(record =>
-        record.nome_escola?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.cadastro?.includes(searchTerm)
-      );
+      const searchLower = searchTerm.toLowerCase();
+      filteredData = filteredData.filter(record => {
+        // Se for busca por nome de escola
+        if (record.nome_escola?.toLowerCase().includes(searchLower)) {
+          return true;
+        }
+        // Se for busca por cadastro, incluir o registro mas filtrar depois
+        try {
+          const cadastrosArray = Array.isArray(record.cadastro) 
+            ? record.cadastro 
+            : (record.cadastro ? JSON.parse(record.cadastro) : []);
+          return cadastrosArray.some((cad: string) => cad?.includes(searchTerm));
+        } catch {
+          return record.cadastro?.includes(searchTerm);
+        }
+      });
       console.log("After search filter:", filteredData.length);
     }
     
@@ -221,6 +235,35 @@ export function WaterReports() {
       });
 
       let result = Array.from(schoolMap.values());
+
+      // Se houver searchTerm e não for busca por nome de escola, filtrar cadastros individuais
+      if (searchTerm && !searchTerm.match(/[a-zA-Z]/)) {
+        // É um número de cadastro - filtrar apenas os cadastros que correspondem
+        result = result.map(school => {
+          const filteredDetails = school.cadastrosDetails.filter((detail: any) => 
+            detail.cadastro?.includes(searchTerm)
+          );
+          
+          // Recalcular totais baseado apenas nos cadastros filtrados
+          const filteredTotalValue = filteredDetails.reduce((sum: number, detail: any) => 
+            sum + (parseFloat(detail.valor) || 0), 0
+          );
+          const filteredTotalConsumption = filteredDetails.reduce((sum: number, detail: any) => 
+            sum + (parseFloat(detail.consumo) || 0), 0
+          );
+          
+          // Criar novo Set apenas com cadastros filtrados
+          const filteredCadastrosSet = new Set(filteredDetails.map((d: any) => d.cadastro));
+          
+          return {
+            ...school,
+            cadastrosDetails: filteredDetails,
+            cadastrosSet: filteredCadastrosSet,
+            totalValue: filteredTotalValue,
+            totalConsumption: filteredTotalConsumption
+          };
+        }).filter(school => school.cadastrosDetails.length > 0); // Remover escolas sem cadastros correspondentes
+      }
 
       // Apply value range filter only for value-range report type
       if (reportType === 'value-range' && (minValue || maxValue)) {
