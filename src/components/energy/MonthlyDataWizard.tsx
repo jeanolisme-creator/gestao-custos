@@ -36,6 +36,7 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
   const [loading, setLoading] = useState(true);
   const [recordId, setRecordId] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [hasRestoredIndex, setHasRestoredIndex] = useState(false);
   
   // Form data
   const [cadastros, setCadastros] = useState<Array<{
@@ -76,8 +77,6 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
   useEffect(() => {
     if (schools.length > 0 && currentIndex < schools.length) {
       checkIfAlreadyFilled();
-      // Salvar o índice atual no localStorage
-      localStorage.setItem(`energy_last_index_${selectedMonth}`, currentIndex.toString());
     }
   }, [currentIndex, schools, selectedMonth]);
 
@@ -91,8 +90,17 @@ export function MonthlyDataWizard({ selectedMonth, onClose }: MonthlyDataWizardP
           setCurrentIndex(index);
         }
       }
+      setHasRestoredIndex(true);
     }
   }, [schools, selectedMonth]);
+
+  // Persistir índice atual somente após restauração inicial para evitar sobrescrever progresso salvo
+  useEffect(() => {
+    if (!hasRestoredIndex) return;
+    if (schools.length > 0 && currentIndex < schools.length && selectedMonth) {
+      localStorage.setItem(`energy_last_index_${selectedMonth}`, currentIndex.toString());
+    }
+  }, [currentIndex, schools, selectedMonth, hasRestoredIndex]);
 
   const fetchSchools = async () => {
     setLoading(true);

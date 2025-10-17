@@ -34,16 +34,21 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
   const [currentSchoolIndex, setCurrentSchoolIndex] = useState(0);
   const [filledSchools, setFilledSchools] = useState<Set<number>>(new Set());
   const [isEditing, setIsEditing] = useState(false);
-
-  // Load initial values if provided
+  const [hasRestoredIndex, setHasRestoredIndex] = useState(false);
+  // Load initial values if provided and try to restore last index
   useEffect(() => {
-    if (open && initialMonth && initialSchoolIndex !== undefined) {
+    if (!open) return;
+
+    if (initialMonth && initialSchoolIndex !== undefined) {
       setSelectedMonth(initialMonth);
       setCurrentSchoolIndex(initialSchoolIndex);
       setStep('fill-data');
       loadPendingSchools(initialMonth);
-    } else if (open && selectedMonth && schools.length > 0) {
-      // Carregar o último índice salvo ao abrir
+      setHasRestoredIndex(true);
+      return;
+    }
+
+    if (selectedMonth && schools.length > 0) {
       const savedIndex = localStorage.getItem(`water_last_index_${selectedMonth}`);
       if (savedIndex) {
         const index = parseInt(savedIndex);
@@ -51,6 +56,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
           setCurrentSchoolIndex(index);
         }
       }
+      setHasRestoredIndex(true);
     }
   }, [open, initialMonth, initialSchoolIndex, selectedMonth, schools]);
   const [formData, setFormData] = useState({
@@ -106,8 +112,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
       // Cache schools in localStorage for pending list
       localStorage.setItem('cached_schools', JSON.stringify(schools));
       
-      // Salvar o índice atual no localStorage
-      localStorage.setItem(`water_last_index_${selectedMonth}`, currentSchoolIndex.toString());
+      // Persistência do índice movida para um efeito separado para evitar sobrescrever progresso salvo
 
       // Check if this school already has data for this month
       const { data: existingRecords, error } = await supabase
@@ -353,6 +358,15 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
 
     loadExistingData();
   }, [currentSchoolIndex, currentSchool, step, schools, selectedMonth]);
+
+  // Persist last index only after restoration/initialization to avoid overwriting saved progress
+  useEffect(() => {
+    if (!open) return;
+    if (!hasRestoredIndex) return;
+    if (step !== 'fill-data' || !selectedMonth) return;
+    if (schools.length === 0) return;
+    localStorage.setItem(`water_last_index_${selectedMonth}`, currentSchoolIndex.toString());
+  }, [currentSchoolIndex, step, selectedMonth, schools, open, hasRestoredIndex]);
 
   const loadPendingSchools = (month: string) => {
     const stored = localStorage.getItem('water_pending_schools');
