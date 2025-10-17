@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Download, FileText, Search, Filter, Pencil, Trash2 } from "lucide-react";
+import { Download, FileText, Search, Filter, Pencil, Trash2, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EnergyRegistration } from "./EnergyRegistration";
+import { DataReview } from "./DataReview";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,6 +69,7 @@ export function EnergyReports() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+  const [dataReviewOpen, setDataReviewOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -701,6 +703,10 @@ export function EnergyReports() {
           <FileText className="h-4 w-4 mr-2" />
           Exportar PDF
         </Button>
+        <Button onClick={() => setDataReviewOpen(true)} variant="outline">
+          <ClipboardCheck className="h-4 w-4 mr-2" />
+          Conferência
+        </Button>
       </div>
 
       <Card className="p-4 bg-gradient-subtle border-border">
@@ -774,6 +780,11 @@ export function EnergyReports() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <DataReview
+        open={dataReviewOpen}
+        onOpenChange={setDataReviewOpen}
+      />
     </div>
   );
 }
