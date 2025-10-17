@@ -713,6 +713,7 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
                   <SelectValue placeholder="Selecione o mês..." />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="Dezembro/2024">Dezembro/2024</SelectItem>
                   <SelectItem value="Janeiro/2025">Janeiro/2025</SelectItem>
                   <SelectItem value="Fevereiro/2025">Fevereiro/2025</SelectItem>
                   <SelectItem value="Março/2025">Março/2025</SelectItem>

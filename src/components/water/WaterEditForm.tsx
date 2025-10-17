@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Trash2, Plus } from "lucide-react";
 
 interface WaterEditFormProps {
@@ -432,12 +433,30 @@ export function WaterEditForm({ record, onSave, onCancel }: WaterEditFormProps) 
 
           <div className="space-y-2">
             <Label>Mês/Ano Referência *</Label>
-            <Input
+            <Select
               required
               value={formData.mes_ano_referencia}
-              onChange={(e) => setFormData({ ...formData, mes_ano_referencia: e.target.value })}
-              placeholder="Janeiro/2025"
-            />
+              onValueChange={(value) => setFormData({ ...formData, mes_ano_referencia: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o mês..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Dezembro/2024">Dezembro/2024</SelectItem>
+                <SelectItem value="Janeiro/2025">Janeiro/2025</SelectItem>
+                <SelectItem value="Fevereiro/2025">Fevereiro/2025</SelectItem>
+                <SelectItem value="Março/2025">Março/2025</SelectItem>
+                <SelectItem value="Abril/2025">Abril/2025</SelectItem>
+                <SelectItem value="Maio/2025">Maio/2025</SelectItem>
+                <SelectItem value="Junho/2025">Junho/2025</SelectItem>
+                <SelectItem value="Julho/2025">Julho/2025</SelectItem>
+                <SelectItem value="Agosto/2025">Agosto/2025</SelectItem>
+                <SelectItem value="Setembro/2025">Setembro/2025</SelectItem>
+                <SelectItem value="Outubro/2025">Outubro/2025</SelectItem>
+                <SelectItem value="Novembro/2025">Novembro/2025</SelectItem>
+                <SelectItem value="Dezembro/2025">Dezembro/2025</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
