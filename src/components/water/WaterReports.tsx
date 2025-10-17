@@ -707,7 +707,7 @@ export function WaterReports() {
                                   </div>
                                 </div>
                               </div>
-                              {group.details.length > 1 && (
+                              {group.details.length >= 1 && (
                                 <div className="ml-4 space-y-1">
                                   {group.details.map((detail: any, detailIndex: number) => (
                                     <div key={detailIndex} className="flex justify-between items-center p-2 bg-muted/50 rounded border border-muted">
