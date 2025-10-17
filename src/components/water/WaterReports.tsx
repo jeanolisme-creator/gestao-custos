@@ -135,6 +135,34 @@ export function WaterReports() {
     }).format(value);
   };
 
+  // Helpers to parse dates in 'dd/mm/yyyy' (BR) or ISO formats
+  const parseBRDate = (value: any): Date | null => {
+    if (!value) return null;
+    const s = String(value).trim();
+    if (!s) return null;
+    // Try BR format dd/mm/yyyy
+    if (s.includes('/')) {
+      const parts = s.split('/');
+      if (parts.length === 3) {
+        const [dd, mm, yyyy] = parts;
+        const day = parseInt(dd, 10);
+        const month = parseInt(mm, 10) - 1; // 0-based
+        const year = parseInt(yyyy, 10);
+        if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+          return new Date(year, month, day);
+        }
+      }
+    }
+    // Fallback to native parser (handles ISO)
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
+  const formatMesAnoFromDate = (d: Date): string => {
+    const month = d.toLocaleString('pt-BR', { month: 'long' });
+    return `${month.charAt(0).toUpperCase()}${month.slice(1)}/${d.getFullYear()}`;
+  };
+
   const getReportData = () => {
     console.log("=== getReportData ===");
     console.log("Total records in data:", data.length);
@@ -145,13 +173,17 @@ export function WaterReports() {
       const mesAno = record.mes_ano_referencia || '';
       const mesAnoHasYear = mesAno.includes(year);
 
-      const singleDueYear = record.data_vencimento ? new Date(record.data_vencimento).getFullYear().toString() : null;
+      const sd = parseBRDate(record.data_vencimento);
+      const singleDueYear = sd ? sd.getFullYear().toString() : null;
       let arrayDueYears: string[] = [];
       try {
         const arr = Array.isArray(record.datas_vencimento)
           ? record.datas_vencimento
           : (record.datas_vencimento ? JSON.parse(record.datas_vencimento as string) : []);
-        arrayDueYears = (arr || []).map((d: string) => new Date(d).getFullYear().toString());
+        arrayDueYears = (arr || [])
+          .map((d: string) => parseBRDate(d))
+          .filter((d: Date | null): d is Date => !!d)
+          .map((d: Date) => d.getFullYear().toString());
       } catch {}
 
       const matches = mesAnoHasYear || singleDueYear === year || arrayDueYears.includes(year);
@@ -169,15 +201,19 @@ export function WaterReports() {
         const mesAno = record.mes_ano_referencia || '';
         const refMonth = mesAno.split('/')[0]?.toLowerCase() || '';
 
-        const singleDueMonth = record.data_vencimento
-          ? new Date(record.data_vencimento).toLocaleString('pt-BR', { month: 'long' }).toLowerCase()
+        const sd = parseBRDate(record.data_vencimento);
+        const singleDueMonth = sd
+          ? sd.toLocaleString('pt-BR', { month: 'long' }).toLowerCase()
           : '';
         let arrayDueMonths: string[] = [];
         try {
           const arr = Array.isArray(record.datas_vencimento)
             ? record.datas_vencimento
             : (record.datas_vencimento ? JSON.parse(record.datas_vencimento as string) : []);
-          arrayDueMonths = (arr || []).map((d: string) => new Date(d).toLocaleString('pt-BR', { month: 'long' }).toLowerCase());
+          arrayDueMonths = (arr || [])
+            .map((d: string) => parseBRDate(d))
+            .filter((d: Date | null): d is Date => !!d)
+            .map((d: Date) => d.toLocaleString('pt-BR', { month: 'long' }).toLowerCase());
         } catch {}
 
         return refMonth === monthLower || singleDueMonth === monthLower || arrayDueMonths.includes(monthLower);
@@ -246,15 +282,26 @@ export function WaterReports() {
           const valoresArray = Array.isArray(record.valores_cadastros) ? record.valores_cadastros : (record.valores_cadastros ? JSON.parse(record.valores_cadastros as string) : []);
           const consumosArray = Array.isArray(record.consumos_m3) ? record.consumos_m3 : (record.consumos_m3 ? JSON.parse(record.consumos_m3 as string) : []);
 
+          // Raw vencimento list may be per index (array) or single
+          let vencimentosRaw: any[] = [];
+          try {
+            vencimentosRaw = Array.isArray(record.datas_vencimento)
+              ? (record.datas_vencimento as any[])
+              : (record.datas_vencimento ? JSON.parse(record.datas_vencimento as string) : []);
+          } catch {}
+
           // Add unique cadastros to Set and store details for each cadastro
           cadastrosArray.forEach((cadastro: string, idx: number) => {
             school.cadastrosSet.add(cadastro);
+
+            const d = parseBRDate(vencimentosRaw[idx] ?? record.data_vencimento);
+            const mesAnoForIdx = d ? formatMesAnoFromDate(d) : (record.mes_ano_referencia || '');
             
             school.cadastrosDetails.push({
               cadastro: cadastro,
               consumo: parseFloat(consumosArray[idx] || 0),
               valor: valoresArray[idx] || 0,
-              mesAno: record.mes_ano_referencia,
+              mesAno: mesAnoForIdx,
               record: record
             });
           });
