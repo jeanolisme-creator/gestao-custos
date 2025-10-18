@@ -27,6 +27,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { WaterEditForm } from "./WaterEditForm";
 import { DataReview } from "./DataReview";
 import {
+  FieldSelector,
+  SchoolMultiSelector,
+  MonthSelector,
+  MacroregionSelector,
+  SchoolTypeSelector,
+  SelectedFieldsReport,
+  MonthlyComparisonReport,
+  StudentComparisonReport,
+  MacroregionComparisonReport,
+  SchoolTypeComparisonReport,
+} from "./AdvancedWaterReports";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -44,6 +56,11 @@ const reportTypes = [
   { value: 'temporal', label: 'Evolução Temporal' },
   { value: 'consolidated', label: 'Relatório Geral' },
   { value: 'value-range', label: 'Faixa de Valores' },
+  { value: 'selected-fields', label: 'Por Campos Selecionados' },
+  { value: 'monthly-comparison', label: 'Comparativo por Meses' },
+  { value: 'student-comparison', label: 'Comparativo por Total de Alunos' },
+  { value: 'macroregion-comparison', label: 'Comparativo por Macrorregião' },
+  { value: 'school-type-comparison', label: 'Comparativo por Tipo de Escola' },
 ];
 
 const months = [
@@ -64,6 +81,7 @@ export function WaterReports() {
   const [maxValue, setMaxValue] = useState<string>("");
   const [data, setData] = useState<any[]>([]);
   const [schools, setSchools] = useState<string[]>([]);
+  const [schoolsData, setSchoolsData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState<any>(null);
@@ -71,6 +89,10 @@ export function WaterReports() {
   const [recordToEdit, setRecordToEdit] = useState<any>(null);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [dataReviewOpen, setDataReviewOpen] = useState(false);
+  const [selectedFields, setSelectedFields] = useState<string[]>(['cadastro', 'consumo_m3', 'valor_gasto']);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [selectedMacroregions, setSelectedMacroregions] = useState<string[]>([]);
+  const [selectedSchoolTypes, setSelectedSchoolTypes] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -103,12 +125,13 @@ export function WaterReports() {
       const recordsSchools = Array.from(new Set(records?.map(r => r.nome_escola).filter(Boolean) || []));
       
       // Also fetch from schools table to ensure all schools appear
-      const { data: schoolsData } = await supabase
+      const { data: schoolsDataFetch } = await supabase
         .from("schools")
-        .select("nome_escola")
+        .select("*")
         .eq("user_id", user.id);
       
-      const registeredSchools = schoolsData?.map(s => s.nome_escola).filter(Boolean) || [];
+      setSchoolsData(schoolsDataFetch || []);
+      const registeredSchools = schoolsDataFetch?.map(s => s.nome_escola).filter(Boolean) || [];
       
       // Combine both lists and remove duplicates
       const allSchools = Array.from(new Set([...recordsSchools, ...registeredSchools]));
@@ -1143,6 +1166,52 @@ export function WaterReports() {
         )}
       </Card>
 
+      {/* Advanced Filters - Conditional based on report type */}
+      {reportType === 'selected-fields' && (
+        <FieldSelector
+          selectedFields={selectedFields}
+          onChange={setSelectedFields}
+        />
+      )}
+
+      {reportType === 'monthly-comparison' && (
+        <div className="space-y-4">
+          <SchoolMultiSelector
+            schools={schools}
+            selectedSchools={selectedSchools}
+            onChange={setSelectedSchools}
+            maxSchools={15}
+          />
+          <MonthSelector
+            selectedMonths={selectedMonths}
+            onChange={setSelectedMonths}
+          />
+        </div>
+      )}
+
+      {reportType === 'student-comparison' && (
+        <SchoolMultiSelector
+          schools={schools}
+          selectedSchools={selectedSchools}
+          onChange={setSelectedSchools}
+          maxSchools={15}
+        />
+      )}
+
+      {reportType === 'macroregion-comparison' && (
+        <MacroregionSelector
+          selectedMacroregions={selectedMacroregions}
+          onChange={setSelectedMacroregions}
+        />
+      )}
+
+      {reportType === 'school-type-comparison' && (
+        <SchoolTypeSelector
+          selectedSchoolTypes={selectedSchoolTypes}
+          onChange={setSelectedSchoolTypes}
+        />
+      )}
+
       {/* Export Buttons */}
       <div className="flex items-center flex-wrap gap-4">
         <Button onClick={exportToCSV} variant="outline">
@@ -1193,7 +1262,31 @@ export function WaterReports() {
         </div>
         
         <div className="overflow-x-auto">
-          {(reportType === 'consolidated' || reportType === 'by-school' || 
+          {reportType === 'selected-fields' ? (
+            <SelectedFieldsReport data={reportData} selectedFields={selectedFields} />
+          ) : reportType === 'monthly-comparison' ? (
+            <MonthlyComparisonReport 
+              data={data} 
+              selectedSchools={selectedSchools} 
+              selectedMonths={selectedMonths} 
+            />
+          ) : reportType === 'student-comparison' ? (
+            <StudentComparisonReport 
+              data={data} 
+              schoolsData={schoolsData} 
+              selectedSchools={selectedSchools} 
+            />
+          ) : reportType === 'macroregion-comparison' ? (
+            <MacroregionComparisonReport 
+              data={data} 
+              selectedMacroregions={selectedMacroregions} 
+            />
+          ) : reportType === 'school-type-comparison' ? (
+            <SchoolTypeComparisonReport 
+              data={data} 
+              selectedSchoolTypes={selectedSchoolTypes} 
+            />
+          ) : (reportType === 'consolidated' || reportType === 'by-school' || 
             reportType === 'value-range' || reportType === 'comparative') 
             ? renderConsolidatedTable() 
             : renderDetailedTable()}

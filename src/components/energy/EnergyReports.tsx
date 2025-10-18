@@ -26,6 +26,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { EnergyRegistration } from "./EnergyRegistration";
 import { DataReview } from "./DataReview";
 import {
+  FieldSelector,
+  SchoolMultiSelector,
+  MonthSelector,
+  MacroregionSelector,
+  SchoolTypeSelector,
+  SelectedFieldsReport,
+  MonthlyComparisonReport,
+  StudentComparisonReport,
+  MacroregionComparisonReport,
+  SchoolTypeComparisonReport,
+} from "./AdvancedEnergyReports";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -43,6 +55,11 @@ const reportTypes = [
   { value: 'temporal', label: 'Evolução Temporal' },
   { value: 'consolidated', label: 'Relatório Geral' },
   { value: 'value-range', label: 'Faixa de Valores' },
+  { value: 'selected-fields', label: 'Por Campos Selecionados' },
+  { value: 'monthly-comparison', label: 'Comparativo por Meses' },
+  { value: 'student-comparison', label: 'Comparativo por Total de Alunos' },
+  { value: 'macroregion-comparison', label: 'Comparativo por Macrorregião' },
+  { value: 'school-type-comparison', label: 'Comparativo por Tipo de Escola' },
 ];
 
 const months = [
@@ -63,6 +80,7 @@ export function EnergyReports() {
   const [maxValue, setMaxValue] = useState<string>("");
   const [data, setData] = useState<any[]>([]);
   const [schools, setSchools] = useState<string[]>([]);
+  const [schoolsData, setSchoolsData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState<any>(null);
@@ -70,6 +88,10 @@ export function EnergyReports() {
   const [recordToDelete, setRecordToDelete] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const [dataReviewOpen, setDataReviewOpen] = useState(false);
+  const [selectedFields, setSelectedFields] = useState<string[]>(['cadastro_cliente', 'consumo_kwh', 'valor_gasto']);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [selectedMacroregions, setSelectedMacroregions] = useState<string[]>([]);
+  const [selectedSchoolTypes, setSelectedSchoolTypes] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -79,6 +101,8 @@ export function EnergyReports() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { data: records, error } = await supabase
         .from("energy_records")
         .select("*")
@@ -91,6 +115,16 @@ export function EnergyReports() {
       
       const uniqueSchools = Array.from(new Set(records?.map(r => r.nome_escola) || []));
       setSchools(uniqueSchools as string[]);
+
+      // Fetch schools data for student comparison
+      if (user) {
+        const { data: schoolsDataFetch } = await supabase
+          .from("schools")
+          .select("*")
+          .eq("user_id", user.id);
+        
+        setSchoolsData(schoolsDataFetch || []);
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
       toast({
@@ -694,6 +728,26 @@ export function EnergyReports() {
         )}
       </Card>
 
+      {/* Advanced Filters */}
+      {reportType === 'selected-fields' && (
+        <FieldSelector selectedFields={selectedFields} onChange={setSelectedFields} />
+      )}
+      {reportType === 'monthly-comparison' && (
+        <div className="space-y-4">
+          <SchoolMultiSelector schools={schools} selectedSchools={selectedSchools} onChange={setSelectedSchools} maxSchools={15} />
+          <MonthSelector selectedMonths={selectedMonths} onChange={setSelectedMonths} />
+        </div>
+      )}
+      {reportType === 'student-comparison' && (
+        <SchoolMultiSelector schools={schools} selectedSchools={selectedSchools} onChange={setSelectedSchools} maxSchools={15} />
+      )}
+      {reportType === 'macroregion-comparison' && (
+        <MacroregionSelector selectedMacroregions={selectedMacroregions} onChange={setSelectedMacroregions} />
+      )}
+      {reportType === 'school-type-comparison' && (
+        <SchoolTypeSelector selectedSchoolTypes={selectedSchoolTypes} onChange={setSelectedSchoolTypes} />
+      )}
+
       <div className="flex items-center space-x-4">
         <Button onClick={exportToCSV} variant="outline">
           <Download className="h-4 w-4 mr-2" />
@@ -733,7 +787,17 @@ export function EnergyReports() {
         </div>
         
         <div className="overflow-x-auto">
-          {reportType === 'consolidated' || reportType === 'by-school' 
+          {reportType === 'selected-fields' ? (
+            <SelectedFieldsReport data={reportData} selectedFields={selectedFields} />
+          ) : reportType === 'monthly-comparison' ? (
+            <MonthlyComparisonReport data={data} selectedSchools={selectedSchools} selectedMonths={selectedMonths} />
+          ) : reportType === 'student-comparison' ? (
+            <StudentComparisonReport data={data} schoolsData={schoolsData} selectedSchools={selectedSchools} />
+          ) : reportType === 'macroregion-comparison' ? (
+            <MacroregionComparisonReport data={data} selectedMacroregions={selectedMacroregions} />
+          ) : reportType === 'school-type-comparison' ? (
+            <SchoolTypeComparisonReport data={data} selectedSchoolTypes={selectedSchoolTypes} />
+          ) : reportType === 'consolidated' || reportType === 'by-school' 
             ? renderConsolidatedTable()
             : renderDetailedTable()
           }
