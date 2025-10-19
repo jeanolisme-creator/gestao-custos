@@ -620,8 +620,8 @@ export function WaterReports() {
         startY: headerHeight + 10,
         margin: { top: headerHeight + 6, bottom: footerHeight + 6, left: 12, right: 12 },
         theme: 'grid' as const,
-        headStyles: { fillColor: [41, 128, 185] },
-        footStyles: { fillColor: [52, 152, 219], fontStyle: 'bold' as const },
+        headStyles: { fillColor: [41, 128, 185] as [number, number, number] },
+        footStyles: { fillColor: [52, 152, 219] as [number, number, number], fontStyle: 'bold' as const },
         didDrawPage: () => {
           drawHeaderFooter();
         },
@@ -710,8 +710,8 @@ export function WaterReports() {
         startY: headerHeight + 10,
         margin: { top: headerHeight + 6, bottom: footerHeight + 6, left: 12, right: 12 },
         theme: 'grid' as const,
-        headStyles: { fillColor: [41, 128, 185] },
-        footStyles: { fillColor: [52, 152, 219], fontStyle: 'bold' as const },
+        headStyles: { fillColor: [41, 128, 185] as [number, number, number] },
+        footStyles: { fillColor: [52, 152, 219] as [number, number, number], fontStyle: 'bold' as const },
         didDrawPage: () => drawHeaderFooter(),
       };
 
