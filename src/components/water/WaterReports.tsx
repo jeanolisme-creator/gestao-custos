@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Download, FileText, Search, Filter, Pencil, Trash2, Printer, Mail, ClipboardCheck } from "lucide-react";
+import { Download, FileText, Search, Filter, Pencil, Trash2, Printer, ClipboardCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import logoSJRP from "@/assets/logo-sjrp.png";
 import {
   Select,
   SelectContent,
@@ -93,6 +94,7 @@ export function WaterReports() {
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [selectedMacroregions, setSelectedMacroregions] = useState<string[]>([]);
   const [selectedSchoolTypes, setSelectedSchoolTypes] = useState<string[]>([]);
+  const [userEmail, setUserEmail] = useState<string>("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -110,6 +112,7 @@ export function WaterReports() {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) setUserEmail(user.email);
       if (!user) return;
 
       const { data: records, error } = await supabase
@@ -563,95 +566,188 @@ export function WaterReports() {
     }
   };
 
-  const exportToPDF = () => {
+  const exportToPDF = async () => {
     try {
-      const doc = new jsPDF();
-      const reportTitle = reportTypes.find(t => t.value === reportType)?.label || "Relatório";
-      
-      // Header
-      doc.setFontSize(18);
-      doc.text(`Relatório de Água - ${reportTitle}`, 14, 20);
-      doc.setFontSize(11);
-      doc.text(`Período: ${selectedMonth === 'todos' ? 'Anual' : selectedMonth} - ${selectedYear}`, 14, 28);
-      
-      if (reportType === 'consolidated' || reportType === 'by-school' || 
-          reportType === 'value-range' || reportType === 'comparative') {
-        // Consolidated report format
+      const doc = new jsPDF({ orientation: 'landscape' });
+      const reportTitle = reportTypes.find(t => t.value === reportType)?.label || 'Relatório';
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const generatedAt = new Date().toLocaleString('pt-BR');
+
+      // Load logo as data URL
+      const getLogoDataUrl = async (): Promise<string | null> => {
+        try {
+          const res = await fetch(logoSJRP);
+          const blob = await res.blob();
+          return await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(blob);
+          });
+        } catch {
+          return null;
+        }
+      };
+      const logoDataUrl = await getLogoDataUrl();
+
+      const headerHeight = 28;
+      const footerHeight = 22;
+
+      const drawHeaderFooter = () => {
+        // Header
+        if (logoDataUrl) {
+          try {
+            doc.addImage(logoDataUrl, 'PNG', 12, 10, 26, 16);
+          } catch {}
+        }
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text('Gestão de Custos – Secretaria Municipal de Educação', pageWidth / 2, 18, { align: 'center' });
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Relatório de Água – ${reportTitle}`, pageWidth / 2, 26, { align: 'center' });
+        doc.text(`Período: ${selectedMonth === 'todos' ? 'Anual' : selectedMonth} / ${selectedYear}` , pageWidth - 12, 18, { align: 'right' });
+
+        // Footer
+        const footerY = pageHeight - 10;
+        doc.setFontSize(9);
+        doc.text(`Gerado por: ${userEmail || 'usuário desconhecido'} • ${generatedAt}`, 12, footerY);
+        doc.text('Rua General Glicério, 3947 – Vila Imperial – CEP 15015-400 – São José do Rio Preto-SP – Telefone (17) 32114000', pageWidth / 2, footerY, { align: 'center' });
+      };
+
+      // Use autoTable hooks to render header/footer on each page
+      const tableCommon = {
+        startY: headerHeight + 10,
+        margin: { top: headerHeight + 6, bottom: footerHeight + 6, left: 12, right: 12 },
+        theme: 'grid' as const,
+        headStyles: { fillColor: [41, 128, 185] },
+        footStyles: { fillColor: [52, 152, 219], fontStyle: 'bold' as const },
+        didDrawPage: () => {
+          drawHeaderFooter();
+        },
+      };
+
+      if (reportType === 'consolidated' || reportType === 'by-school' || reportType === 'value-range' || reportType === 'comparative') {
         const tableData = (reportData as any[]).map((school) => [
           school.schoolName,
           school.cadastrosSet?.size || 0,
-          `${school.totalConsumption?.toFixed(1) || '0.0'}m³`,
-          `R$ ${school.totalValue?.toFixed(2) || '0.00'}`
+          `${school.totalConsumption?.toFixed(1) || '0.0'} m³`,
+          `R$ ${school.totalValue?.toFixed(2) || '0.00'}`,
         ]);
-        
-        // Calculate totals
         const totalConsumption = (reportData as any[]).reduce((sum, s) => sum + (s.totalConsumption || 0), 0);
         const totalValue = (reportData as any[]).reduce((sum, s) => sum + (s.totalValue || 0), 0);
-        
+
         autoTable(doc, {
+          ...tableCommon,
           head: [['Escola', 'Total Cadastros', 'Consumo Total', 'Valor Total']],
           body: tableData,
-          foot: [['TOTAL GERAL', '', `${totalConsumption.toFixed(1)}m³`, `R$ ${totalValue.toFixed(2)}`]],
-          startY: 35,
-          theme: 'grid',
-          headStyles: { fillColor: [41, 128, 185] },
-          footStyles: { fillColor: [52, 152, 219], fontStyle: 'bold' },
+          foot: [['TOTAL GERAL', '', `${totalConsumption.toFixed(1)} m³`, `R$ ${totalValue.toFixed(2)}`]],
         });
       } else {
-        // Detailed report format
         const tableData = (reportData as any[]).map((record) => [
           record.cadastro,
           record.nome_escola,
           record.mes_ano_referencia,
-          `${parseFloat(record.consumo_m3 || 0).toFixed(1)}m³`,
-          `R$ ${parseFloat(record.valor_gasto || 0).toFixed(2)}`
+          `${parseFloat(record.consumo_m3 || 0).toFixed(1)} m³`,
+          `R$ ${parseFloat(record.valor_gasto || 0).toFixed(2)}`,
         ]);
-        
-        // Calculate totals
         const totalConsumption = (reportData as any[]).reduce((sum, r) => sum + parseFloat(r.consumo_m3 || 0), 0);
         const totalValue = (reportData as any[]).reduce((sum, r) => sum + parseFloat(r.valor_gasto || 0), 0);
-        
+
         autoTable(doc, {
+          ...tableCommon,
           head: [['Cadastro', 'Escola', 'Mês/Ano', 'Consumo', 'Valor']],
           body: tableData,
-          foot: [['TOTAL GERAL', '', '', `${totalConsumption.toFixed(1)}m³`, `R$ ${totalValue.toFixed(2)}`]],
-          startY: 35,
-          theme: 'grid',
-          headStyles: { fillColor: [41, 128, 185] },
-          footStyles: { fillColor: [52, 152, 219], fontStyle: 'bold' },
+          foot: [['TOTAL GERAL', '', '', `${totalConsumption.toFixed(1)} m³`, `R$ ${totalValue.toFixed(2)}`]],
         });
       }
-      
+
       doc.save(`relatorio_agua_${reportType}_${selectedYear}_${selectedMonth}.pdf`);
-      
-      toast({
-        title: "Exportado com sucesso",
-        description: "O arquivo PDF foi baixado",
-      });
+      toast({ title: 'Exportado com sucesso', description: 'O arquivo PDF foi baixado' });
     } catch (error) {
-      console.error("Erro ao exportar PDF:", error);
-      toast({
-        title: "Erro ao exportar",
-        description: "Não foi possível exportar o arquivo PDF",
-        variant: "destructive",
-      });
+      console.error('Erro ao exportar PDF:', error);
+      toast({ title: 'Erro ao exportar', description: 'Não foi possível exportar o arquivo PDF', variant: 'destructive' });
     }
   };
 
-  const handlePrint = () => {
-    window.print();
-    toast({
-      title: "Imprimir",
-      description: "Abrindo janela de impressão",
-    });
+  const handlePrint = async () => {
+    try {
+      const doc = new jsPDF({ orientation: 'landscape' });
+      const reportTitle = reportTypes.find(t => t.value === reportType)?.label || 'Relatório';
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const generatedAt = new Date().toLocaleString('pt-BR');
+
+      const res = await fetch(logoSJRP);
+      const blob = await res.blob();
+      const logoDataUrl: string = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+
+      const headerHeight = 28;
+      const footerHeight = 22;
+
+      const drawHeaderFooter = () => {
+        if (logoDataUrl) {
+          try { doc.addImage(logoDataUrl, 'PNG', 12, 10, 26, 16); } catch {}
+        }
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text('Gestão de Custos – Secretaria Municipal de Educação', pageWidth / 2, 18, { align: 'center' });
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Relatório de Água – ${reportTitle}`, pageWidth / 2, 26, { align: 'center' });
+        doc.text(`Período: ${selectedMonth === 'todos' ? 'Anual' : selectedMonth} / ${selectedYear}` , pageWidth - 12, 18, { align: 'right' });
+        const footerY = pageHeight - 10;
+        doc.setFontSize(9);
+        doc.text(`Gerado por: ${userEmail || 'usuário desconhecido'} • ${generatedAt}`, 12, footerY);
+        doc.text('Rua General Glicério, 3947 – Vila Imperial – CEP 15015-400 – São José do Rio Preto-SP – Telefone (17) 32114000', pageWidth / 2, footerY, { align: 'center' });
+      };
+
+      const tableCommon = {
+        startY: headerHeight + 10,
+        margin: { top: headerHeight + 6, bottom: footerHeight + 6, left: 12, right: 12 },
+        theme: 'grid' as const,
+        headStyles: { fillColor: [41, 128, 185] },
+        footStyles: { fillColor: [52, 152, 219], fontStyle: 'bold' as const },
+        didDrawPage: () => drawHeaderFooter(),
+      };
+
+      if (reportType === 'consolidated' || reportType === 'by-school' || reportType === 'value-range' || reportType === 'comparative') {
+        const tableData = (reportData as any[]).map((school) => [
+          school.schoolName,
+          school.cadastrosSet?.size || 0,
+          `${school.totalConsumption?.toFixed(1) || '0.0'} m³`,
+          `R$ ${school.totalValue?.toFixed(2) || '0.00'}`,
+        ]);
+        const totalConsumption = (reportData as any[]).reduce((sum, s) => sum + (s.totalConsumption || 0), 0);
+        const totalValue = (reportData as any[]).reduce((sum, s) => sum + (s.totalValue || 0), 0);
+
+        autoTable(doc, { ...tableCommon, head: [['Escola', 'Total Cadastros', 'Consumo Total', 'Valor Total']], body: tableData, foot: [['TOTAL GERAL', '', `${totalConsumption.toFixed(1)} m³`, `R$ ${totalValue.toFixed(2)}`]] });
+      } else {
+        const tableData = (reportData as any[]).map((record) => [
+          record.cadastro,
+          record.nome_escola,
+          record.mes_ano_referencia,
+          `${parseFloat(record.consumo_m3 || 0).toFixed(1)} m³`,
+          `R$ ${parseFloat(record.valor_gasto || 0).toFixed(2)}`,
+        ]);
+        const totalConsumption = (reportData as any[]).reduce((sum, r) => sum + parseFloat(r.consumo_m3 || 0), 0);
+        const totalValue = (reportData as any[]).reduce((sum, r) => sum + parseFloat(r.valor_gasto || 0), 0);
+        autoTable(doc, { ...tableCommon, head: [['Cadastro', 'Escola', 'Mês/Ano', 'Consumo', 'Valor']], body: tableData, foot: [['TOTAL GERAL', '', '', `${totalConsumption.toFixed(1)} m³`, `R$ ${totalValue.toFixed(2)}`]] });
+      }
+
+      const url = doc.output('bloburl');
+      window.open(url, '_blank');
+      toast({ title: 'Visualização gerada', description: 'O PDF foi aberto para visualização. Use o botão do visor para imprimir.' });
+    } catch (error) {
+      console.error('Erro ao gerar visualização de impressão:', error);
+      toast({ title: 'Erro ao imprimir', description: 'Não foi possível gerar a visualização do PDF', variant: 'destructive' });
+    }
   };
 
-  const handleSendEmail = () => {
-    toast({
-      title: "Enviar por email",
-      description: "Funcionalidade em desenvolvimento",
-    });
-  };
 
   const handleEdit = (record: any) => {
     setRecordToEdit(record);
@@ -1229,10 +1325,6 @@ export function WaterReports() {
         <Button onClick={handlePrint} variant="outline">
           <Printer className="h-4 w-4 mr-2" />
           Imprimir
-        </Button>
-        <Button onClick={handleSendEmail} variant="outline">
-          <Mail className="h-4 w-4 mr-2" />
-          Enviar por email
         </Button>
       </div>
 

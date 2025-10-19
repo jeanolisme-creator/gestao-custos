@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Download, FileText, Search, Filter, Pencil, Trash2, ClipboardCheck } from "lucide-react";
+import { Download, FileText, Search, Filter, Pencil, Trash2, ClipboardCheck, Printer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EnergyRegistration } from "./EnergyRegistration";
 import { DataReview } from "./DataReview";
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import logoSJRP from '@/assets/logo-sjrp.png';
 import {
   FieldSelector,
   SchoolMultiSelector,
@@ -92,6 +95,7 @@ export function EnergyReports() {
   const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [selectedMacroregions, setSelectedMacroregions] = useState<string[]>([]);
   const [selectedSchoolTypes, setSelectedSchoolTypes] = useState<string[]>([]);
+  const [userEmail, setUserEmail] = useState<string>("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -102,6 +106,7 @@ export function EnergyReports() {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) setUserEmail(user.email);
       
       const { data: records, error } = await supabase
         .from("energy_records")
@@ -268,11 +273,158 @@ export function EnergyReports() {
     });
   };
 
-  const exportToPDF = () => {
-    toast({
-      title: "Exportando para PDF",
-      description: "O arquivo será baixado em instantes",
-    });
+  const exportToPDF = async () => {
+    try {
+      const doc = new jsPDF({ orientation: 'landscape' });
+      const reportTitle = reportTypes.find(t => t.value === reportType)?.label || 'Relatório';
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const generatedAt = new Date().toLocaleString('pt-BR');
+
+      const res = await fetch(logoSJRP);
+      const blob = await res.blob();
+      const logoDataUrl: string = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+
+      const headerHeight = 28;
+      const footerHeight = 22;
+
+      const drawHeaderFooter = () => {
+        if (logoDataUrl) {
+          try { doc.addImage(logoDataUrl, 'PNG', 12, 10, 26, 16); } catch {}
+        }
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text('Gestão de Custos – Secretaria Municipal de Educação', pageWidth / 2, 18, { align: 'center' });
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Relatório de Energia – ${reportTitle}`, pageWidth / 2, 26, { align: 'center' });
+        doc.text(`Período: ${selectedMonth === 'todos' ? 'Anual' : selectedMonth} / ${selectedYear}` , pageWidth - 12, 18, { align: 'right' });
+        const footerY = pageHeight - 10;
+        doc.setFontSize(9);
+        doc.text(`Gerado por: ${userEmail || 'usuário desconhecido'} • ${generatedAt}`, 12, footerY);
+        doc.text('Rua General Glicério, 3947 – Vila Imperial – CEP 15015-400 – São José do Rio Preto-SP – Telefone (17) 32114000', pageWidth / 2, footerY, { align: 'center' });
+      };
+
+      const tableCommon = {
+        startY: headerHeight + 10,
+        margin: { top: headerHeight + 6, bottom: footerHeight + 6, left: 12, right: 12 },
+        theme: 'grid' as const,
+        headStyles: { fillColor: [41, 128, 185] },
+        footStyles: { fillColor: [52, 152, 219], fontStyle: 'bold' as const },
+        didDrawPage: () => drawHeaderFooter(),
+      };
+
+      if (reportType === 'consolidated' || reportType === 'by-school' || reportType === 'value-range' || reportType === 'comparative') {
+        const tableData = (reportData as any[]).map((school) => [
+          school.schoolName,
+          school.cadastros?.length || 0,
+          `${school.totalConsumption?.toFixed(1) || '0.0'} KWh`,
+          `R$ ${school.totalValue?.toFixed(2) || '0.00'}`,
+        ]);
+        const totalConsumption = (reportData as any[]).reduce((sum, s) => sum + (s.totalConsumption || 0), 0);
+        const totalValue = (reportData as any[]).reduce((sum, s) => sum + (s.totalValue || 0), 0);
+
+        autoTable(doc, { ...tableCommon, head: [['Escola', 'Total Cadastros', 'Consumo Total', 'Valor Total']], body: tableData, foot: [['TOTAL GERAL', '', `${totalConsumption.toFixed(1)} KWh`, `R$ ${totalValue.toFixed(2)}`]] });
+      } else {
+        const tableData = (reportData as any[]).map((record) => [
+          record.cadastro_cliente,
+          record.nome_escola,
+          record.mes_ano_referencia,
+          `${parseFloat(record.consumo_kwh || 0).toFixed(1)} KWh`,
+          `R$ ${parseFloat(record.valor_gasto || 0).toFixed(2)}`,
+        ]);
+        const totalConsumption = (reportData as any[]).reduce((sum, r) => sum + parseFloat(r.consumo_kwh || 0), 0);
+        const totalValue = (reportData as any[]).reduce((sum, r) => sum + parseFloat(r.valor_gasto || 0), 0);
+        autoTable(doc, { ...tableCommon, head: [['Cadastro', 'Escola', 'Mês/Ano', 'Consumo', 'Valor']], body: tableData, foot: [['TOTAL GERAL', '', '', `${totalConsumption.toFixed(1)} KWh`, `R$ ${totalValue.toFixed(2)}`]] });
+      }
+
+      doc.save(`relatorio_energia_${reportType}_${selectedYear}_${selectedMonth}.pdf`);
+      toast({ title: 'Exportado com sucesso', description: 'O arquivo PDF foi baixado' });
+    } catch (error) {
+      console.error('Erro ao exportar PDF:', error);
+      toast({ title: 'Erro ao exportar', description: 'Não foi possível exportar o arquivo PDF', variant: 'destructive' });
+    }
+};
+
+  const handlePrint = async () => {
+    try {
+      const doc = new jsPDF({ orientation: 'landscape' });
+      const reportTitle = reportTypes.find(t => t.value === reportType)?.label || 'Relatório';
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const generatedAt = new Date().toLocaleString('pt-BR');
+
+      const res = await fetch(logoSJRP);
+      const blob = await res.blob();
+      const logoDataUrl: string = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+
+      const headerHeight = 28;
+      const footerHeight = 22;
+
+      const drawHeaderFooter = () => {
+        if (logoDataUrl) {
+          try { doc.addImage(logoDataUrl, 'PNG', 12, 10, 26, 16); } catch {}
+        }
+        doc.setFontSize(14);
+        doc.setFont(undefined, 'bold');
+        doc.text('Gestão de Custos – Secretaria Municipal de Educação', pageWidth / 2, 18, { align: 'center' });
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'normal');
+        doc.text(`Relatório de Energia – ${reportTitle}`, pageWidth / 2, 26, { align: 'center' });
+        doc.text(`Período: ${selectedMonth === 'todos' ? 'Anual' : selectedMonth} / ${selectedYear}` , pageWidth - 12, 18, { align: 'right' });
+        const footerY = pageHeight - 10;
+        doc.setFontSize(9);
+        doc.text(`Gerado por: ${userEmail || 'usuário desconhecido'} • ${generatedAt}`, 12, footerY);
+        doc.text('Rua General Glicério, 3947 – Vila Imperial – CEP 15015-400 – São José do Rio Preto-SP – Telefone (17) 32114000', pageWidth / 2, footerY, { align: 'center' });
+      };
+
+      const tableCommon = {
+        startY: headerHeight + 10,
+        margin: { top: headerHeight + 6, bottom: footerHeight + 6, left: 12, right: 12 },
+        theme: 'grid' as const,
+        headStyles: { fillColor: [41, 128, 185] },
+        footStyles: { fillColor: [52, 152, 219], fontStyle: 'bold' as const },
+        didDrawPage: () => drawHeaderFooter(),
+      };
+
+      if (reportType === 'consolidated' || reportType === 'by-school' || reportType === 'value-range' || reportType === 'comparative') {
+        const tableData = (reportData as any[]).map((school) => [
+          school.schoolName,
+          school.cadastros?.length || 0,
+          `${school.totalConsumption?.toFixed(1) || '0.0'} KWh`,
+          `R$ ${school.totalValue?.toFixed(2) || '0.00'}`,
+        ]);
+        const totalConsumption = (reportData as any[]).reduce((sum, s) => sum + (s.totalConsumption || 0), 0);
+        const totalValue = (reportData as any[]).reduce((sum, s) => sum + (s.totalValue || 0), 0);
+        autoTable(doc, { ...tableCommon, head: [['Escola', 'Total Cadastros', 'Consumo Total', 'Valor Total']], body: tableData, foot: [['TOTAL GERAL', '', `${totalConsumption.toFixed(1)} KWh`, `R$ ${totalValue.toFixed(2)}`]] });
+      } else {
+        const tableData = (reportData as any[]).map((record) => [
+          record.cadastro_cliente,
+          record.nome_escola,
+          record.mes_ano_referencia,
+          `${parseFloat(record.consumo_kwh || 0).toFixed(1)} KWh`,
+          `R$ ${parseFloat(record.valor_gasto || 0).toFixed(2)}`,
+        ]);
+        const totalConsumption = (reportData as any[]).reduce((sum, r) => sum + parseFloat(r.consumo_kwh || 0), 0);
+        const totalValue = (reportData as any[]).reduce((sum, r) => sum + parseFloat(r.valor_gasto || 0), 0);
+        autoTable(doc, { ...tableCommon, head: [['Cadastro', 'Escola', 'Mês/Ano', 'Consumo', 'Valor']], body: tableData, foot: [['TOTAL GERAL', '', '', `${totalConsumption.toFixed(1)} KWh`, `R$ ${totalValue.toFixed(2)}`]] });
+      }
+
+      const url = doc.output('bloburl');
+      window.open(url, '_blank');
+      toast({ title: 'Visualização gerada', description: 'O PDF foi aberto para visualização. Use o botão do visor para imprimir.' });
+    } catch (error) {
+      console.error('Erro ao gerar visualização de impressão:', error);
+      toast({ title: 'Erro ao imprimir', description: 'Não foi possível gerar a visualização do PDF', variant: 'destructive' });
+    }
   };
 
   const handleEdit = (record: any) => {
@@ -756,6 +908,10 @@ export function EnergyReports() {
         <Button onClick={exportToPDF} variant="outline">
           <FileText className="h-4 w-4 mr-2" />
           Exportar PDF
+        </Button>
+        <Button onClick={async () => await handlePrint()} variant="outline">
+          <Printer className="h-4 w-4 mr-2" />
+          Imprimir
         </Button>
         <Button onClick={() => setDataReviewOpen(true)} variant="outline">
           <ClipboardCheck className="h-4 w-4 mr-2" />
