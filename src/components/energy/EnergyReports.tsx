@@ -207,8 +207,8 @@ export function EnergyReports() {
         school.cadastrosDetails.push({
           cadastro: record.cadastro_cliente,
           mesAno: record.mes_ano_referencia,
-          consumo: parseFloat(record.consumo_kwh || 0),
-          valor: parseFloat(record.valor_gasto || 0),
+          consumo: typeof record.consumo_kwh === 'number' ? record.consumo_kwh : (parseFloat(String(record.consumo_kwh || 0).replace(',', '.')) || 0),
+          valor: typeof record.valor_gasto === 'number' ? record.valor_gasto : (parseFloat(String(record.valor_gasto || 0).replace(/[R$\s.]/g, '').replace(',', '.')) || 0),
           record: record
         });
         school.records.push(record);
@@ -555,8 +555,14 @@ export function EnergyReports() {
                               };
                             }
                             acc[detail.cadastro].details.push(detail);
-                            acc[detail.cadastro].totalConsumo += detail.consumo || 0;
-                            acc[detail.cadastro].totalValor += detail.valor || 0;
+                            
+                            // Ensure proper number conversion before adding
+                            const consumoNum = typeof detail.consumo === 'number' ? detail.consumo : (parseFloat(String(detail.consumo).replace(',', '.')) || 0);
+                            const valorNum = typeof detail.valor === 'number' ? detail.valor : (parseFloat(String(detail.valor).replace(/[R$\s.]/g, '').replace(',', '.')) || 0);
+                            
+                            acc[detail.cadastro].totalConsumo += consumoNum;
+                            acc[detail.cadastro].totalValor += valorNum;
+                            
                             return acc;
                           }, {});
 

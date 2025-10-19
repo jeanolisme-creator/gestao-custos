@@ -381,10 +381,37 @@ export function WaterReports() {
             const mesRef = record.mes_ano_referencia || '';
             const mesVenc = d ? formatMesAnoFromDate(d) : '';
             
+            // Parse consumo value properly - handle both string and number formats
+            let consumoValue = 0;
+            const consumoRaw = consumosArray[idx];
+            if (consumoRaw !== null && consumoRaw !== undefined && consumoRaw !== '') {
+              if (typeof consumoRaw === 'string') {
+                // Remove any non-numeric characters except decimal separators
+                const cleaned = consumoRaw.replace(/[^\d.,\-]/g, '').replace(',', '.');
+                consumoValue = parseFloat(cleaned) || 0;
+              } else {
+                consumoValue = Number(consumoRaw) || 0;
+              }
+            }
+            
+            // Parse valor properly
+            let valorValue = 0;
+            const valorRaw = valoresArray[idx];
+            if (valorRaw !== null && valorRaw !== undefined && valorRaw !== '') {
+              if (typeof valorRaw === 'string') {
+                const cleaned = valorRaw.replace(/[R$\s.]/g, '').replace(',', '.');
+                valorValue = parseFloat(cleaned) || 0;
+              } else {
+                valorValue = Number(valorRaw) || 0;
+              }
+            }
+            
+            console.log(`Cadastro ${cadastro} (${mesRef}): consumo raw=${JSON.stringify(consumoRaw)}, parsed=${consumoValue}, valor raw=${JSON.stringify(valorRaw)}, parsed=${valorValue}`);
+            
             school.cadastrosDetails.push({
               cadastro: cadastro,
-              consumo: parseFloat(consumosArray[idx] || 0),
-              valor: valoresArray[idx] || 0,
+              consumo: consumoValue,
+              valor: valorValue,
               mesAno: mesRef, // backward compatibility
               mesRef: mesRef,
               mesVenc: mesVenc,
@@ -918,8 +945,16 @@ export function WaterReports() {
                               };
                             }
                             acc[detail.cadastro].details.push(detail);
-                            acc[detail.cadastro].totalConsumo += detail.consumo || 0;
-                            acc[detail.cadastro].totalValor += detail.valor || 0;
+                            
+                            // Ensure proper number conversion before adding
+                            const consumoNum = typeof detail.consumo === 'number' ? detail.consumo : (parseFloat(String(detail.consumo).replace(',', '.')) || 0);
+                            const valorNum = typeof detail.valor === 'number' ? detail.valor : (parseFloat(String(detail.valor).replace(/[R$\s.]/g, '').replace(',', '.')) || 0);
+                            
+                            acc[detail.cadastro].totalConsumo += consumoNum;
+                            acc[detail.cadastro].totalValor += valorNum;
+                            
+                            console.log(`Grouping cadastro ${detail.cadastro}: adding consumo=${consumoNum} (was ${detail.consumo}), total now=${acc[detail.cadastro].totalConsumo}`);
+                            
                             return acc;
                           }, {});
 
