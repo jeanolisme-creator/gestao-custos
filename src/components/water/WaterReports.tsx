@@ -650,7 +650,7 @@ export function WaterReports() {
         const footerY = pageHeight - 10;
         doc.setFontSize(9);
         doc.text(`Gerado por: ${userEmail || 'usuário desconhecido'} • ${generatedAt}`, 12, footerY);
-        doc.text('Rua General Glicério, 3947 – Vila Imperial – CEP 15015-400 – São José do Rio Preto-SP – Telefone (17) 32114000', pageWidth / 2, footerY, { align: 'center' });
+        doc.text('Rua General Glicério, 3947 – Vila Imperial – CEP 15015-400 – São José do Rio Preto-SP – Telefone (17) 32114000', pageWidth - 12, footerY, { align: 'right' });
       };
 
       // Use autoTable hooks to render header/footer on each page
@@ -680,6 +680,11 @@ export function WaterReports() {
           head: [['Escola', 'Total Cadastros', 'Consumo Total', 'Valor Total']],
           body: tableData,
           foot: [['TOTAL GERAL', '', `${totalConsumption.toFixed(1)} m³`, `R$ ${totalValue.toFixed(2)}`]],
+          columnStyles: {
+            1: { halign: 'center' },
+            2: { halign: 'center' },
+            3: { halign: 'center' }
+          }
         });
       } else {
         const tableData = (reportData as any[]).map((record) => [
@@ -741,7 +746,7 @@ export function WaterReports() {
         const footerY = pageHeight - 10;
         doc.setFontSize(9);
         doc.text(`Gerado por: ${userEmail || 'usuário desconhecido'} • ${generatedAt}`, 12, footerY);
-        doc.text('Rua General Glicério, 3947 – Vila Imperial – CEP 15015-400 – São José do Rio Preto-SP – Telefone (17) 32114000', pageWidth / 2, footerY, { align: 'center' });
+        doc.text('Rua General Glicério, 3947 – Vila Imperial – CEP 15015-400 – São José do Rio Preto-SP – Telefone (17) 32114000', pageWidth - 12, footerY, { align: 'right' });
       };
 
       const tableCommon = {
@@ -763,7 +768,17 @@ export function WaterReports() {
         const totalConsumption = (reportData as any[]).reduce((sum, s) => sum + (s.totalConsumption || 0), 0);
         const totalValue = (reportData as any[]).reduce((sum, s) => sum + (s.totalValue || 0), 0);
 
-        autoTable(doc, { ...tableCommon, head: [['Escola', 'Total Cadastros', 'Consumo Total', 'Valor Total']], body: tableData, foot: [['TOTAL GERAL', '', `${totalConsumption.toFixed(1)} m³`, `R$ ${totalValue.toFixed(2)}`]] });
+        autoTable(doc, { 
+          ...tableCommon, 
+          head: [['Escola', 'Total Cadastros', 'Consumo Total', 'Valor Total']], 
+          body: tableData, 
+          foot: [['TOTAL GERAL', '', `${totalConsumption.toFixed(1)} m³`, `R$ ${totalValue.toFixed(2)}`]],
+          columnStyles: {
+            1: { halign: 'center' },
+            2: { halign: 'center' },
+            3: { halign: 'center' }
+          }
+        });
       } else {
         const tableData = (reportData as any[]).map((record) => [
           record.cadastro,
@@ -940,112 +955,110 @@ export function WaterReports() {
               </TableRow>
               {expandedRows.has(index) && (
                 <TableRow key={`${index}-details`}>
-                  <TableCell colSpan={6} className="bg-muted/30 p-4">
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-sm mb-2">Detalhes dos Cadastros:</h4>
-                      <div className="grid grid-cols-1 gap-2">
-                        {(() => {
-                          // Agrupar por cadastro para calcular totais quando há múltiplos registros do mesmo cadastro
-                          // Create grouping based on cadastro to calculate totals for multiple records of the same cadastro
-                          const cadastroGroups = school.cadastrosDetails.reduce((acc: any, detail: any) => {
-                            if (!acc[detail.cadastro]) {
-                              acc[detail.cadastro] = {
-                                cadastro: detail.cadastro,
-                                details: [],
-                                totalConsumo: 0,
-                                totalValor: 0
-                              };
-                            }
-                            acc[detail.cadastro].details.push(detail);
-                            
-                            // Properly parse and sum values to avoid issues with last value only
-                            const consumoNum = detail.consumo || 0;
-                            const valorNum = detail.valor || 0;
-                            
-                            console.log(`BEFORE: Cadastro ${detail.cadastro} totalConsumo=${acc[detail.cadastro].totalConsumo}, adding consumo=${consumoNum}`);
-                            
-                            acc[detail.cadastro].totalConsumo += Number(consumoNum);
-                            acc[detail.cadastro].totalValor += Number(valorNum);
-                            
-                            console.log(`AFTER: Cadastro ${detail.cadastro} totalConsumo=${acc[detail.cadastro].totalConsumo}, totalValor=${acc[detail.cadastro].totalValor}`);
-                            
-                            return acc;
-                          }, {});
+                  <TableCell colSpan={6} className="bg-muted/30 p-6">
+                    <div className="space-y-4">
+                      <h4 className="font-semibold text-base mb-3 text-primary">Detalhes dos Cadastros</h4>
+                      {(() => {
+                        const cadastroGroups = school.cadastrosDetails.reduce((acc: any, detail: any) => {
+                          if (!acc[detail.cadastro]) {
+                            acc[detail.cadastro] = {
+                              cadastro: detail.cadastro,
+                              details: [],
+                              totalConsumo: 0,
+                              totalValor: 0
+                            };
+                          }
+                          acc[detail.cadastro].details.push(detail);
+                          const consumoNum = detail.consumo || 0;
+                          const valorNum = detail.valor || 0;
+                          acc[detail.cadastro].totalConsumo += Number(consumoNum);
+                          acc[detail.cadastro].totalValor += Number(valorNum);
+                          return acc;
+                        }, {});
 
-                          return Object.values(cadastroGroups).map((group: any, groupIndex: number) => (
-                            <div key={groupIndex} className="space-y-1">
-                              <div className="flex justify-between items-center p-3 bg-background rounded border">
-                                <div className="flex flex-col gap-1">
-                                  <span className="font-mono text-sm font-semibold">{group.cadastro}</span>
-                                  {group.details.length > 1 && (
-                                    <span className="text-xs text-muted-foreground">
-                                      {group.details.length} registros
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-3">
-                                  <div className="flex flex-col items-end gap-1">
-                                    <span className="text-xs text-muted-foreground">
-                                      {group.totalConsumo.toFixed(1)} m³
-                                    </span>
-                                    <span className="font-semibold text-primary">
-                                      {formatCurrency(group.totalValor || 0)}
-                                    </span>
+                        return (
+                          <div className="space-y-4">
+                            {Object.values(cadastroGroups).map((group: any, groupIndex: number) => (
+                              <div key={groupIndex} className="border rounded-lg overflow-hidden">
+                                <div className="bg-primary/10 px-4 py-2 border-b">
+                                  <div className="flex justify-between items-center">
+                                    <span className="font-mono text-sm font-semibold">Cadastro: {group.cadastro}</span>
+                                    <div className="flex gap-4 items-center">
+                                      <span className="text-sm font-medium">{group.totalConsumo.toFixed(1)} m³</span>
+                                      <span className="text-sm font-bold text-primary">{formatCurrency(group.totalValor)}</span>
+                                    </div>
                                   </div>
                                 </div>
+                                {group.details.length >= 1 && (
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow className="bg-muted/50">
+                                        <TableHead className="w-[140px]">Mês Ref.</TableHead>
+                                        <TableHead className="w-[140px]">Vencimento</TableHead>
+                                        <TableHead className="text-right w-[120px]">Consumo (m³)</TableHead>
+                                        <TableHead className="text-right w-[120px]">Valor (R$)</TableHead>
+                                        <TableHead className="text-right w-[100px]">Ações</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {group.details.map((detail: any, detailIndex: number) => (
+                                        <TableRow 
+                                          key={detailIndex}
+                                          className={detailIndex % 2 === 0 ? 'bg-background' : 'bg-muted/30'}
+                                        >
+                                          <TableCell className="font-medium text-sm">
+                                            {detail.mesRef || detail.mesAno || '—'}
+                                          </TableCell>
+                                          <TableCell className="text-sm text-muted-foreground">
+                                            {detail.mesVenc || '—'}
+                                          </TableCell>
+                                          <TableCell className="text-right font-medium">
+                                            {(detail.consumo || 0).toFixed(1)}
+                                          </TableCell>
+                                          <TableCell className="text-right font-semibold text-primary">
+                                            {formatCurrency(detail.valor || 0)}
+                                          </TableCell>
+                                          <TableCell className="text-right">
+                                            <div className="flex justify-end gap-1">
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleEdit(detail.record)}
+                                                className="h-7 w-7"
+                                              >
+                                                <Pencil className="h-3.5 w-3.5" />
+                                              </Button>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleDeleteClick(detail.record)}
+                                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                              >
+                                                <Trash2 className="h-3.5 w-3.5" />
+                                              </Button>
+                                            </div>
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                )}
                               </div>
-                              {group.details.length >= 1 && (
-                                <div className="ml-4 space-y-1">
-                                  {group.details.map((detail: any, detailIndex: number) => (
-                                    <div key={detailIndex} className="flex justify-between items-center p-2 bg-muted/50 rounded border border-muted">
-                                      <div className="flex items-center gap-4">
-                                        <span className="text-xs text-muted-foreground min-w-[160px]">
-                                          Ref: {detail.mesRef || detail.mesAno || '—'} • Venc: {detail.mesVenc || '—'}
-                                        </span>
-                                        <span className="text-xs text-muted-foreground min-w-[60px]">
-                                          {(detail.consumo || 0).toFixed(1)} m³
-                                        </span>
-                                        <span className="text-sm font-medium min-w-[80px]">
-                                          {formatCurrency(detail.valor || 0)}
-                                        </span>
-                                      </div>
-                                      <div className="flex gap-1">
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() => handleEdit(detail.record)}
-                                          className="h-6 w-6"
-                                        >
-                                          <Pencil className="h-3 w-3" />
-                                        </Button>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          onClick={() => handleDeleteClick(detail.record)}
-                                          className="h-6 w-6 text-destructive hover:text-destructive"
-                                        >
-                                          <Trash2 className="h-3 w-3" />
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              )}
+                            ))}
+                            <div className="flex justify-between items-center pt-4 border-t-2 border-primary/20">
+                              <span className="font-bold text-base">Soma Total da Escola:</span>
+                              <div className="flex gap-6 items-center">
+                                <span className="text-base font-semibold">
+                                  {school.totalConsumption?.toFixed(1) || '0.0'} m³
+                                </span>
+                                <span className="text-lg font-bold text-primary">
+                                  {formatCurrency(school.totalValue || 0)}
+                                </span>
+                              </div>
                             </div>
-                          ));
-                        })()}
-                      </div>
-                      <div className="flex justify-between items-center pt-3 border-t mt-3">
-                        <span className="font-semibold">Soma Total:</span>
-                        <div className="flex flex-col items-end gap-1">
-                          <span className="text-sm text-muted-foreground">
-                            {school.totalConsumption?.toFixed(1) || '0.0'} m³
-                          </span>
-                          <span className="text-lg font-bold text-primary">
-                            {formatCurrency(school.totalValue || 0)}
-                          </span>
-                        </div>
-                      </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </TableCell>
                 </TableRow>
