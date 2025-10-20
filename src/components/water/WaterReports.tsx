@@ -394,13 +394,15 @@ export function WaterReports() {
               }
             }
             
-            // Parse valor properly
+            // Parse valor properly - handle empty, null and undefined values correctly
             let valorValue = 0;
             const valorRaw = valoresArray[idx];
-            if (valorRaw !== null && valorRaw !== undefined && valorRaw !== '') {
+            if (valorRaw !== null && valorRaw !== undefined && valorRaw !== '' && valorRaw !== 0) {
               if (typeof valorRaw === 'string') {
                 const cleaned = valorRaw.replace(/[R$\s.]/g, '').replace(',', '.');
-                valorValue = parseFloat(cleaned) || 0;
+                if (cleaned && cleaned !== '0') {
+                  valorValue = parseFloat(cleaned) || 0;
+                }
               } else {
                 valorValue = Number(valorRaw) || 0;
               }
@@ -505,6 +507,15 @@ export function WaterReports() {
           console.log("Details in first school:", result[0].cadastrosDetails);
         }
       }
+
+      // Recompute totals from cadastrosDetails to ensure correct aggregation across multiple cadastros
+      result = result.map((school: any) => {
+        const details = school.cadastrosDetails || [];
+        const totalValue = details.reduce((sum: number, d: any) => sum + (parseFloat(d.valor) || 0), 0);
+        const totalConsumption = details.reduce((sum: number, d: any) => sum + (parseFloat(d.consumo) || 0), 0);
+        const cadastrosSet = new Set(details.map((d: any) => d.cadastro));
+        return { ...school, totalValue, totalConsumption, cadastrosSet };
+      });
 
       // Apply value range filter only for value-range report type
       if (reportType === 'value-range' && (minValue || maxValue)) {
@@ -935,6 +946,7 @@ export function WaterReports() {
                       <div className="grid grid-cols-1 gap-2">
                         {(() => {
                           // Agrupar por cadastro para calcular totais quando há múltiplos registros do mesmo cadastro
+                          // Create grouping based on cadastro to calculate totals for multiple records of the same cadastro
                           const cadastroGroups = school.cadastrosDetails.reduce((acc: any, detail: any) => {
                             if (!acc[detail.cadastro]) {
                               acc[detail.cadastro] = {
@@ -946,14 +958,16 @@ export function WaterReports() {
                             }
                             acc[detail.cadastro].details.push(detail);
                             
-                            // Ensure proper number conversion before adding
-                            const consumoNum = typeof detail.consumo === 'number' ? detail.consumo : (parseFloat(String(detail.consumo).replace(',', '.')) || 0);
-                            const valorNum = typeof detail.valor === 'number' ? detail.valor : (parseFloat(String(detail.valor).replace(/[R$\s.]/g, '').replace(',', '.')) || 0);
+                            // Properly parse and sum values to avoid issues with last value only
+                            const consumoNum = detail.consumo || 0;
+                            const valorNum = detail.valor || 0;
                             
-                            acc[detail.cadastro].totalConsumo += consumoNum;
-                            acc[detail.cadastro].totalValor += valorNum;
+                            console.log(`BEFORE: Cadastro ${detail.cadastro} totalConsumo=${acc[detail.cadastro].totalConsumo}, adding consumo=${consumoNum}`);
                             
-                            console.log(`Grouping cadastro ${detail.cadastro}: adding consumo=${consumoNum} (was ${detail.consumo}), total now=${acc[detail.cadastro].totalConsumo}`);
+                            acc[detail.cadastro].totalConsumo += Number(consumoNum);
+                            acc[detail.cadastro].totalValor += Number(valorNum);
+                            
+                            console.log(`AFTER: Cadastro ${detail.cadastro} totalConsumo=${acc[detail.cadastro].totalConsumo}, totalValor=${acc[detail.cadastro].totalValor}`);
                             
                             return acc;
                           }, {});

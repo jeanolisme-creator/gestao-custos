@@ -245,6 +245,15 @@ export function EnergyReports() {
         }).filter(school => school.cadastrosDetails.length > 0); // Remover escolas sem cadastros correspondentes
       }
 
+      // Recompute totals from cadastrosDetails to ensure correct aggregation across multiple cadastros
+      result = result.map((school: any) => {
+        const details = school.cadastrosDetails || [];
+        const totalValue = details.reduce((sum: number, d: any) => sum + (parseFloat(d.valor) || 0), 0);
+        const totalConsumption = details.reduce((sum: number, d: any) => sum + (parseFloat(d.consumo) || 0), 0);
+        const cadastros = Array.from(new Set(details.map((d: any) => d.cadastro)));
+        return { ...school, totalValue, totalConsumption, cadastros };
+      });
+
       if (minValue || maxValue) {
         result = result.filter(school => {
           const totalValue = school.totalValue;
@@ -545,6 +554,7 @@ export function EnergyReports() {
                       <div className="grid grid-cols-1 gap-2">
                         {(() => {
                           // Agrupar por cadastro para calcular totais quando há múltiplos registros do mesmo cadastro
+                          // Create grouping based on cadastro to calculate totals for multiple records of the same cadastro
                           const cadastroGroups = school.cadastrosDetails.reduce((acc: any, detail: any) => {
                             if (!acc[detail.cadastro]) {
                               acc[detail.cadastro] = {
@@ -556,12 +566,16 @@ export function EnergyReports() {
                             }
                             acc[detail.cadastro].details.push(detail);
                             
-                            // Ensure proper number conversion before adding
-                            const consumoNum = typeof detail.consumo === 'number' ? detail.consumo : (parseFloat(String(detail.consumo).replace(',', '.')) || 0);
-                            const valorNum = typeof detail.valor === 'number' ? detail.valor : (parseFloat(String(detail.valor).replace(/[R$\s.]/g, '').replace(',', '.')) || 0);
+                            // Properly parse and sum values to avoid issues with last value only
+                            const consumoNum = detail.consumo || 0;
+                            const valorNum = detail.valor || 0;
                             
-                            acc[detail.cadastro].totalConsumo += consumoNum;
-                            acc[detail.cadastro].totalValor += valorNum;
+                            console.log(`BEFORE: Cadastro ${detail.cadastro} totalConsumo=${acc[detail.cadastro].totalConsumo}, adding consumo=${consumoNum}`);
+                            
+                            acc[detail.cadastro].totalConsumo += Number(consumoNum);
+                            acc[detail.cadastro].totalValor += Number(valorNum);
+                            
+                            console.log(`AFTER: Cadastro ${detail.cadastro} totalConsumo=${acc[detail.cadastro].totalConsumo}, totalValor=${acc[detail.cadastro].totalValor}`);
                             
                             return acc;
                           }, {});
