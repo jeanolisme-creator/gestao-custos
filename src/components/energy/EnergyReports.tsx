@@ -327,7 +327,29 @@ export function EnergyReports() {
         didDrawPage: () => drawHeaderFooter(),
       };
 
-      if (reportType === 'consolidated' || reportType === 'by-school' || reportType === 'value-range' || reportType === 'comparative') {
+      if (reportType === 'monthly-comparison') {
+        // Agrupar dados por escola e mês (apenas meses selecionados)
+        const comparisonData = selectedSchools.map(schoolName => {
+          const row: any[] = [schoolName];
+          selectedMonths.forEach(month => {
+            const records = data.filter(
+              r => r.nome_escola === schoolName && r.mes_ano_referencia === month
+            );
+            const totalConsumption = records.reduce((sum, r) => sum + (parseFloat(r.consumo_kwh) || 0), 0);
+            const totalValue = records.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);
+            row.push(`${totalConsumption.toFixed(1)} KWh\nR$ ${totalValue.toFixed(2)}`);
+          });
+          return row;
+        });
+
+        const headRow = ['Escola', ...selectedMonths];
+
+        autoTable(doc, {
+          ...tableCommon,
+          head: [headRow],
+          body: comparisonData,
+        });
+      } else if (reportType === 'consolidated' || reportType === 'by-school' || reportType === 'value-range' || reportType === 'comparative') {
         const tableData = (reportData as any[]).map((school) => [
           school.schoolName,
           school.cadastros?.length || 0,
@@ -414,7 +436,29 @@ export function EnergyReports() {
         didDrawPage: () => drawHeaderFooter(),
       };
 
-      if (reportType === 'consolidated' || reportType === 'by-school' || reportType === 'value-range' || reportType === 'comparative') {
+      if (reportType === 'monthly-comparison') {
+        // Agrupar dados por escola e mês (apenas meses selecionados)
+        const comparisonData = selectedSchools.map(schoolName => {
+          const row: any[] = [schoolName];
+          selectedMonths.forEach(month => {
+            const records = data.filter(
+              r => r.nome_escola === schoolName && r.mes_ano_referencia === month
+            );
+            const totalConsumption = records.reduce((sum, r) => sum + (parseFloat(r.consumo_kwh) || 0), 0);
+            const totalValue = records.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);
+            row.push(`${totalConsumption.toFixed(1)} KWh\nR$ ${totalValue.toFixed(2)}`);
+          });
+          return row;
+        });
+
+        const headRow = ['Escola', ...selectedMonths];
+
+        autoTable(doc, {
+          ...tableCommon,
+          head: [headRow],
+          body: comparisonData,
+        });
+      } else if (reportType === 'consolidated' || reportType === 'by-school' || reportType === 'value-range' || reportType === 'comparative') {
         const tableData = (reportData as any[]).map((school) => [
           school.schoolName,
           school.cadastros?.length || 0,

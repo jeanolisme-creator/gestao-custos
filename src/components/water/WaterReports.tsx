@@ -665,7 +665,29 @@ export function WaterReports() {
         },
       };
 
-      if (reportType === 'consolidated' || reportType === 'by-school' || reportType === 'value-range' || reportType === 'comparative') {
+      if (reportType === 'monthly-comparison') {
+        // Agrupar dados por escola e mês (apenas meses selecionados)
+        const comparisonData = selectedSchools.map(schoolName => {
+          const row: any[] = [schoolName];
+          selectedMonths.forEach(month => {
+            const records = data.filter(
+              r => r.nome_escola === schoolName && r.mes_ano_referencia === month
+            );
+            const totalConsumption = records.reduce((sum, r) => sum + (parseFloat(r.consumo_m3) || 0), 0);
+            const totalValue = records.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);
+            row.push(`${totalConsumption.toFixed(1)} m³\n${formatCurrency(totalValue)}`);
+          });
+          return row;
+        });
+
+        const headRow = ['Escola', ...selectedMonths];
+
+        autoTable(doc, {
+          ...tableCommon,
+          head: [headRow],
+          body: comparisonData,
+        });
+      } else if (reportType === 'consolidated' || reportType === 'by-school' || reportType === 'value-range' || reportType === 'comparative') {
         const tableData = (reportData as any[]).map((school) => [
           school.schoolName,
           school.cadastrosSet?.size || 0,
@@ -758,28 +780,50 @@ export function WaterReports() {
         didDrawPage: () => drawHeaderFooter(),
       };
 
-      if (reportType === 'consolidated' || reportType === 'by-school' || reportType === 'value-range' || reportType === 'comparative') {
+      if (reportType === 'monthly-comparison') {
+        // Agrupar dados por escola e mês (apenas meses selecionados)
+        const comparisonData = selectedSchools.map(schoolName => {
+          const row: any[] = [schoolName];
+          selectedMonths.forEach(month => {
+            const records = data.filter(
+              r => r.nome_escola === schoolName && r.mes_ano_referencia === month
+            );
+            const totalConsumption = records.reduce((sum, r) => sum + (parseFloat(r.consumo_m3) || 0), 0);
+            const totalValue = records.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);
+            row.push(`${totalConsumption.toFixed(1)} m³\n${formatCurrency(totalValue)}`);
+          });
+          return row;
+        });
+
+        const headRow = ['Escola', ...selectedMonths];
+
+        autoTable(doc, {
+          ...tableCommon,
+          head: [headRow],
+          body: comparisonData,
+        });
+      } else if (reportType === 'consolidated' || reportType === 'by-school' || reportType === 'value-range' || reportType === 'comparative') { 
         const tableData = (reportData as any[]).map((school) => [
-          school.schoolName,
-          school.cadastrosSet?.size || 0,
-          `${school.totalConsumption?.toFixed(1) || '0.0'} m³`,
-          `R$ ${school.totalValue?.toFixed(2) || '0.00'}`,
-        ]);
-        const totalConsumption = (reportData as any[]).reduce((sum, s) => sum + (s.totalConsumption || 0), 0);
-        const totalValue = (reportData as any[]).reduce((sum, s) => sum + (s.totalValue || 0), 0);
+          school.schoolName, 
+          school.cadastrosSet?.size || 0, 
+          `${school.totalConsumption?.toFixed(1) || '0.0'} m³`, 
+          `R$ ${school.totalValue?.toFixed(2) || '0.00'}`, 
+        ]); 
+        const totalConsumption = (reportData as any[]).reduce((sum, s) => sum + (s.totalConsumption || 0), 0); 
+        const totalValue = (reportData as any[]).reduce((sum, s) => sum + (s.totalValue || 0), 0); 
 
         autoTable(doc, { 
           ...tableCommon, 
           head: [['Escola', 'Total Cadastros', 'Consumo Total', 'Valor Total']], 
           body: tableData, 
           foot: [['TOTAL GERAL', '', `${totalConsumption.toFixed(1)} m³`, `R$ ${totalValue.toFixed(2)}`]],
-          columnStyles: {
-            1: { halign: 'center' },
-            2: { halign: 'center' },
-            3: { halign: 'center' }
-          }
-        });
-      } else {
+          columnStyles: { 
+            1: { halign: 'center' }, 
+            2: { halign: 'center' }, 
+            3: { halign: 'center' } 
+          } 
+        }); 
+      } else { 
         const tableData = (reportData as any[]).map((record) => [
           record.cadastro,
           record.nome_escola,
