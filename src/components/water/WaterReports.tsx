@@ -687,6 +687,117 @@ export function WaterReports() {
           head: [headRow],
           body: comparisonData,
         });
+      } else if (reportType === 'student-comparison') {
+        // Relatório comparativo por total de alunos
+        const comparisonData = selectedSchools.map(schoolName => {
+          const schoolInfo = schoolsData.find(s => s.nome_escola === schoolName);
+          const schoolRecords = data.filter(r => r.nome_escola === schoolName);
+          const totalConsumption = schoolRecords.reduce((sum, r) => sum + (parseFloat(r.consumo_m3) || 0), 0);
+          const totalValue = schoolRecords.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);
+          const totalStudents = schoolInfo?.total_alunos || 0;
+
+          return [
+            schoolName,
+            schoolInfo?.alunos_creche || 0,
+            schoolInfo?.alunos_infantil || 0,
+            schoolInfo?.alunos_fundamental_i || 0,
+            schoolInfo?.alunos_fundamental_ii || 0,
+            totalStudents,
+            `${totalConsumption.toFixed(1)} m³`,
+            formatCurrency(totalValue),
+            totalStudents ? (totalConsumption / totalStudents).toFixed(2) : '0.00',
+            totalStudents ? formatCurrency(totalValue / totalStudents) : formatCurrency(0),
+          ];
+        });
+
+        autoTable(doc, {
+          ...tableCommon,
+          head: [['Escola', 'Creche', 'Infantil', 'Fund. I', 'Fund. II', 'Total Alunos', 'Consumo Total', 'Valor Total', 'm³/Aluno', 'R$/Aluno']],
+          body: comparisonData,
+          columnStyles: {
+            1: { halign: 'center' },
+            2: { halign: 'center' },
+            3: { halign: 'center' },
+            4: { halign: 'center' },
+            5: { halign: 'center' },
+            8: { halign: 'center' },
+            9: { halign: 'center' }
+          }
+        });
+      } else if (reportType === 'macroregion-comparison') {
+        // Relatório comparativo por macroregião
+        const comparisonData = selectedMacroregions.map(macroregion => {
+          const records = data.filter(r => r.macroregiao === macroregion);
+          const schools = new Set(records.map(r => r.nome_escola));
+          const totalConsumption = records.reduce((sum, r) => sum + (parseFloat(r.consumo_m3) || 0), 0);
+          const totalValue = records.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);
+
+          return [
+            macroregion,
+            schools.size,
+            `${totalConsumption.toFixed(1)} m³`,
+            formatCurrency(totalValue),
+            schools.size > 0 ? `${(totalConsumption / schools.size).toFixed(1)} m³` : '0.0 m³',
+            schools.size > 0 ? formatCurrency(totalValue / schools.size) : formatCurrency(0),
+          ];
+        });
+
+        const totals = selectedMacroregions.reduce((acc, macroregion) => {
+          const records = data.filter(r => r.macroregiao === macroregion);
+          const schools = new Set(records.map(r => r.nome_escola));
+          return {
+            schoolCount: acc.schoolCount + schools.size,
+            totalConsumption: acc.totalConsumption + records.reduce((sum, r) => sum + (parseFloat(r.consumo_m3) || 0), 0),
+            totalValue: acc.totalValue + records.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0),
+          };
+        }, { schoolCount: 0, totalConsumption: 0, totalValue: 0 });
+
+        autoTable(doc, {
+          ...tableCommon,
+          head: [['Macrorregião', 'Nº Escolas', 'Consumo Total', 'Valor Total', 'Média Consumo/Escola', 'Média Valor/Escola']],
+          body: comparisonData,
+          foot: [['TOTAL', totals.schoolCount.toString(), `${totals.totalConsumption.toFixed(1)} m³`, formatCurrency(totals.totalValue), '', '']],
+          columnStyles: {
+            1: { halign: 'center' }
+          }
+        });
+      } else if (reportType === 'school-type-comparison') {
+        // Relatório comparativo por tipo de escola
+        const comparisonData = selectedSchoolTypes.map(type => {
+          const records = data.filter(r => r.tipo_escola === type);
+          const schools = new Set(records.map(r => r.nome_escola));
+          const totalConsumption = records.reduce((sum, r) => sum + (parseFloat(r.consumo_m3) || 0), 0);
+          const totalValue = records.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);
+
+          return [
+            type,
+            schools.size,
+            `${totalConsumption.toFixed(1)} m³`,
+            formatCurrency(totalValue),
+            schools.size > 0 ? `${(totalConsumption / schools.size).toFixed(1)} m³` : '0.0 m³',
+            schools.size > 0 ? formatCurrency(totalValue / schools.size) : formatCurrency(0),
+          ];
+        });
+
+        const totals = selectedSchoolTypes.reduce((acc, type) => {
+          const records = data.filter(r => r.tipo_escola === type);
+          const schools = new Set(records.map(r => r.nome_escola));
+          return {
+            schoolCount: acc.schoolCount + schools.size,
+            totalConsumption: acc.totalConsumption + records.reduce((sum, r) => sum + (parseFloat(r.consumo_m3) || 0), 0),
+            totalValue: acc.totalValue + records.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0),
+          };
+        }, { schoolCount: 0, totalConsumption: 0, totalValue: 0 });
+
+        autoTable(doc, {
+          ...tableCommon,
+          head: [['Tipo de Escola', 'Nº Escolas', 'Consumo Total', 'Valor Total', 'Média Consumo/Escola', 'Média Valor/Escola']],
+          body: comparisonData,
+          foot: [['TOTAL', totals.schoolCount.toString(), `${totals.totalConsumption.toFixed(1)} m³`, formatCurrency(totals.totalValue), '', '']],
+          columnStyles: {
+            1: { halign: 'center' }
+          }
+        });
       } else if (reportType === 'consolidated' || reportType === 'by-school' || reportType === 'value-range' || reportType === 'comparative') {
         const tableData = (reportData as any[]).map((school) => [
           school.schoolName,
@@ -802,7 +913,118 @@ export function WaterReports() {
           head: [headRow],
           body: comparisonData,
         });
-      } else if (reportType === 'consolidated' || reportType === 'by-school' || reportType === 'value-range' || reportType === 'comparative') { 
+      } else if (reportType === 'student-comparison') {
+        // Relatório comparativo por total de alunos
+        const comparisonData = selectedSchools.map(schoolName => {
+          const schoolInfo = schoolsData.find(s => s.nome_escola === schoolName);
+          const schoolRecords = data.filter(r => r.nome_escola === schoolName);
+          const totalConsumption = schoolRecords.reduce((sum, r) => sum + (parseFloat(r.consumo_m3) || 0), 0);
+          const totalValue = schoolRecords.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);
+          const totalStudents = schoolInfo?.total_alunos || 0;
+
+          return [
+            schoolName,
+            schoolInfo?.alunos_creche || 0,
+            schoolInfo?.alunos_infantil || 0,
+            schoolInfo?.alunos_fundamental_i || 0,
+            schoolInfo?.alunos_fundamental_ii || 0,
+            totalStudents,
+            `${totalConsumption.toFixed(1)} m³`,
+            formatCurrency(totalValue),
+            totalStudents ? (totalConsumption / totalStudents).toFixed(2) : '0.00',
+            totalStudents ? formatCurrency(totalValue / totalStudents) : formatCurrency(0),
+          ];
+        });
+
+        autoTable(doc, {
+          ...tableCommon,
+          head: [['Escola', 'Creche', 'Infantil', 'Fund. I', 'Fund. II', 'Total Alunos', 'Consumo Total', 'Valor Total', 'm³/Aluno', 'R$/Aluno']],
+          body: comparisonData,
+          columnStyles: {
+            1: { halign: 'center' },
+            2: { halign: 'center' },
+            3: { halign: 'center' },
+            4: { halign: 'center' },
+            5: { halign: 'center' },
+            8: { halign: 'center' },
+            9: { halign: 'center' }
+          }
+        });
+      } else if (reportType === 'macroregion-comparison') {
+        // Relatório comparativo por macroregião
+        const comparisonData = selectedMacroregions.map(macroregion => {
+          const records = data.filter(r => r.macroregiao === macroregion);
+          const schools = new Set(records.map(r => r.nome_escola));
+          const totalConsumption = records.reduce((sum, r) => sum + (parseFloat(r.consumo_m3) || 0), 0);
+          const totalValue = records.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);
+
+          return [
+            macroregion,
+            schools.size,
+            `${totalConsumption.toFixed(1)} m³`,
+            formatCurrency(totalValue),
+            schools.size > 0 ? `${(totalConsumption / schools.size).toFixed(1)} m³` : '0.0 m³',
+            schools.size > 0 ? formatCurrency(totalValue / schools.size) : formatCurrency(0),
+          ];
+        });
+
+        const totals = selectedMacroregions.reduce((acc, macroregion) => {
+          const records = data.filter(r => r.macroregiao === macroregion);
+          const schools = new Set(records.map(r => r.nome_escola));
+          return {
+            schoolCount: acc.schoolCount + schools.size,
+            totalConsumption: acc.totalConsumption + records.reduce((sum, r) => sum + (parseFloat(r.consumo_m3) || 0), 0),
+            totalValue: acc.totalValue + records.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0),
+          };
+        }, { schoolCount: 0, totalConsumption: 0, totalValue: 0 });
+
+        autoTable(doc, {
+          ...tableCommon,
+          head: [['Macrorregião', 'Nº Escolas', 'Consumo Total', 'Valor Total', 'Média Consumo/Escola', 'Média Valor/Escola']],
+          body: comparisonData,
+          foot: [['TOTAL', totals.schoolCount.toString(), `${totals.totalConsumption.toFixed(1)} m³`, formatCurrency(totals.totalValue), '', '']],
+          columnStyles: {
+            1: { halign: 'center' }
+          }
+        });
+      } else if (reportType === 'school-type-comparison') {
+        // Relatório comparativo por tipo de escola
+        const comparisonData = selectedSchoolTypes.map(type => {
+          const records = data.filter(r => r.tipo_escola === type);
+          const schools = new Set(records.map(r => r.nome_escola));
+          const totalConsumption = records.reduce((sum, r) => sum + (parseFloat(r.consumo_m3) || 0), 0);
+          const totalValue = records.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);
+
+          return [
+            type,
+            schools.size,
+            `${totalConsumption.toFixed(1)} m³`,
+            formatCurrency(totalValue),
+            schools.size > 0 ? `${(totalConsumption / schools.size).toFixed(1)} m³` : '0.0 m³',
+            schools.size > 0 ? formatCurrency(totalValue / schools.size) : formatCurrency(0),
+          ];
+        });
+
+        const totals = selectedSchoolTypes.reduce((acc, type) => {
+          const records = data.filter(r => r.tipo_escola === type);
+          const schools = new Set(records.map(r => r.nome_escola));
+          return {
+            schoolCount: acc.schoolCount + schools.size,
+            totalConsumption: acc.totalConsumption + records.reduce((sum, r) => sum + (parseFloat(r.consumo_m3) || 0), 0),
+            totalValue: acc.totalValue + records.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0),
+          };
+        }, { schoolCount: 0, totalConsumption: 0, totalValue: 0 });
+
+        autoTable(doc, {
+          ...tableCommon,
+          head: [['Tipo de Escola', 'Nº Escolas', 'Consumo Total', 'Valor Total', 'Média Consumo/Escola', 'Média Valor/Escola']],
+          body: comparisonData,
+          foot: [['TOTAL', totals.schoolCount.toString(), `${totals.totalConsumption.toFixed(1)} m³`, formatCurrency(totals.totalValue), '', '']],
+          columnStyles: {
+            1: { halign: 'center' }
+          }
+        });
+      } else if (reportType === 'consolidated' || reportType === 'by-school' || reportType === 'value-range' || reportType === 'comparative') {
         const tableData = (reportData as any[]).map((school) => [
           school.schoolName, 
           school.cadastrosSet?.size || 0, 

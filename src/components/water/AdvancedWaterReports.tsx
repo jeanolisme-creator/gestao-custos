@@ -1,3 +1,4 @@
+import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -479,6 +480,8 @@ interface MacroregionComparisonReportProps {
 }
 
 export function MacroregionComparisonReport({ data, selectedMacroregions }: MacroregionComparisonReportProps) {
+  const [expandedRows, setExpandedRows] = React.useState<Set<number>>(new Set());
+
   if (selectedMacroregions.length === 0) {
     return (
       <Card className="p-8 text-center text-muted-foreground">
@@ -487,19 +490,46 @@ export function MacroregionComparisonReport({ data, selectedMacroregions }: Macr
     );
   }
 
+  const toggleRow = (index: number) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    setExpandedRows(newExpanded);
+  };
+
   const comparisonData = selectedMacroregions.map(macroregion => {
     const records = data.filter(r => r.macroregiao === macroregion);
-    const schools = new Set(records.map(r => r.nome_escola));
-    const totalConsumption = records.reduce((sum, r) => sum + (parseFloat(r.consumo_m3) || 0), 0);
-    const totalValue = records.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);
+    const schoolsMap = new Map<string, { consumption: number; value: number; recordCount: number }>();
+    
+    records.forEach(r => {
+      const schoolName = r.nome_escola;
+      const existing = schoolsMap.get(schoolName) || { consumption: 0, value: 0, recordCount: 0 };
+      schoolsMap.set(schoolName, {
+        consumption: existing.consumption + (parseFloat(r.consumo_m3) || 0),
+        value: existing.value + (parseFloat(r.valor_gasto) || 0),
+        recordCount: existing.recordCount + 1,
+      });
+    });
+
+    const totalConsumption = Array.from(schoolsMap.values()).reduce((sum, s) => sum + s.consumption, 0);
+    const totalValue = Array.from(schoolsMap.values()).reduce((sum, s) => sum + s.value, 0);
 
     return {
       macroregion,
-      schoolCount: schools.size,
+      schoolCount: schoolsMap.size,
       totalConsumption,
       totalValue,
-      avgConsumption: schools.size > 0 ? totalConsumption / schools.size : 0,
-      avgValue: schools.size > 0 ? totalValue / schools.size : 0,
+      avgConsumption: schoolsMap.size > 0 ? totalConsumption / schoolsMap.size : 0,
+      avgValue: schoolsMap.size > 0 ? totalValue / schoolsMap.size : 0,
+      schools: Array.from(schoolsMap.entries()).map(([name, stats]) => ({
+        name,
+        consumption: stats.consumption,
+        value: stats.value,
+        recordCount: stats.recordCount,
+      })),
     };
   });
 
@@ -522,22 +552,59 @@ export function MacroregionComparisonReport({ data, selectedMacroregions }: Macr
           <TableHead className="text-right">Valor Total</TableHead>
           <TableHead className="text-right">Média Consumo/Escola</TableHead>
           <TableHead className="text-right">Média Valor/Escola</TableHead>
+          <TableHead className="text-center">Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {comparisonData.map((item, index) => (
-          <TableRow key={index}>
-            <TableCell className="font-medium">{item.macroregion}</TableCell>
-            <TableCell className="text-center">
-              <Badge variant="outline">{item.schoolCount}</Badge>
-            </TableCell>
-            <TableCell className="text-right">{item.totalConsumption.toFixed(1)} m³</TableCell>
-            <TableCell className="text-right font-semibold">{formatCurrency(item.totalValue)}</TableCell>
-            <TableCell className="text-right">{item.avgConsumption.toFixed(1)} m³</TableCell>
-            <TableCell className="text-right text-primary font-semibold">
-              {formatCurrency(item.avgValue)}
-            </TableCell>
-          </TableRow>
+          <React.Fragment key={index}>
+            <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => toggleRow(index)}>
+              <TableCell className="font-medium">{item.macroregion}</TableCell>
+              <TableCell className="text-center">
+                <Badge variant="outline">{item.schoolCount}</Badge>
+              </TableCell>
+              <TableCell className="text-right">{item.totalConsumption.toFixed(1)} m³</TableCell>
+              <TableCell className="text-right font-semibold">{formatCurrency(item.totalValue)}</TableCell>
+              <TableCell className="text-right">{item.avgConsumption.toFixed(1)} m³</TableCell>
+              <TableCell className="text-right text-primary font-semibold">
+                {formatCurrency(item.avgValue)}
+              </TableCell>
+              <TableCell className="text-center">
+                <Button variant="ghost" size="sm">
+                  {expandedRows.has(index) ? '▼ Ocultar' : '▶ Detalhes'}
+                </Button>
+              </TableCell>
+            </TableRow>
+            {expandedRows.has(index) && (
+              <TableRow>
+                <TableCell colSpan={7} className="bg-muted/20 p-4">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm">Escolas da {item.macroregion}:</h4>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Escola</TableHead>
+                          <TableHead className="text-center">Nº Cadastros</TableHead>
+                          <TableHead className="text-right">Consumo Total</TableHead>
+                          <TableHead className="text-right">Valor Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {item.schools.map((school, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell>{school.name}</TableCell>
+                            <TableCell className="text-center">{school.recordCount}</TableCell>
+                            <TableCell className="text-right">{school.consumption.toFixed(1)} m³</TableCell>
+                            <TableCell className="text-right">{formatCurrency(school.value)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </React.Fragment>
         ))}
       </TableBody>
       <TableFooter>
@@ -548,6 +615,7 @@ export function MacroregionComparisonReport({ data, selectedMacroregions }: Macr
           </TableCell>
           <TableCell className="text-right font-bold">{totals.totalConsumption.toFixed(1)} m³</TableCell>
           <TableCell className="text-right font-bold">{formatCurrency(totals.totalValue)}</TableCell>
+          <TableCell></TableCell>
           <TableCell></TableCell>
           <TableCell></TableCell>
         </TableRow>
@@ -562,6 +630,8 @@ interface SchoolTypeComparisonReportProps {
 }
 
 export function SchoolTypeComparisonReport({ data, selectedSchoolTypes }: SchoolTypeComparisonReportProps) {
+  const [expandedRows, setExpandedRows] = React.useState<Set<number>>(new Set());
+
   if (selectedSchoolTypes.length === 0) {
     return (
       <Card className="p-8 text-center text-muted-foreground">
@@ -570,19 +640,46 @@ export function SchoolTypeComparisonReport({ data, selectedSchoolTypes }: School
     );
   }
 
+  const toggleRow = (index: number) => {
+    const newExpanded = new Set(expandedRows);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    setExpandedRows(newExpanded);
+  };
+
   const comparisonData = selectedSchoolTypes.map(type => {
     const records = data.filter(r => r.tipo_escola === type);
-    const schools = new Set(records.map(r => r.nome_escola));
-    const totalConsumption = records.reduce((sum, r) => sum + (parseFloat(r.consumo_m3) || 0), 0);
-    const totalValue = records.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);
+    const schoolsMap = new Map<string, { consumption: number; value: number; recordCount: number }>();
+    
+    records.forEach(r => {
+      const schoolName = r.nome_escola;
+      const existing = schoolsMap.get(schoolName) || { consumption: 0, value: 0, recordCount: 0 };
+      schoolsMap.set(schoolName, {
+        consumption: existing.consumption + (parseFloat(r.consumo_m3) || 0),
+        value: existing.value + (parseFloat(r.valor_gasto) || 0),
+        recordCount: existing.recordCount + 1,
+      });
+    });
+
+    const totalConsumption = Array.from(schoolsMap.values()).reduce((sum, s) => sum + s.consumption, 0);
+    const totalValue = Array.from(schoolsMap.values()).reduce((sum, s) => sum + s.value, 0);
 
     return {
       type,
-      schoolCount: schools.size,
+      schoolCount: schoolsMap.size,
       totalConsumption,
       totalValue,
-      avgConsumption: schools.size > 0 ? totalConsumption / schools.size : 0,
-      avgValue: schools.size > 0 ? totalValue / schools.size : 0,
+      avgConsumption: schoolsMap.size > 0 ? totalConsumption / schoolsMap.size : 0,
+      avgValue: schoolsMap.size > 0 ? totalValue / schoolsMap.size : 0,
+      schools: Array.from(schoolsMap.entries()).map(([name, stats]) => ({
+        name,
+        consumption: stats.consumption,
+        value: stats.value,
+        recordCount: stats.recordCount,
+      })),
     };
   });
 
@@ -605,22 +702,59 @@ export function SchoolTypeComparisonReport({ data, selectedSchoolTypes }: School
           <TableHead className="text-right">Valor Total</TableHead>
           <TableHead className="text-right">Média Consumo/Escola</TableHead>
           <TableHead className="text-right">Média Valor/Escola</TableHead>
+          <TableHead className="text-center">Ações</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {comparisonData.map((item, index) => (
-          <TableRow key={index}>
-            <TableCell className="font-medium">{item.type}</TableCell>
-            <TableCell className="text-center">
-              <Badge variant="outline">{item.schoolCount}</Badge>
-            </TableCell>
-            <TableCell className="text-right">{item.totalConsumption.toFixed(1)} m³</TableCell>
-            <TableCell className="text-right font-semibold">{formatCurrency(item.totalValue)}</TableCell>
-            <TableCell className="text-right">{item.avgConsumption.toFixed(1)} m³</TableCell>
-            <TableCell className="text-right text-primary font-semibold">
-              {formatCurrency(item.avgValue)}
-            </TableCell>
-          </TableRow>
+          <React.Fragment key={index}>
+            <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => toggleRow(index)}>
+              <TableCell className="font-medium">{item.type}</TableCell>
+              <TableCell className="text-center">
+                <Badge variant="outline">{item.schoolCount}</Badge>
+              </TableCell>
+              <TableCell className="text-right">{item.totalConsumption.toFixed(1)} m³</TableCell>
+              <TableCell className="text-right font-semibold">{formatCurrency(item.totalValue)}</TableCell>
+              <TableCell className="text-right">{item.avgConsumption.toFixed(1)} m³</TableCell>
+              <TableCell className="text-right text-primary font-semibold">
+                {formatCurrency(item.avgValue)}
+              </TableCell>
+              <TableCell className="text-center">
+                <Button variant="ghost" size="sm">
+                  {expandedRows.has(index) ? '▼ Ocultar' : '▶ Detalhes'}
+                </Button>
+              </TableCell>
+            </TableRow>
+            {expandedRows.has(index) && (
+              <TableRow>
+                <TableCell colSpan={7} className="bg-muted/20 p-4">
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm">Escolas do tipo {item.type}:</h4>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Escola</TableHead>
+                          <TableHead className="text-center">Nº Cadastros</TableHead>
+                          <TableHead className="text-right">Consumo Total</TableHead>
+                          <TableHead className="text-right">Valor Total</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {item.schools.map((school, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell>{school.name}</TableCell>
+                            <TableCell className="text-center">{school.recordCount}</TableCell>
+                            <TableCell className="text-right">{school.consumption.toFixed(1)} m³</TableCell>
+                            <TableCell className="text-right">{formatCurrency(school.value)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )}
+          </React.Fragment>
         ))}
       </TableBody>
       <TableFooter>
@@ -631,6 +765,7 @@ export function SchoolTypeComparisonReport({ data, selectedSchoolTypes }: School
           </TableCell>
           <TableCell className="text-right font-bold">{totals.totalConsumption.toFixed(1)} m³</TableCell>
           <TableCell className="text-right font-bold">{formatCurrency(totals.totalValue)}</TableCell>
+          <TableCell></TableCell>
           <TableCell></TableCell>
           <TableCell></TableCell>
         </TableRow>
