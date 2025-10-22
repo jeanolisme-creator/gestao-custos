@@ -437,14 +437,35 @@ export function WaterReports() {
             const filteredDetails = (school.cadastrosDetails || []).filter((detail: any) => {
               const refParsed = parseMesAnoReferencia(detail.mesRef || detail.mesAno || '');
               const refIdx = refParsed ? refParsed.monthIndex : null;
+              
+              // Check vencimento month from the record's data_vencimento
               let venIdx: number | null = null;
-              if (detail.mesVenc) {
-                // detail.mesVenc is already a formatted string, parse month name back
+              if (detail.record && detail.record.data_vencimento) {
+                try {
+                  const vencDate = new Date(detail.record.data_vencimento + 'T12:00:00');
+                  if (!isNaN(vencDate.getTime())) {
+                    venIdx = vencDate.getMonth(); // 0-based month
+                  }
+                } catch (e) {
+                  console.log("Error parsing vencimento date:", e);
+                }
+              }
+              
+              // Also check from parsed mesVenc string as fallback
+              if (venIdx === null && detail.mesVenc) {
                 const venParsed = parseMesAnoReferencia(detail.mesVenc);
                 venIdx = venParsed ? venParsed.monthIndex : null;
               }
+              
               if (selectedIdx === null) return true;
-              return refIdx === selectedIdx || venIdx === selectedIdx;
+              const matches = refIdx === selectedIdx || venIdx === selectedIdx;
+              
+              // Debug log for Janeiro/Fevereiro case
+              if ((selectedIdx === 0 || selectedIdx === 1) && detail.cadastro) { // Janeiro ou Fevereiro
+                console.log(`Detail cadastro ${detail.cadastro}: refIdx=${refIdx}, venIdx=${venIdx}, selectedIdx=${selectedIdx}, matches=${matches}, mesRef=${detail.mesRef}, data_vencimento=${detail.record?.data_vencimento}`);
+              }
+              
+              return matches;
             });
             const filteredTotalValue = filteredDetails.reduce((sum: number, d: any) => sum + (parseFloat(d.valor) || 0), 0);
             const filteredTotalConsumption = filteredDetails.reduce((sum: number, d: any) => sum + (parseFloat(d.consumo) || 0), 0);
