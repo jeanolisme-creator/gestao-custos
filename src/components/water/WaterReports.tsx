@@ -164,6 +164,7 @@ export function WaterReports() {
   // Helpers to parse dates in 'dd/mm/yyyy' (BR) or ISO formats
   const parseBRDate = (value: any): Date | null => {
     if (!value) return null;
+    if (value instanceof Date && !isNaN(value.getTime())) return value;
     const s = String(value).trim();
     if (!s) return null;
     // Try BR format dd/mm/yyyy
@@ -271,6 +272,22 @@ export function WaterReports() {
     return null;
   };
 
+  // Utilitário: garante array a partir de valor simples, array ou JSON em string
+  const toArray = (raw: any): any[] => {
+    if (raw === null || raw === undefined || raw === '') return [];
+    if (Array.isArray(raw)) return raw;
+    const s = typeof raw === 'string' ? raw.trim() : String(raw);
+    if (!s) return [];
+    if (s.startsWith('[')) {
+      try {
+        return JSON.parse(s);
+      } catch {
+        return [raw];
+      }
+    }
+    return [raw];
+  };
+
   const getReportData = () => {
     console.log("=== getReportData ===");
     console.log("Total records in data:", data.length);
@@ -371,97 +388,87 @@ export function WaterReports() {
         school.totalConsumption += parseFloat(record.consumo_m3 || 0);
         school.totalService += parseFloat(record.valor_servicos || 0);
         
-        // Parse cadastros, valores_cadastros and consumos_m3 from JSON with error handling
-        try {
-          const cadastrosArray = Array.isArray(record.cadastro) ? record.cadastro : (record.cadastro ? JSON.parse(record.cadastro) : []);
-          const valoresArray = Array.isArray(record.valores_cadastros) ? record.valores_cadastros : (record.valores_cadastros ? JSON.parse(record.valores_cadastros as string) : []);
-          const consumosArray = Array.isArray(record.consumos_m3) ? record.consumos_m3 : (record.consumos_m3 ? JSON.parse(record.consumos_m3 as string) : []);
+        // Parse cadastros, valores e consumos com robustez (aceita string simples, array ou JSON string)
+        const cadastrosArray: any[] = toArray(record.cadastro);
+        const valoresArray: any[] = toArray(record.valores_cadastros);
+        const consumosArray: any[] = toArray(record.consumos_m3);
+        const vencimentosRaw: any[] = toArray(record.datas_vencimento);
 
-          // Raw vencimento list may be per index (array) or single
-          let vencimentosRaw: any[] = [];
-          try {
-            vencimentosRaw = Array.isArray(record.datas_vencimento)
-              ? (record.datas_vencimento as any[])
-              : (record.datas_vencimento ? JSON.parse(record.datas_vencimento as string) : []);
-          } catch {}
-
-          // Add unique cadastros to Set and store details for each cadastro
-          cadastrosArray.forEach((cadastro: string, idx: number) => {
-            school.cadastrosSet.add(cadastro);
-
-            const d = parseBRDate(vencimentosRaw[idx] ?? record.data_vencimento);
-            const mesRefOriginal = record.mes_ano_referencia || '';
-            const mesVenc = d ? formatMesAnoFromDate(d) : '';
-
-            // Determinar o mês de exibição sempre a partir do vencimento quando disponível:
-            // Regra: mês de referência = mês anterior ao vencimento (ex.: venc. 28/02/2025 => ref jan/2025)
-            const refParsed = parseMesAnoReferencia(mesRefOriginal);
-            const vencParsed = parseMesAnoReferencia(mesVenc);
-            const mesRefFromDue = d ? getPreviousMonthLabel(d) : '';
-
-            // Prioridade: usar mês derivado do vencimento quando existir; caso contrário, usar o original do banco
-            let mesRefDisplay = mesRefFromDue || (refParsed ? mesRefOriginal : '');
-
-            // Se não houver vencimento válido e houver competência válida no banco, manter a original
-            if (!mesRefDisplay) {
-              mesRefDisplay = mesRefOriginal;
-            }
-
-            // Debug específico para fevereiro -> janeiro
-            if (vencParsed && vencParsed.monthIndex === 1) {
-              console.log(`Ajuste ref por vencimento FEVEReiro: cad=${cadastro}, refOriginal=${mesRefOriginal}, refExibicao=${mesRefDisplay}, venc=${mesVenc}`);
-            }
-            
-            // Parse consumo value properly - handle both string and number formats
-            let consumoValue = 0;
-            const consumoRaw = consumosArray[idx];
-            if (consumoRaw !== null && consumoRaw !== undefined && consumoRaw !== '') {
-              if (typeof consumoRaw === 'string') {
-                // Remove any non-numeric characters except decimal separators
-                const cleaned = consumoRaw.replace(/[^\d.,\-]/g, '').replace(',', '.');
-                consumoValue = parseFloat(cleaned) || 0;
-              } else {
-                consumoValue = Number(consumoRaw) || 0;
-              }
-            }
-            
-            // Parse valor properly - handle empty, null and undefined values correctly
-            let valorValue = 0;
-            const valorRaw = valoresArray[idx];
-            if (valorRaw !== null && valorRaw !== undefined && valorRaw !== '' && valorRaw !== 0) {
-              if (typeof valorRaw === 'string') {
-                const cleaned = valorRaw.replace(/[R$\s.]/g, '').replace(',', '.');
-                if (cleaned && cleaned !== '0') {
-                  valorValue = parseFloat(cleaned) || 0;
-                }
-              } else {
-                valorValue = Number(valorRaw) || 0;
-              }
-            }
-            
-            console.log(`Cadastro ${cadastro} (${mesRefDisplay}): consumo raw=${JSON.stringify(consumoRaw)}, parsed=${consumoValue}, valor raw=${JSON.stringify(valorRaw)}, parsed=${valorValue}`);
-            
-            school.cadastrosDetails.push({
-              cadastro: cadastro,
-              consumo: consumoValue,
-              valor: valorValue,
-              mesAno: mesRefDisplay, // backward compatibility
-              mesRef: mesRefDisplay,
-              mesVenc: mesVenc,
-              record: record
-            });
-          });
-        } catch (error) {
-          console.error("Error parsing cadastros/valores/consumos for record:", record.id, error);
+        if (cadastrosArray.length === 0 && record.cadastro) {
+          cadastrosArray.push(String(record.cadastro));
         }
-        
-        school.records.push(record);
+
+        // Adicionar cadastros únicos e armazenar detalhes por cadastro
+        cadastrosArray.forEach((cadastro: string, idx: number) => {
+          school.cadastrosSet.add(cadastro);
+
+          const d = parseBRDate(vencimentosRaw[idx] ?? record.data_vencimento);
+          const mesRefOriginal = record.mes_ano_referencia || '';
+          const mesVenc = d ? formatMesAnoFromDate(d) : '';
+
+          // Determinar o mês de exibição sempre a partir do vencimento quando disponível:
+          // Regra: mês de referência = mês anterior ao vencimento (ex.: venc. 28/02/2025 => ref jan/2025)
+          const refParsed = parseMesAnoReferencia(mesRefOriginal);
+          const vencParsed = parseMesAnoReferencia(mesVenc);
+          const mesRefFromDue = d ? getPreviousMonthLabel(d) : '';
+
+          // Prioridade: usar mês derivado do vencimento quando existir; caso contrário, usar o original do banco
+          let mesRefDisplay = mesRefFromDue || (refParsed ? mesRefOriginal : '');
+
+          // Se não houver vencimento válido e houver competência válida no banco, manter a original
+          if (!mesRefDisplay) {
+            mesRefDisplay = mesRefOriginal;
+          }
+
+          // Debug específico para fevereiro -> janeiro
+          if (vencParsed && vencParsed.monthIndex === 1) {
+            console.log(`Ajuste ref por vencimento FEVEReiro: cad=${cadastro}, refOriginal=${mesRefOriginal}, refExibicao=${mesRefDisplay}, venc=${mesVenc}`);
+          }
+          
+          // Consumo: pegar do array por índice, senão cair no valor do registro
+          let consumoValue = 0;
+          const consumoRaw = (idx in consumosArray) ? consumosArray[idx] : record.consumo_m3;
+          if (consumoRaw !== null && consumoRaw !== undefined && consumoRaw !== '') {
+            if (typeof consumoRaw === 'string') {
+              const cleaned = consumoRaw.replace(/[^\d.,\-]/g, '').replace(',', '.');
+              consumoValue = parseFloat(cleaned) || 0;
+            } else {
+              consumoValue = Number(consumoRaw) || 0;
+            }
+          }
+
+          // Valor: pegar do array por índice, senão cair no valor do registro
+          let valorValue = 0;
+          const valorRaw = (idx in valoresArray) ? valoresArray[idx] : record.valor_gasto;
+          if (valorRaw !== null && valorRaw !== undefined && valorRaw !== '' && valorRaw !== 0) {
+            if (typeof valorRaw === 'string') {
+              const cleaned = valorRaw.replace(/[R$\s.]/g, '').replace(',', '.');
+              if (cleaned && cleaned !== '0') {
+                valorValue = parseFloat(cleaned) || 0;
+              }
+            } else {
+              valorValue = Number(valorRaw) || 0;
+            }
+          }
+          
+          console.log(`Cadastro ${cadastro} (${mesRefDisplay}): consumo raw=${JSON.stringify(consumoRaw)}, parsed=${consumoValue}, valor raw=${JSON.stringify(valorRaw)}, parsed=${valorValue}`);
+          
+          school.cadastrosDetails.push({
+            cadastro: cadastro,
+            consumo: consumoValue,
+            valor: valorValue,
+            mesAno: mesRefDisplay, // backward compatibility
+            mesRef: mesRefDisplay,
+            mesVenc: mesVenc,
+            record: record
+          });
+        });
       });
 
       let result = Array.from(schoolMap.values());
       
       // Detail-level month filter to keep only details matching selected month
-      if (selectedMonth !== 'todos') {
+      if (selectedMonth !== 'todos' && !(searchTerm && !/[a-zA-Z]/.test(searchTerm.trim()))) {
         const selectedIdx = monthIndexFromName(selectedMonth) ?? null;
         result = result
           .map((school: any) => {
