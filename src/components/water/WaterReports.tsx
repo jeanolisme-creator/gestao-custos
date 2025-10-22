@@ -317,7 +317,7 @@ export function WaterReports() {
 
     // Aplicar filtro de busca apenas para nome de escola aqui
     // O filtro de cadastro detalhado será aplicado após a agregação, mas aqui já pré-selecionamos registros prováveis
-    if (searchTerm) {
+    if (searchTerm && /[a-zA-Z]/.test(searchTerm.trim())) {
       const term = searchTerm.trim();
       const termDigits = term.replace(/\D/g, '');
       const searchLower = term.toLowerCase();
