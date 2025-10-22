@@ -387,21 +387,23 @@ export function WaterReports() {
             const mesRefOriginal = record.mes_ano_referencia || '';
             const mesVenc = d ? formatMesAnoFromDate(d) : '';
 
-            // Determinar o mês de exibição:
-            // - Preferir a competência original quando houver e for do ano selecionado
-            // - Caso contrário, se o vencimento for do ano selecionado, usar o mês ANTERIOR ao vencimento (regra: 28/02 => janeiro)
+            // Determinar o mês de exibição sempre a partir do vencimento quando disponível:
+            // Regra: mês de referência = mês anterior ao vencimento (ex.: venc. 28/02/2025 => ref jan/2025)
             const refParsed = parseMesAnoReferencia(mesRefOriginal);
             const vencParsed = parseMesAnoReferencia(mesVenc);
-            const refYear = refParsed ? refParsed.year.toString() : null;
-            const vencYear = vencParsed ? vencParsed.year.toString() : null;
-
             const mesRefFromDue = d ? getPreviousMonthLabel(d) : '';
 
-            let mesRefDisplay = mesRefOriginal || mesRefFromDue;
-            if (refYear !== selectedYear && vencYear === selectedYear) {
-              // Competência não é do ano selecionado, mas vencimento é
-              // Usar o mês ANTERIOR ao vencimento para exibição (ex.: venc. 28/02/2025 => ref jan/2025)
-              mesRefDisplay = mesRefFromDue;
+            // Prioridade: usar mês derivado do vencimento quando existir; caso contrário, usar o original do banco
+            let mesRefDisplay = mesRefFromDue || (refParsed ? mesRefOriginal : '');
+
+            // Se não houver vencimento válido e houver competência válida no banco, manter a original
+            if (!mesRefDisplay) {
+              mesRefDisplay = mesRefOriginal;
+            }
+
+            // Debug específico para fevereiro -> janeiro
+            if (vencParsed && vencParsed.monthIndex === 1) {
+              console.log(`Ajuste ref por vencimento FEVEReiro: cad=${cadastro}, refOriginal=${mesRefOriginal}, refExibicao=${mesRefDisplay}, venc=${mesVenc}`);
             }
             
             // Parse consumo value properly - handle both string and number formats
