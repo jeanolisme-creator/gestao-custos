@@ -117,6 +117,8 @@ export function SchoolMultiSelector({
     }
   };
 
+  const sortedSchools = [...schools].sort();
+  
   return (
     <Card className="p-4">
       <div className="space-y-3">
@@ -124,7 +126,7 @@ export function SchoolMultiSelector({
           Selecione até {maxSchools} Escolas ({selectedSchools.length}/{maxSchools})
         </Label>
         <div className="max-h-60 overflow-y-auto space-y-2">
-          {schools.map((school) => (
+          {sortedSchools.map((school) => (
             <div key={school} className="flex items-center space-x-2">
               <Checkbox
                 id={`school-${school}`}
@@ -410,6 +412,7 @@ export function StudentComparisonReport({ data, schoolsData, selectedSchools }: 
 
   const comparisonData = selectedSchools.map(schoolName => {
     const schoolInfo = schoolsData.find(s => s.nome_escola === schoolName);
+    // Filter school records - this uses the already filtered data passed from parent
     const schoolRecords = data.filter(r => r.nome_escola === schoolName);
     const totalConsumption = schoolRecords.reduce((sum, r) => sum + (parseFloat(r.consumo_kwh) || 0), 0);
     const totalValue = schoolRecords.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);

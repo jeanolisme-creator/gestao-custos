@@ -118,7 +118,7 @@ export function EnergyReports() {
       console.log("Dados reais carregados do energy_records:", records?.length);
       setData(records || []);
       
-      const uniqueSchools = Array.from(new Set(records?.map(r => r.nome_escola) || []));
+      const uniqueSchools = Array.from(new Set(records?.map(r => r.nome_escola) || [])).sort();
       setSchools(uniqueSchools as string[]);
 
       // Fetch schools data for student comparison
@@ -351,9 +351,14 @@ export function EnergyReports() {
         });
       } else if (reportType === 'student-comparison') {
         // Relatório comparativo por total de alunos
+        // Use filtered data to respect month selection
+        const filteredData = selectedMonth !== 'todos' 
+          ? data.filter(r => r.mes_ano_referencia?.toLowerCase().includes(selectedMonth))
+          : data;
+        
         const comparisonData = selectedSchools.map(schoolName => {
           const schoolInfo = schoolsData.find(s => s.nome_escola === schoolName);
-          const schoolRecords = data.filter(r => r.nome_escola === schoolName);
+          const schoolRecords = filteredData.filter(r => r.nome_escola === schoolName);
           const totalConsumption = schoolRecords.reduce((sum, r) => sum + (parseFloat(r.consumo_kwh) || 0), 0);
           const totalValue = schoolRecords.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);
           const totalStudents = schoolInfo?.total_alunos || 0;
@@ -571,9 +576,14 @@ export function EnergyReports() {
         });
       } else if (reportType === 'student-comparison') {
         // Relatório comparativo por total de alunos
+        // Use filtered data to respect month selection
+        const filteredData = selectedMonth !== 'todos' 
+          ? data.filter(r => r.mes_ano_referencia?.toLowerCase().includes(selectedMonth))
+          : data;
+        
         const comparisonData = selectedSchools.map(schoolName => {
           const schoolInfo = schoolsData.find(s => s.nome_escola === schoolName);
-          const schoolRecords = data.filter(r => r.nome_escola === schoolName);
+          const schoolRecords = filteredData.filter(r => r.nome_escola === schoolName);
           const totalConsumption = schoolRecords.reduce((sum, r) => sum + (parseFloat(r.consumo_kwh) || 0), 0);
           const totalValue = schoolRecords.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);
           const totalStudents = schoolInfo?.total_alunos || 0;
@@ -713,9 +723,19 @@ export function EnergyReports() {
         autoTable(doc, { ...tableCommon, head: [['Cadastro', 'Escola', 'Mês/Ano', 'Consumo', 'Valor']], body: tableData, foot: [['TOTAL GERAL', '', '', `${totalConsumption.toFixed(1)} KWh`, `R$ ${totalValue.toFixed(2)}`]] });
       }
 
-      const url = doc.output('bloburl');
-      window.open(url, '_blank');
-      toast({ title: 'Visualização gerada', description: 'O PDF foi aberto para visualização. Use o botão do visor para imprimir.' });
+      // Generate blob and open in new window
+      const pdfBlob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      const printWindow = window.open(blobUrl, '_blank');
+      
+      if (printWindow) {
+        printWindow.onload = () => {
+          URL.revokeObjectURL(blobUrl);
+        };
+        toast({ title: 'Visualização gerada', description: 'O PDF foi aberto para visualização. Use Ctrl+P para imprimir.' });
+      } else {
+        toast({ title: 'Erro', description: 'Não foi possível abrir a janela de visualização. Verifique se o bloqueador de pop-ups está ativo.', variant: 'destructive' });
+      }
     } catch (error) {
       console.error('Erro ao gerar visualização de impressão:', error);
       toast({ title: 'Erro ao imprimir', description: 'Não foi possível gerar a visualização do PDF', variant: 'destructive' });

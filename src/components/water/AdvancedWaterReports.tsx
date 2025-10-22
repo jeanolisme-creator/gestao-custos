@@ -124,6 +124,8 @@ export function SchoolMultiSelector({
     }
   };
 
+  const sortedSchools = [...schools].sort();
+  
   return (
     <Card className="p-4">
       <div className="space-y-3">
@@ -131,7 +133,7 @@ export function SchoolMultiSelector({
           Selecione até {maxSchools} Escolas ({selectedSchools.length}/{maxSchools})
         </Label>
         <div className="max-h-60 overflow-y-auto space-y-2">
-          {schools.map((school) => (
+          {sortedSchools.map((school) => (
             <div key={school} className="flex items-center space-x-2">
               <Checkbox
                 id={`school-${school}`}
@@ -418,9 +420,36 @@ export function StudentComparisonReport({ data, schoolsData, selectedSchools }: 
 
   const comparisonData = selectedSchools.map(schoolName => {
     const schoolInfo = schoolsData.find(s => s.nome_escola === schoolName);
+    // Filter school records - this uses the already filtered data passed from parent
     const schoolRecords = data.filter(r => r.nome_escola === schoolName);
-    const totalConsumption = schoolRecords.reduce((sum, r) => sum + (parseFloat(r.consumo_m3) || 0), 0);
-    const totalValue = schoolRecords.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);
+    
+    // Aggregate consumption and value from all cadastros
+    let totalConsumption = 0;
+    let totalValue = 0;
+    
+    schoolRecords.forEach(record => {
+      // Handle multiple cadastros per record
+      try {
+        const consumosArray = Array.isArray(record.consumos_m3) 
+          ? record.consumos_m3 
+          : (record.consumos_m3 ? JSON.parse(record.consumos_m3 as string) : []);
+        const valoresArray = Array.isArray(record.valores_cadastros) 
+          ? record.valores_cadastros 
+          : (record.valores_cadastros ? JSON.parse(record.valores_cadastros as string) : []);
+        
+        consumosArray.forEach((consumo: any) => {
+          totalConsumption += parseFloat(consumo) || 0;
+        });
+        
+        valoresArray.forEach((valor: any) => {
+          totalValue += parseFloat(valor) || 0;
+        });
+      } catch {
+        // Fallback to single values
+        totalConsumption += parseFloat(record.consumo_m3) || 0;
+        totalValue += parseFloat(record.valor_gasto) || 0;
+      }
+    });
 
     return {
       schoolName,

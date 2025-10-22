@@ -86,7 +86,7 @@ export function DataReview({ open, onOpenChange }: DataReviewProps) {
         .order("nome_escola");
 
       if (error) throw error;
-      const uniqueSchools = [...new Set(data.map(s => s.nome_escola))];
+      const uniqueSchools = [...new Set(data.map(s => s.nome_escola))].sort();
       setSchools(uniqueSchools);
     } catch (error) {
       console.error("Error fetching schools:", error);
@@ -161,7 +161,22 @@ export function DataReview({ open, onOpenChange }: DataReviewProps) {
   };
 
   const getMonthRecords = (month: string) => {
-    return records.filter(r => r.mes_ano_referencia === `${month}/${selectedYear}`);
+    const monthIndex = months.indexOf(month);
+    return records.filter(r => {
+      // Check by mes_ano_referencia
+      const mesAnoMatch = r.mes_ano_referencia === `${month}/${selectedYear}`;
+      
+      // Check by data_vencimento month
+      let vencimentoMatch = false;
+      if (r.data_vencimento) {
+        try {
+          const vencDate = new Date(r.data_vencimento + 'T12:00:00');
+          vencimentoMatch = vencDate.getMonth() === monthIndex && vencDate.getFullYear() === parseInt(selectedYear);
+        } catch {}
+      }
+      
+      return mesAnoMatch || vencimentoMatch;
+    });
   };
 
   return (
@@ -252,7 +267,7 @@ export function DataReview({ open, onOpenChange }: DataReviewProps) {
                                 <span className="text-sm text-muted-foreground">Vencimento:</span>
                                 <p className="font-medium">
                                   {record.data_vencimento 
-                                    ? new Date(record.data_vencimento).toLocaleDateString("pt-BR")
+                                    ? new Date(record.data_vencimento + 'T12:00:00').toLocaleDateString("pt-BR")
                                     : "-"}
                                 </p>
                               </div>

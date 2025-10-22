@@ -136,8 +136,8 @@ export function WaterReports() {
       setSchoolsData(schoolsDataFetch || []);
       const registeredSchools = schoolsDataFetch?.map(s => s.nome_escola).filter(Boolean) || [];
       
-      // Combine both lists and remove duplicates
-      const allSchools = Array.from(new Set([...recordsSchools, ...registeredSchools]));
+      // Combine both lists and remove duplicates, then sort alphabetically
+      const allSchools = Array.from(new Set([...recordsSchools, ...registeredSchools])).sort();
       console.log("Escolas disponíveis:", allSchools.length, allSchools);
       
       setSchools(allSchools as string[]);
@@ -689,11 +689,35 @@ export function WaterReports() {
         });
       } else if (reportType === 'student-comparison') {
         // Relatório comparativo por total de alunos
+        // Use filtered reportData instead of raw data to respect month selection
+        const filteredData = selectedMonth !== 'todos' 
+          ? data.filter(r => {
+              const selectedIdx = monthIndexFromName(selectedMonth) ?? null;
+              const refParsed = parseMesAnoReferencia(r.mes_ano_referencia || '');
+              return refParsed && refParsed.monthIndex === selectedIdx;
+            })
+          : data;
+        
         const comparisonData = selectedSchools.map(schoolName => {
           const schoolInfo = schoolsData.find(s => s.nome_escola === schoolName);
-          const schoolRecords = data.filter(r => r.nome_escola === schoolName);
-          const totalConsumption = schoolRecords.reduce((sum, r) => sum + (parseFloat(r.consumo_m3) || 0), 0);
-          const totalValue = schoolRecords.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);
+          const schoolRecords = filteredData.filter(r => r.nome_escola === schoolName);
+          
+          // Aggregate from all cadastros
+          let totalConsumption = 0;
+          let totalValue = 0;
+          schoolRecords.forEach(record => {
+            try {
+              const consumosArray = Array.isArray(record.consumos_m3) ? record.consumos_m3 : (record.consumos_m3 ? JSON.parse(record.consumos_m3 as string) : []);
+              const valoresArray = Array.isArray(record.valores_cadastros) ? record.valores_cadastros : (record.valores_cadastros ? JSON.parse(record.valores_cadastros as string) : []);
+              
+              consumosArray.forEach((c: any) => { totalConsumption += parseFloat(c) || 0; });
+              valoresArray.forEach((v: any) => { totalValue += parseFloat(v) || 0; });
+            } catch {
+              totalConsumption += parseFloat(record.consumo_m3) || 0;
+              totalValue += parseFloat(record.valor_gasto) || 0;
+            }
+          });
+          
           const totalStudents = schoolInfo?.total_alunos || 0;
 
           return [
@@ -915,11 +939,35 @@ export function WaterReports() {
         });
       } else if (reportType === 'student-comparison') {
         // Relatório comparativo por total de alunos
+        // Use filtered data to respect month selection
+        const filteredData = selectedMonth !== 'todos' 
+          ? data.filter(r => {
+              const selectedIdx = monthIndexFromName(selectedMonth) ?? null;
+              const refParsed = parseMesAnoReferencia(r.mes_ano_referencia || '');
+              return refParsed && refParsed.monthIndex === selectedIdx;
+            })
+          : data;
+        
         const comparisonData = selectedSchools.map(schoolName => {
           const schoolInfo = schoolsData.find(s => s.nome_escola === schoolName);
-          const schoolRecords = data.filter(r => r.nome_escola === schoolName);
-          const totalConsumption = schoolRecords.reduce((sum, r) => sum + (parseFloat(r.consumo_m3) || 0), 0);
-          const totalValue = schoolRecords.reduce((sum, r) => sum + (parseFloat(r.valor_gasto) || 0), 0);
+          const schoolRecords = filteredData.filter(r => r.nome_escola === schoolName);
+          
+          // Aggregate from all cadastros
+          let totalConsumption = 0;
+          let totalValue = 0;
+          schoolRecords.forEach(record => {
+            try {
+              const consumosArray = Array.isArray(record.consumos_m3) ? record.consumos_m3 : (record.consumos_m3 ? JSON.parse(record.consumos_m3 as string) : []);
+              const valoresArray = Array.isArray(record.valores_cadastros) ? record.valores_cadastros : (record.valores_cadastros ? JSON.parse(record.valores_cadastros as string) : []);
+              
+              consumosArray.forEach((c: any) => { totalConsumption += parseFloat(c) || 0; });
+              valoresArray.forEach((v: any) => { totalValue += parseFloat(v) || 0; });
+            } catch {
+              totalConsumption += parseFloat(record.consumo_m3) || 0;
+              totalValue += parseFloat(record.valor_gasto) || 0;
+            }
+          });
+          
           const totalStudents = schoolInfo?.total_alunos || 0;
 
           return [
@@ -1058,9 +1106,19 @@ export function WaterReports() {
         autoTable(doc, { ...tableCommon, head: [['Cadastro', 'Escola', 'Mês/Ano', 'Consumo', 'Valor']], body: tableData, foot: [['TOTAL GERAL', '', '', `${totalConsumption.toFixed(1)} m³`, `R$ ${totalValue.toFixed(2)}`]] });
       }
 
-      const url = doc.output('bloburl');
-      window.open(url, '_blank');
-      toast({ title: 'Visualização gerada', description: 'O PDF foi aberto para visualização. Use o botão do visor para imprimir.' });
+      // Generate blob and open in new window
+      const pdfBlob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      const printWindow = window.open(blobUrl, '_blank');
+      
+      if (printWindow) {
+        printWindow.onload = () => {
+          URL.revokeObjectURL(blobUrl);
+        };
+        toast({ title: 'Visualização gerada', description: 'O PDF foi aberto para visualização. Use Ctrl+P para imprimir.' });
+      } else {
+        toast({ title: 'Erro', description: 'Não foi possível abrir a janela de visualização. Verifique se o bloqueador de pop-ups está ativo.', variant: 'destructive' });
+      }
     } catch (error) {
       console.error('Erro ao gerar visualização de impressão:', error);
       toast({ title: 'Erro ao imprimir', description: 'Não foi possível gerar a visualização do PDF', variant: 'destructive' });
