@@ -313,7 +313,7 @@ export function WaterReports() {
 
       const refParsed = parseMesAnoReferencia(mesAno);
       const refYear = refParsed ? refParsed.year.toString() : null;
-      const matches = refYear === year;
+      const matches = (refYear === year) || (mesAno && mesAno.includes(year));
       if (!matches) {
         console.log(`[FILTRO ANO - REFERÊNCIA] Ignorado: ${record.nome_escola}, mes_ano_referencia="${mesAno}", refParsed=${JSON.stringify(refParsed)}, refYear=${refYear}, selectedYear=${year}`);
       } else if (mesAno && mesAno.toLowerCase().includes('janeiro')) {
