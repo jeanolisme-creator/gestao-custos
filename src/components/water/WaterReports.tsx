@@ -396,13 +396,17 @@ export function WaterReports() {
         const consumosArray: any[] = toArray(record.consumos_m3);
         const vencimentosRaw: any[] = toArray(record.datas_vencimento);
 
-        if (cadastrosArray.length === 0 && record.cadastro) {
+        // Garantir pelo menos um detalhe mesmo sem cadastro
+        if (cadastrosArray.length === 0) {
+          cadastrosArray.push('—');
+        } else if (cadastrosArray.length === 0 && record.cadastro) {
           cadastrosArray.push(String(record.cadastro));
         }
 
         // Adicionar cadastros únicos e armazenar detalhes por cadastro
         cadastrosArray.forEach((cadastro: string, idx: number) => {
-          school.cadastrosSet.add(cadastro);
+          const cadastroKey = cadastro && String(cadastro).trim() ? String(cadastro).trim() : '—';
+          school.cadastrosSet.add(cadastroKey);
 
           const d = parseBRDate(vencimentosRaw[idx] ?? record.data_vencimento);
           const mesRefOriginal = record.mes_ano_referencia || '';
@@ -451,11 +455,12 @@ export function WaterReports() {
           console.log(`Cadastro ${cadastro} (${mesRefDisplay}): consumo raw=${JSON.stringify(consumoRaw)}, parsed=${consumoValue}, valor raw=${JSON.stringify(valorRaw)}, parsed=${valorValue}`);
           
           school.cadastrosDetails.push({
-            cadastro: cadastro,
+            cadastro: cadastroKey,
             consumo: consumoValue,
             valor: valorValue,
             mesAno: mesRefDisplay, // backward compatibility
             mesRef: mesRefDisplay,
+            mesRefOriginal: mesRefOriginal,
             mesVenc: mesVenc,
             record: record
           });
@@ -472,19 +477,17 @@ export function WaterReports() {
         result = result
           .map((school: any) => {
             const filteredDetails = (school.cadastrosDetails || []).filter((detail: any) => {
-              // Filtrar pelo mês de exibição (mesRef) que já foi ajustado na criação dos detalhes
-              const displayParsed = parseMesAnoReferencia(detail.mesRef || detail.mesAno || '');
-              const displayIdx = displayParsed ? displayParsed.monthIndex : null;
+              // Filtrar estritamente pelo Mês/Ano Referência do banco (mesRefOriginal)
+              const refParsed = parseMesAnoReferencia(detail.mesRefOriginal || detail.mesRef || detail.mesAno || '');
+              const displayIdx = refParsed ? refParsed.monthIndex : null;
+              const displayYear = refParsed ? refParsed.year.toString() : null;
               
-              console.log(`Escola: ${school.nome_escola}, Cadastro: ${detail.cadastro}, mesRef: "${detail.mesRef}", parsed monthIdx=${displayIdx}, matches=${displayIdx === selectedIdx}`);
+              const matches = selectedIdx !== null
+                ? (displayIdx === selectedIdx && displayYear === selectedYear)
+                : (displayYear === selectedYear);
 
-              if (selectedIdx === null) return true;
-              const matches = displayIdx === selectedIdx;
-
-              // Debug para Janeiro
-              if (selectedIdx === 0 && detail.cadastro) {
-                console.log(`Detail cad ${detail.cadastro}: displayIdx=${displayIdx}, sel=${selectedIdx}, mesRef=${detail.mesRef}, mesVenc=${detail.mesVenc}`);
-              }
+              // Debug
+              console.log(`Escola: ${school.nome_escola}, Cad: ${detail.cadastro}, mesRefOriginal: "${detail.mesRefOriginal}", parsed={idx:${displayIdx}, year:${displayYear}}, selIdx=${selectedIdx}, selYear=${selectedYear}, matches=${matches}`);
 
               return matches;
             });
