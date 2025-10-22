@@ -272,27 +272,37 @@ export function WaterReports() {
     console.log("Selected filters:", { selectedYear, selectedMonth, selectedSchool, reportType });
     
     let filteredData = data.filter(record => {
-      const refParsed = parseMesAnoReferencia(record.mes_ano_referencia || '');
-      const matches = !!refParsed && refParsed.year.toString() === selectedYear;
+      const year = selectedYear;
+      const mesAno = record.mes_ano_referencia || '';
+      const mesAnoHasYear = mesAno.includes(year);
+
+      const sd = parseBRDate(record.data_vencimento);
+      const singleDueYear = sd ? sd.getFullYear().toString() : null;
+      let arrayDueYears: string[] = [];
+      try {
+        const arr = Array.isArray(record.datas_vencimento)
+          ? record.datas_vencimento
+          : (record.datas_vencimento ? JSON.parse(record.datas_vencimento as string) : []);
+        arrayDueYears = (arr || [])
+          .map((d: string) => parseBRDate(d))
+          .filter((d: Date | null): d is Date => !!d)
+          .map((d: Date) => d.getFullYear().toString());
+      } catch {}
+
+      const refParsed = parseMesAnoReferencia(mesAno);
+      const refYear = refParsed ? refParsed.year.toString() : null;
+      const matches = refYear === year || singleDueYear === year || arrayDueYears.includes(year);
       if (!matches) {
-        console.log("Record filtered out by ref year:", record.nome_escola, {
-          mes_ano_referencia: record.mes_ano_referencia
-        }, "!=", selectedYear);
+        console.log("Record filtered out:", record.nome_escola, { mes_ano_referencia: mesAno, singleDueYear, arrayDueYears }, "doesn't include", year);
       }
       return matches;
     });
     
     console.log("After year filter:", filteredData.length);
     
+    // Não filtramos por mês nesta etapa; filtragem por mês será aplicada nos detalhes (cadastros)
     if (selectedMonth !== 'todos') {
-      const selectedIdx = monthIndexFromName(selectedMonth) ?? null;
-      filteredData = filteredData.filter(record => {
-        const refParsed = parseMesAnoReferencia(record.mes_ano_referencia || '');
-        const refIdx = refParsed ? refParsed.monthIndex : null;
-        if (selectedIdx === null) return true;
-        return refIdx === selectedIdx;
-      });
-      console.log("After month filter (by referência only):", filteredData.length);
+      console.log("Month filter will be applied at detail level only");
     }
 
     if (selectedSchool !== 'all') {
@@ -429,15 +439,18 @@ export function WaterReports() {
         result = result
           .map((school: any) => {
             const filteredDetails = (school.cadastrosDetails || []).filter((detail: any) => {
-              // Use the computed competência (mesRef) ONLY to decide the selected month
+              // Usar a competência (mesRef) como base, com fallback para mês de vencimento
               const refParsed = parseMesAnoReferencia(detail.mesRef || detail.mesAno || '');
               const refIdx = refParsed ? refParsed.monthIndex : null;
-              if (selectedIdx === null) return true;
-              const matches = refIdx === selectedIdx;
+              const vencParsed = parseMesAnoReferencia(detail.mesVenc || '');
+              const dueIdx = vencParsed ? vencParsed.monthIndex : null;
 
-              // Debug log focusing on competência filtering
-              if ((selectedIdx === 0 || selectedIdx === 1) && detail.cadastro) { // Janeiro ou Fevereiro
-                console.log(`Detail (competência) cadastro ${detail.cadastro}: refIdx=${refIdx}, selectedIdx=${selectedIdx}, mesRef=${detail.mesRef}, mesVenc=${detail.mesVenc}`);
+              if (selectedIdx === null) return true;
+              const matches = (refIdx === selectedIdx) || (dueIdx === selectedIdx);
+
+              // Debug para Janeiro/Fevereiro
+              if ((selectedIdx === 0 || selectedIdx === 1) && detail.cadastro) {
+                console.log(`Detail (ref/venc) cad ${detail.cadastro}: refIdx=${refIdx}, dueIdx=${dueIdx}, sel=${selectedIdx}, mesRef=${detail.mesRef}, mesVenc=${detail.mesVenc}`);
               }
 
               return matches;
@@ -460,7 +473,10 @@ export function WaterReports() {
           .map((school: any) => {
             const filteredDetails = (school.cadastrosDetails || []).filter((detail: any) => {
               const refParsed = parseMesAnoReferencia(detail.mesRef || detail.mesAno || '');
-              return refParsed ? refParsed.year.toString() === selectedYear : true;
+              const vencParsed = parseMesAnoReferencia(detail.mesVenc || '');
+              const refYear = refParsed ? refParsed.year.toString() : null;
+              const dueYear = vencParsed ? vencParsed.year.toString() : null;
+              return refYear === selectedYear || dueYear === selectedYear;
             });
             const filteredTotalValue = filteredDetails.reduce((sum: number, d: any) => sum + (parseFloat(d.valor) || 0), 0);
             const filteredTotalConsumption = filteredDetails.reduce((sum: number, d: any) => sum + (parseFloat(d.consumo) || 0), 0);
