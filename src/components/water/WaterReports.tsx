@@ -179,7 +179,17 @@ export function WaterReports() {
         }
       }
     }
-    // Fallback to native parser (handles ISO)
+    // Handle ISO yyyy-mm-dd explicitly to avoid timezone shifts
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+      const [yyyy, mm, dd] = s.split('T')[0].split('-');
+      const year = parseInt(yyyy, 10);
+      const month = parseInt(mm, 10) - 1;
+      const day = parseInt(dd, 10);
+      if (!isNaN(day) && !isNaN(month) && !isNaN(year)) {
+        return new Date(year, month, day);
+      }
+    }
+    // Fallback to native parser (handles other ISO variants)
     const d = new Date(s);
     return isNaN(d.getTime()) ? null : d;
   };
@@ -299,7 +309,15 @@ export function WaterReports() {
         } catch {}
 
         if (selectedIdx === null) return true;
-        return refIdx === selectedIdx || singleDueIdx === selectedIdx || arrayDueIdxs.includes(selectedIdx);
+        const nextOfSelected = (selectedIdx + 1) % 12;
+        return (
+          refIdx === selectedIdx ||
+          singleDueIdx === selectedIdx ||
+          arrayDueIdxs.includes(selectedIdx) ||
+          // Include records whose vencimento is in the month immediately after the selected month
+          singleDueIdx === nextOfSelected ||
+          arrayDueIdxs.includes(nextOfSelected)
+        );
       });
       console.log("After month filter:", filteredData.length);
     }
@@ -458,11 +476,17 @@ export function WaterReports() {
               }
               
               if (selectedIdx === null) return true;
-              const matches = refIdx === selectedIdx || venIdx === selectedIdx;
+              const nextOfSelected = (selectedIdx + 1) % 12;
+              const matches = (
+                refIdx === selectedIdx ||
+                venIdx === selectedIdx ||
+                // Include details whose vencimento is in the month immediately after the selected month
+                venIdx === nextOfSelected
+              );
               
               // Debug log for Janeiro/Fevereiro case
               if ((selectedIdx === 0 || selectedIdx === 1) && detail.cadastro) { // Janeiro ou Fevereiro
-                console.log(`Detail cadastro ${detail.cadastro}: refIdx=${refIdx}, venIdx=${venIdx}, selectedIdx=${selectedIdx}, matches=${matches}, mesRef=${detail.mesRef}, data_vencimento=${detail.record?.data_vencimento}`);
+                console.log(`Detail cadastro ${detail.cadastro}: refIdx=${refIdx}, venIdx=${venIdx}, selectedIdx=${selectedIdx}, nextOfSelected=${nextOfSelected}, matches=${matches}, mesRef=${detail.mesRef}, data_vencimento=${detail.record?.data_vencimento}`);
               }
               
               return matches;
@@ -714,8 +738,29 @@ export function WaterReports() {
         const filteredData = selectedMonth !== 'todos' 
           ? data.filter(r => {
               const selectedIdx = monthIndexFromName(selectedMonth) ?? null;
+              if (selectedIdx === null) return true;
+              const nextOfSelected = (selectedIdx + 1) % 12;
               const refParsed = parseMesAnoReferencia(r.mes_ano_referencia || '');
-              return refParsed && refParsed.monthIndex === selectedIdx;
+              const refIdx = refParsed ? refParsed.monthIndex : null;
+              const sd = parseBRDate(r.data_vencimento);
+              const dueIdx = sd ? sd.getMonth() : null;
+              let arrayDueIdxs: number[] = [];
+              try {
+                const arr = Array.isArray(r.datas_vencimento)
+                  ? r.datas_vencimento
+                  : (r.datas_vencimento ? JSON.parse(r.datas_vencimento as string) : []);
+                arrayDueIdxs = (arr || [])
+                  .map((d: string) => parseBRDate(d))
+                  .filter((d: Date | null): d is Date => !!d)
+                  .map((d: Date) => d.getMonth());
+              } catch {}
+              return (
+                refIdx === selectedIdx ||
+                dueIdx === selectedIdx ||
+                arrayDueIdxs.includes(selectedIdx) ||
+                dueIdx === nextOfSelected ||
+                arrayDueIdxs.includes(nextOfSelected)
+              );
             })
           : data;
         
@@ -964,8 +1009,29 @@ export function WaterReports() {
         const filteredData = selectedMonth !== 'todos' 
           ? data.filter(r => {
               const selectedIdx = monthIndexFromName(selectedMonth) ?? null;
+              if (selectedIdx === null) return true;
+              const nextOfSelected = (selectedIdx + 1) % 12;
               const refParsed = parseMesAnoReferencia(r.mes_ano_referencia || '');
-              return refParsed && refParsed.monthIndex === selectedIdx;
+              const refIdx = refParsed ? refParsed.monthIndex : null;
+              const sd = parseBRDate(r.data_vencimento);
+              const dueIdx = sd ? sd.getMonth() : null;
+              let arrayDueIdxs: number[] = [];
+              try {
+                const arr = Array.isArray(r.datas_vencimento)
+                  ? r.datas_vencimento
+                  : (r.datas_vencimento ? JSON.parse(r.datas_vencimento as string) : []);
+                arrayDueIdxs = (arr || [])
+                  .map((d: string) => parseBRDate(d))
+                  .filter((d: Date | null): d is Date => !!d)
+                  .map((d: Date) => d.getMonth());
+              } catch {}
+              return (
+                refIdx === selectedIdx ||
+                dueIdx === selectedIdx ||
+                arrayDueIdxs.includes(selectedIdx) ||
+                dueIdx === nextOfSelected ||
+                arrayDueIdxs.includes(nextOfSelected)
+              );
             })
           : data;
         
