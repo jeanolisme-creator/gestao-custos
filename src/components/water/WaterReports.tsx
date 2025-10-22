@@ -293,37 +293,31 @@ export function WaterReports() {
     console.log("Total records in data:", data.length);
     console.log("Selected filters:", { selectedYear, selectedMonth, selectedSchool, reportType });
     
-    let filteredData = data.filter(record => {
-      const year = selectedYear;
-      const mesAno = record.mes_ano_referencia || '';
-      const mesAnoHasYear = mesAno.includes(year);
+    let filteredData = data;
 
-      const sd = parseBRDate(record.data_vencimento);
-      const singleDueYear = sd ? sd.getFullYear().toString() : null;
-      let arrayDueYears: string[] = [];
-      try {
-        const arr = Array.isArray(record.datas_vencimento)
-          ? record.datas_vencimento
-          : (record.datas_vencimento ? JSON.parse(record.datas_vencimento as string) : []);
-        arrayDueYears = (arr || [])
-          .map((d: string) => parseBRDate(d))
-          .filter((d: Date | null): d is Date => !!d)
-          .map((d: Date) => d.getFullYear().toString());
-      } catch {}
+    // Se o usuário selecionou um mês específico, não restringimos por ano nesta etapa
+    // para não perder registros cujo parsing do ano possa falhar. O filtro de MÊS/ANO
+    // será aplicado com precisão no nível de detalhes (cadastros).
+    if (selectedMonth === 'todos') {
+      filteredData = data.filter(record => {
+        const year = selectedYear;
+        const mesAno = record.mes_ano_referencia || '';
 
-      const refParsed = parseMesAnoReferencia(mesAno);
-      const refYear = refParsed ? refParsed.year.toString() : null;
-      const matches = (refYear === year) || (mesAno && mesAno.includes(year));
-      if (!matches) {
-        console.log(`[FILTRO ANO - REFERÊNCIA] Ignorado: ${record.nome_escola}, mes_ano_referencia="${mesAno}", refParsed=${JSON.stringify(refParsed)}, refYear=${refYear}, selectedYear=${year}`);
-      } else if (mesAno && mesAno.toLowerCase().includes('janeiro')) {
-        console.log(`[FILTRO ANO PASSOU - REFERÊNCIA] ${record.nome_escola}: mes_ano_referencia="${mesAno}", refYear=${refYear}, selectedYear=${year}`);
-      }
-      return matches;
-    });
-    
-    console.log("After year filter:", filteredData.length);
-    
+        const refParsed = parseMesAnoReferencia(mesAno);
+        const refYear = refParsed ? refParsed.year.toString() : null;
+        const matches = (refYear === year) || (mesAno && mesAno.includes(year));
+        if (!matches) {
+          console.log(`[FILTRO ANO - REFERÊNCIA] Ignorado: ${record.nome_escola}, mes_ano_referencia="${mesAno}", refParsed=${JSON.stringify(refParsed)}, refYear=${refYear}, selectedYear=${year}`);
+        } else if (mesAno && mesAno.toLowerCase().includes('janeiro')) {
+          console.log(`[FILTRO ANO PASSOU - REFERÊNCIA] ${record.nome_escola}: mes_ano_referencia="${mesAno}", refYear=${refYear}, selectedYear=${year}`);
+        }
+        return matches;
+      });
+      console.log("After year filter:", filteredData.length);
+    } else {
+      console.log("Skipping year-level pre-filter; month/year will be enforced at detail-level");
+    }
+
     // Não filtramos por mês nesta etapa; filtragem por mês será aplicada nos detalhes (cadastros)
     if (selectedMonth !== 'todos') {
       console.log("Month filter will be applied at detail level only");
