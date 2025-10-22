@@ -199,6 +199,11 @@ export function WaterReports() {
     return `${month.charAt(0).toUpperCase()}${month.slice(1)}/${d.getFullYear()}`;
   };
 
+  // Deriva o mês/ano de referência a partir da data de vencimento: mês anterior
+  const getPreviousMonthLabel = (d: Date): string => {
+    const prev = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+    return formatMesAnoFromDate(prev);
+  };
   const ptMonths = [
     'janeiro','fevereiro','março','abril','maio','junho',
     'julho','agosto','setembro','outubro','novembro','dezembro'
@@ -382,18 +387,21 @@ export function WaterReports() {
             const mesRefOriginal = record.mes_ano_referencia || '';
             const mesVenc = d ? formatMesAnoFromDate(d) : '';
 
-            // Determinar o mês de exibição: se competência for do ano selecionado, usar ela;
-            // caso contrário, se vencimento for do ano selecionado, usar vencimento
+            // Determinar o mês de exibição:
+            // - Preferir a competência original quando houver e for do ano selecionado
+            // - Caso contrário, se o vencimento for do ano selecionado, usar o mês ANTERIOR ao vencimento (regra: 28/02 => janeiro)
             const refParsed = parseMesAnoReferencia(mesRefOriginal);
             const vencParsed = parseMesAnoReferencia(mesVenc);
             const refYear = refParsed ? refParsed.year.toString() : null;
             const vencYear = vencParsed ? vencParsed.year.toString() : null;
-            
-            let mesRefDisplay = mesRefOriginal;
+
+            const mesRefFromDue = d ? getPreviousMonthLabel(d) : '';
+
+            let mesRefDisplay = mesRefOriginal || mesRefFromDue;
             if (refYear !== selectedYear && vencYear === selectedYear) {
               // Competência não é do ano selecionado, mas vencimento é
-              // Usar o mês do vencimento para exibição
-              mesRefDisplay = mesVenc;
+              // Usar o mês ANTERIOR ao vencimento para exibição (ex.: venc. 28/02/2025 => ref jan/2025)
+              mesRefDisplay = mesRefFromDue;
             }
             
             // Parse consumo value properly - handle both string and number formats
