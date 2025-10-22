@@ -396,8 +396,27 @@ export function WaterReports() {
             school.cadastrosSet.add(cadastro);
 
             const d = parseBRDate(vencimentosRaw[idx] ?? record.data_vencimento);
-            const mesRef = record.mes_ano_referencia || '';
+            const mesRefOriginal = record.mes_ano_referencia || '';
             const mesVenc = d ? formatMesAnoFromDate(d) : '';
+
+            // Determine the best month reference to display:
+            // If mes_ano_referencia appears to be the month of vencimento (common in some data),
+            // compute the competência as the previous month of vencimento.
+            let mesRefDisplay = mesRefOriginal;
+            const refParsedTry = parseMesAnoReferencia(mesRefOriginal || '');
+            if (d) {
+              const dueMonth = d.getMonth();
+              const dueYear = d.getFullYear();
+              const prevMonth = (dueMonth + 11) % 12;
+              const prevYear = dueMonth === 0 ? dueYear - 1 : dueYear;
+              const prevDate = new Date(prevYear, prevMonth, 1);
+              const prevDisplay = formatMesAnoFromDate(prevDate);
+
+              // If ref is missing or equals due month/year, use previous month as competência
+              if (!refParsedTry || (refParsedTry.monthIndex === dueMonth && refParsedTry.year === dueYear)) {
+                mesRefDisplay = prevDisplay;
+              }
+            }
             
             // Parse consumo value properly - handle both string and number formats
             let consumoValue = 0;
@@ -426,14 +445,14 @@ export function WaterReports() {
               }
             }
             
-            console.log(`Cadastro ${cadastro} (${mesRef}): consumo raw=${JSON.stringify(consumoRaw)}, parsed=${consumoValue}, valor raw=${JSON.stringify(valorRaw)}, parsed=${valorValue}`);
+            console.log(`Cadastro ${cadastro} (${mesRefDisplay}): consumo raw=${JSON.stringify(consumoRaw)}, parsed=${consumoValue}, valor raw=${JSON.stringify(valorRaw)}, parsed=${valorValue}`);
             
             school.cadastrosDetails.push({
               cadastro: cadastro,
               consumo: consumoValue,
               valor: valorValue,
-              mesAno: mesRef, // backward compatibility
-              mesRef: mesRef,
+              mesAno: mesRefDisplay, // backward compatibility
+              mesRef: mesRefDisplay,
               mesVenc: mesVenc,
               record: record
             });
