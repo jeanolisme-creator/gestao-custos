@@ -408,13 +408,24 @@ export function WaterReports() {
           const mesRefOriginal = record.mes_ano_referencia || '';
           const mesVenc = d ? formatMesAnoFromDate(d) : '';
 
-          // Determinar o mês de exibição: priorizar competência do banco; se ausente, derivar do vencimento (mês anterior)
+          // Determinar o mês de exibição: priorizar competência (mês anterior ao vencimento)
           const refParsed = parseMesAnoReferencia(mesRefOriginal);
           const mesRefFromDue = d ? getPreviousMonthLabel(d) : '';
           const vencParsed = parseMesAnoReferencia(mesVenc);
 
-          // Prioridade: usar o mês/ano de referência do banco quando válido; caso contrário, usar o derivado do vencimento
-          let mesRefDisplay = refParsed ? mesRefOriginal : mesRefFromDue;
+          // Regra:
+          // - Se houver vencimento e o mes_ano_referencia do banco for IGUAL ao mês do vencimento,
+          //   assumimos que o campo traz o mês de vencimento e ajustamos para a competência (mês anterior).
+          // - Caso contrário, se mes_ano_referencia for válido, usamos ele.
+          // - Se não houver referência válida, usamos a derivada do vencimento.
+          let mesRefDisplay = '';
+          if (vencParsed && refParsed && refParsed.monthIndex === vencParsed.monthIndex && refParsed.year === vencParsed.year) {
+            mesRefDisplay = mesRefFromDue;
+          } else if (refParsed) {
+            mesRefDisplay = mesRefOriginal;
+          } else {
+            mesRefDisplay = mesRefFromDue;
+          }
 
           // Se nada definido, manter o original (mesmo que não parseado) para exibição
           if (!mesRefDisplay) {
