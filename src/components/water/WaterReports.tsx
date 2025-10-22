@@ -408,36 +408,19 @@ export function WaterReports() {
           const mesRefOriginal = record.mes_ano_referencia || '';
           const mesVenc = d ? formatMesAnoFromDate(d) : '';
 
-          // Determinar o mês de exibição: priorizar competência (mês anterior ao vencimento)
+          // Determinar o mês de exibição: usar sempre o mes_ano_referencia do banco quando válido
           const refParsed = parseMesAnoReferencia(mesRefOriginal);
           const mesRefFromDue = d ? getPreviousMonthLabel(d) : '';
-          const vencParsed = parseMesAnoReferencia(mesVenc);
 
-          // Regra:
-          // - Se houver vencimento e o mes_ano_referencia do banco for IGUAL ao mês do vencimento,
-          //   assumimos que o campo traz o mês de vencimento e ajustamos para a competência (mês anterior).
-          // - Caso contrário, se mes_ano_referencia for válido, usamos ele.
-          // - Se não houver referência válida, usamos a derivada do vencimento.
-          let mesRefDisplay = '';
-          if (vencParsed && refParsed && refParsed.monthIndex === vencParsed.monthIndex && refParsed.year === vencParsed.year) {
-            mesRefDisplay = mesRefFromDue;
-          } else if (refParsed) {
-            mesRefDisplay = mesRefOriginal;
-          } else {
-            mesRefDisplay = mesRefFromDue;
-          }
+          // Regra simples: se mes_ano_referencia é válido, usá-lo; senão derivar do vencimento
+          let mesRefDisplay = refParsed ? mesRefOriginal : mesRefFromDue;
 
-          // Se nada definido, manter o original (mesmo que não parseado) para exibição
+          // Se nada definido, manter o original
           if (!mesRefDisplay) {
             mesRefDisplay = mesRefOriginal;
           }
           
           console.log(`[CRIAÇÃO DETALHE] Escola: ${record.nome_escola}, Cad: ${cadastro}, mesRefOriginal: "${mesRefOriginal}", refParsed: ${JSON.stringify(refParsed)}, mesRefFromDue: "${mesRefFromDue}", mesRefDisplay: "${mesRefDisplay}"`);
-
-          // Debug específico para fevereiro -> janeiro
-          if (vencParsed && vencParsed.monthIndex === 1) {
-            console.log(`Ajuste ref por vencimento FEVEReiro: cad=${cadastro}, refOriginal=${mesRefOriginal}, refExibicao=${mesRefDisplay}, venc=${mesVenc}`);
-          }
           
           // Consumo: pegar do array por índice, senão cair no valor do registro
           let consumoValue = 0;
