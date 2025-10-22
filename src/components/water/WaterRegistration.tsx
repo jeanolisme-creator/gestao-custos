@@ -425,9 +425,67 @@ export function WaterRegistration({ onSuccess, editData, viewMode = false }: Wat
 
     const dataToEdit = internalEditData || editData;
 
+    // Validar cadastros únicos
+    const cadastrosValidos = formData.cadastros.filter(c => c.trim() !== '');
+    if (cadastrosValidos.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Cadastro obrigatório",
+        description: "Pelo menos um número de cadastro deve ser informado"
+      });
+      return;
+    }
+
+    // Validar se cadastros já existem em outras escolas
+    for (const cadastro of cadastrosValidos) {
+      const { data: existingCadastros } = await supabase
+        .from('school_records')
+        .select('id, nome_escola, cadastro')
+        .neq('nome_escola', formData.nome_escola);
+      
+      if (existingCadastros) {
+        for (const record of existingCadastros) {
+          let cadastrosArray: string[] = [];
+          try {
+            cadastrosArray = JSON.parse(record.cadastro);
+          } catch {
+            cadastrosArray = [record.cadastro];
+          }
+          
+          if (cadastrosArray.includes(cadastro)) {
+            toast({
+              variant: "destructive",
+              title: "Cadastro duplicado",
+              description: `O cadastro ${cadastro} já está sendo usado na escola ${record.nome_escola}`
+            });
+            return;
+          }
+        }
+      }
+    }
+
+    // Validar duplicação no mesmo mês (apenas para novos registros ou mudança de mês)
+    if (!dataToEdit || dataToEdit.mes_ano_referencia !== formData.mes_referencia) {
+      const { data: existingMonth } = await supabase
+        .from('school_records')
+        .select('id')
+        .eq('nome_escola', formData.nome_escola)
+        .eq('mes_ano_referencia', formData.mes_referencia || new Date().toISOString().slice(0, 7))
+        .limit(1);
+
+      if (existingMonth && existingMonth.length > 0) {
+        toast({
+          variant: "destructive",
+          title: "Registro já existe",
+          description: `Já existe um registro para ${formData.nome_escola} no mês ${formData.mes_referencia}. Use a opção de editar.`
+        });
+        return;
+      }
+    }
+
     const submitData: any = { 
       user_id: user.id,
-      cadastro: JSON.stringify(formData.cadastros.filter(c => c.trim() !== '')),
+      cadastro: JSON.stringify(cadastrosValidos),
       hidrometros: formData.hidrometros,
       consumos_m3: formData.consumos_m3.map(c => parseFloat(c) || 0),
       numeros_dias: formData.numeros_dias.map(n => parseInt(n) || 0),

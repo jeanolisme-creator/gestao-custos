@@ -532,9 +532,48 @@ export function MonthlyDataWizard({ open, onOpenChange, onSuccess, initialMonth,
   const handleSaveAndNext = async () => {
     if (!user || !currentSchool) return;
 
+    // Validar cadastros únicos
+    const cadastrosValidos = formData.cadastros.filter(c => c.trim() !== '');
+    if (cadastrosValidos.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Cadastro obrigatório",
+        description: "Pelo menos um número de cadastro deve ser informado"
+      });
+      return;
+    }
+
+    // Validar se cadastros já existem em outras escolas
+    for (const cadastro of cadastrosValidos) {
+      const { data: existingCadastros } = await supabase
+        .from('school_records')
+        .select('id, nome_escola, cadastro')
+        .neq('nome_escola', currentSchool.nome_escola);
+      
+      if (existingCadastros) {
+        for (const record of existingCadastros) {
+          let cadastrosArray: string[] = [];
+          try {
+            cadastrosArray = JSON.parse(record.cadastro);
+          } catch {
+            cadastrosArray = [record.cadastro];
+          }
+          
+          if (cadastrosArray.includes(cadastro)) {
+            toast({
+              variant: "destructive",
+              title: "Cadastro duplicado",
+              description: `O cadastro ${cadastro} já está sendo usado na escola ${record.nome_escola}`
+            });
+            return;
+          }
+        }
+      }
+    }
+
     const submitData: any = { 
       user_id: user.id,
-      cadastro: JSON.stringify(formData.cadastros.filter(c => c.trim() !== '')),
+      cadastro: JSON.stringify(cadastrosValidos),
       hidrometros: formData.hidrometros, // JSONB field - Supabase handles serialization
       consumos_m3: formData.consumos_m3.map(c => parseFloat(c) || 0), // JSONB field
       numeros_dias: formData.numeros_dias.map(n => parseInt(n) || 0), // JSONB field
