@@ -313,11 +313,11 @@ export function WaterReports() {
 
       const refParsed = parseMesAnoReferencia(mesAno);
       const refYear = refParsed ? refParsed.year.toString() : null;
-      const matches = refYear === year || singleDueYear === year || arrayDueYears.includes(year);
+      const matches = refYear === year;
       if (!matches) {
-        console.log(`[FILTRO ANO] Record filtered out: ${record.nome_escola}, mes_ano_referencia="${mesAno}", refParsed=${JSON.stringify(refParsed)}, refYear=${refYear}, singleDueYear=${singleDueYear}, selectedYear=${year}`);
+        console.log(`[FILTRO ANO - REFERÊNCIA] Ignorado: ${record.nome_escola}, mes_ano_referencia="${mesAno}", refParsed=${JSON.stringify(refParsed)}, refYear=${refYear}, selectedYear=${year}`);
       } else if (mesAno && mesAno.toLowerCase().includes('janeiro')) {
-        console.log(`[FILTRO ANO PASSOU] ${record.nome_escola}: mes_ano_referencia="${mesAno}", refYear=${refYear}, singleDueYear=${singleDueYear}, selectedYear=${year}`);
+        console.log(`[FILTRO ANO PASSOU - REFERÊNCIA] ${record.nome_escola}: mes_ano_referencia="${mesAno}", refYear=${refYear}, selectedYear=${year}`);
       }
       return matches;
     });
@@ -412,12 +412,12 @@ export function WaterReports() {
           const mesRefOriginal = record.mes_ano_referencia || '';
           const mesVenc = d ? formatMesAnoFromDate(d) : '';
 
-          // Determinar o mês de exibição: usar sempre o mes_ano_referencia do banco quando válido
+          // Determinar o mês de exibição: usar apenas o Mês/Ano Referência informado no banco
           const refParsed = parseMesAnoReferencia(mesRefOriginal);
           const mesRefFromDue = d ? getPreviousMonthLabel(d) : '';
 
-          // Regra simples: se mes_ano_referencia é válido, usá-lo; senão derivar do vencimento
-          let mesRefDisplay = refParsed ? mesRefOriginal : mesRefFromDue;
+          // Sempre exibir o mês/ano de referência do banco (sem depender do vencimento)
+          let mesRefDisplay = mesRefOriginal;
 
           // Se nada definido, manter o original
           if (!mesRefDisplay) {
@@ -1426,15 +1426,14 @@ export function WaterReports() {
                                 </div>
                                 {group.details.length >= 1 && (
                                   <Table>
-                                    <TableHeader>
-                                      <TableRow className="bg-muted/50">
-                                        <TableHead className="w-[140px]">Mês Ref.</TableHead>
-                                        <TableHead className="w-[140px]">Vencimento</TableHead>
-                                        <TableHead className="text-right w-[120px]">Consumo (m³)</TableHead>
-                                        <TableHead className="text-right w-[120px]">Valor (R$)</TableHead>
-                                        <TableHead className="text-right w-[100px]">Ações</TableHead>
-                                      </TableRow>
-                                    </TableHeader>
+                                      <TableHeader>
+                                        <TableRow className="bg-muted/50">
+                                          <TableHead className="w-[160px]">Mês Ref.</TableHead>
+                                          <TableHead className="text-right w-[140px]">Consumo (m³)</TableHead>
+                                          <TableHead className="text-right w-[140px]">Valor (R$)</TableHead>
+                                          <TableHead className="text-right w-[100px]">Ações</TableHead>
+                                        </TableRow>
+                                      </TableHeader>
                                     <TableBody>
                                       {(group.details || []).slice().sort((a: any, b: any) => {
                                         const ap = parseMesAnoReferencia(a.mesRef || a.mesAno || '');
@@ -1451,9 +1450,6 @@ export function WaterReports() {
                                         >
                                           <TableCell className="font-medium text-sm">
                                             {detail.mesRef || detail.mesAno || '—'}
-                                          </TableCell>
-                                          <TableCell className="text-sm text-muted-foreground">
-                                            {detail.mesVenc || '—'}
                                           </TableCell>
                                           <TableCell className="text-right font-medium">
                                             {(detail.consumo || 0).toFixed(1)}
