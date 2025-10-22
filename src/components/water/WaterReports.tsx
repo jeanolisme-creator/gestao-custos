@@ -413,7 +413,12 @@ export function WaterReports() {
               const prevDisplay = formatMesAnoFromDate(prevDate);
 
               // If ref is missing or equals due month/year, use previous month as competência
-              if (!refParsedTry || (refParsedTry.monthIndex === dueMonth && refParsedTry.year === dueYear)) {
+              if (
+                !refParsedTry ||
+                (refParsedTry.monthIndex === dueMonth && refParsedTry.year === dueYear) ||
+                // Special case: Ref Dez/prevYear with Vencimento em Fevereiro/dueYear -> competência = Janeiro/dueYear
+                (dueMonth === 1 && refParsedTry && refParsedTry.monthIndex === 11 && refParsedTry.year === dueYear - 1)
+              ) {
                 mesRefDisplay = prevDisplay;
               }
             }
