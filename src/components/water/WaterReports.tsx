@@ -316,24 +316,30 @@ export function WaterReports() {
     }
 
     // Aplicar filtro de busca apenas para nome de escola aqui
-    // O filtro de cadastro será aplicado após a agregação
+    // O filtro de cadastro detalhado será aplicado após a agregação, mas aqui já pré-selecionamos registros prováveis
     if (searchTerm) {
       const term = searchTerm.trim();
+      const termDigits = term.replace(/\D/g, '');
       const searchLower = term.toLowerCase();
       filteredData = filteredData.filter(record => {
         // Se for busca por nome de escola
         if (record.nome_escola?.toLowerCase().includes(searchLower)) {
           return true;
         }
-        // Se for busca por cadastro (numérico), incluir o registro se contiver o cadastro exatamente
+        // Se for busca por cadastro (numérico ou com máscara), incluir o registro se contiver o cadastro parcial
         try {
           const cadastrosArray = Array.isArray(record.cadastro)
             ? record.cadastro
             : (record.cadastro ? JSON.parse(record.cadastro) : []);
-          const normalized = (cadastrosArray || []).map((c: any) => c?.toString().trim());
-          return normalized.some((cad: string) => cad === term);
+          const normalized = (cadastrosArray || []).map((c: any) => (c?.toString().trim() || ''));
+          return normalized.some((cad: string) => {
+            const cadDigits = cad.replace(/\D/g, '');
+            return cad === term || cadDigits === termDigits || (termDigits && cadDigits.includes(termDigits));
+          });
         } catch {
-          return record.cadastro?.toString().trim() === term;
+          const cadStr = record.cadastro?.toString().trim() || '';
+          const cadDigits = cadStr.replace(/\D/g, '');
+          return cadStr === term || cadDigits === termDigits || (termDigits && cadDigits.includes(termDigits));
         }
       });
       console.log("After search filter:", filteredData.length);
@@ -512,7 +518,7 @@ export function WaterReports() {
       
       // Se houver searchTerm e não for busca por nome de escola, filtrar cadastros individuais
       if (searchTerm && !searchTerm.match(/[a-zA-Z]/)) {
-        // É um número de cadastro - filtrar apenas os cadastros que correspondem
+        // É um número de cadastro - permitir correspondência parcial e ignorar caracteres não numéricos
         console.log("Filtering by cadastro number:", searchTerm);
         console.log("Schools before filter:", result.length);
         
@@ -520,12 +526,14 @@ export function WaterReports() {
           console.log(`Processing school ${school.schoolName}, cadastrosDetails:`, school.cadastrosDetails.length);
           
           const term = searchTerm.trim();
+          const termDigits = term.replace(/\D/g, '');
           
           const filteredDetails = school.cadastrosDetails.filter((detail: any) => {
-            const cad = detail.cadastro?.toString().trim();
-            const matches = cad === term;
+            const cadRaw = detail.cadastro?.toString().trim() || '';
+            const cadDigits = cadRaw.replace(/\D/g, '');
+            const matches = (cadRaw === term) || (termDigits && cadDigits.includes(termDigits));
             if (matches) {
-              console.log(`  Found match: cadastro ${detail.cadastro}, mes: ${detail.mesAno}, valor: ${detail.valor}`);
+              console.log(`  Found match: cadastro ${detail.cadastro}, mes: ${detail.mesRef || detail.mesAno}, venc: ${detail.mesVenc}, valor: ${detail.valor}`);
             }
             return matches;
           });
