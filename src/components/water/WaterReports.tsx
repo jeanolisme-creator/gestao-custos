@@ -471,49 +471,44 @@ export function WaterReports() {
 
       let result = Array.from(schoolMap.values());
       
-      // Detail-level month filter to keep only details matching selected month (by referência or vencimento)
+      // Detail-level month filter to keep only details matching selected month (by referência)
       if (selectedMonth !== 'todos') {
         const selectedIdx = monthIndexFromName(selectedMonth) ?? null;
         result = result
           .map((school: any) => {
             const filteredDetails = (school.cadastrosDetails || []).filter((detail: any) => {
+              // Use the computed competência (mesRef) ONLY to decide the selected month
               const refParsed = parseMesAnoReferencia(detail.mesRef || detail.mesAno || '');
               const refIdx = refParsed ? refParsed.monthIndex : null;
-              
-              // Check vencimento month from the record's data_vencimento
-              let venIdx: number | null = null;
-              if (detail.record && detail.record.data_vencimento) {
-                try {
-                  const vencDate = new Date(detail.record.data_vencimento + 'T12:00:00');
-                  if (!isNaN(vencDate.getTime())) {
-                    venIdx = vencDate.getMonth(); // 0-based month
-                  }
-                } catch (e) {
-                  console.log("Error parsing vencimento date:", e);
-                }
-              }
-              
-              // Also check from parsed mesVenc string as fallback
-              if (venIdx === null && detail.mesVenc) {
-                const venParsed = parseMesAnoReferencia(detail.mesVenc);
-                venIdx = venParsed ? venParsed.monthIndex : null;
-              }
-              
               if (selectedIdx === null) return true;
-              const nextOfSelected = (selectedIdx + 1) % 12;
-              const matches = (
-                refIdx === selectedIdx ||
-                venIdx === selectedIdx ||
-                // Include details whose vencimento is in the month immediately after the selected month
-                venIdx === nextOfSelected
-              );
-              
-              // Debug log for Janeiro/Fevereiro case
+              const matches = refIdx === selectedIdx;
+
+              // Debug log focusing on competência filtering
               if ((selectedIdx === 0 || selectedIdx === 1) && detail.cadastro) { // Janeiro ou Fevereiro
-                console.log(`Detail cadastro ${detail.cadastro}: refIdx=${refIdx}, venIdx=${venIdx}, selectedIdx=${selectedIdx}, nextOfSelected=${nextOfSelected}, matches=${matches}, mesRef=${detail.mesRef}, data_vencimento=${detail.record?.data_vencimento}`);
+                console.log(`Detail (competência) cadastro ${detail.cadastro}: refIdx=${refIdx}, selectedIdx=${selectedIdx}, mesRef=${detail.mesRef}, mesVenc=${detail.mesVenc}`);
               }
-              
+
               return matches;
+            });
+            const filteredTotalValue = filteredDetails.reduce((sum: number, d: any) => sum + (parseFloat(d.valor) || 0), 0);
+            const filteredTotalConsumption = filteredDetails.reduce((sum: number, d: any) => sum + (parseFloat(d.consumo) || 0), 0);
+            const filteredCadastrosSet = new Set(filteredDetails.map((d: any) => d.cadastro));
+            return {
+              ...school,
+              cadastrosDetails: filteredDetails,
+              cadastrosSet: filteredCadastrosSet,
+              totalValue: filteredTotalValue,
+              totalConsumption: filteredTotalConsumption
+            };
+          })
+          .filter((school: any) => (school.cadastrosDetails || []).length > 0);
+      } else {
+        // When viewing annual data, ensure only competências within selectedYear are shown
+        result = result
+          .map((school: any) => {
+            const filteredDetails = (school.cadastrosDetails || []).filter((detail: any) => {
+              const refParsed = parseMesAnoReferencia(detail.mesRef || detail.mesAno || '');
+              return refParsed ? refParsed.year.toString() === selectedYear : true;
             });
             const filteredTotalValue = filteredDetails.reduce((sum: number, d: any) => sum + (parseFloat(d.valor) || 0), 0);
             const filteredTotalConsumption = filteredDetails.reduce((sum: number, d: any) => sum + (parseFloat(d.consumo) || 0), 0);
