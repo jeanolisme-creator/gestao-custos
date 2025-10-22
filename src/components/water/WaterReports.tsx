@@ -468,7 +468,7 @@ export function WaterReports() {
       let result = Array.from(schoolMap.values());
       
       // Detail-level month filter to keep only details matching selected month
-      if (selectedMonth !== 'todos' && !(searchTerm && !/[a-zA-Z]/.test(searchTerm.trim()))) {
+      if (selectedMonth !== 'todos') {
         const selectedIdx = monthIndexFromName(selectedMonth) ?? null;
         result = result
           .map((school: any) => {
