@@ -243,15 +243,24 @@ export function WaterReports() {
       } else {
         monthIndex = monthIndexFromName(left);
       }
-      const year = parseInt(right, 10);
+      let year = parseInt(right, 10);
+      if (!isNaN(year) && year < 100) {
+        year = 2000 + year; // normalizar anos com 2 dígitos (ex.: 25 => 2025)
+      }
       if (monthIndex !== null && !isNaN(year)) return { monthIndex, year };
     }
     // Try full month name in string
     for (let i = 0; i < ptMonths.length; i++) {
       const m = ptMonths[i];
       if (normalize(s).includes(normalize(m))) {
-        const yearMatch = s.match(/\d{4}/);
-        if (yearMatch) return { monthIndex: i, year: parseInt(yearMatch[0], 10) };
+        const yearMatch = s.match(/\d{2,4}/);
+        if (yearMatch) {
+          let y = parseInt(yearMatch[0], 10);
+          if (!isNaN(y) && y < 100) {
+            y = 2000 + y;
+          }
+          return { monthIndex: i, year: y };
+        }
       }
     }
     return null;
@@ -263,26 +272,12 @@ export function WaterReports() {
     console.log("Selected filters:", { selectedYear, selectedMonth, selectedSchool, reportType });
     
     let filteredData = data.filter(record => {
-      const year = selectedYear;
-      const mesAno = record.mes_ano_referencia || '';
-      const mesAnoHasYear = mesAno.includes(year);
-
-      const sd = parseBRDate(record.data_vencimento);
-      const singleDueYear = sd ? sd.getFullYear().toString() : null;
-      let arrayDueYears: string[] = [];
-      try {
-        const arr = Array.isArray(record.datas_vencimento)
-          ? record.datas_vencimento
-          : (record.datas_vencimento ? JSON.parse(record.datas_vencimento as string) : []);
-        arrayDueYears = (arr || [])
-          .map((d: string) => parseBRDate(d))
-          .filter((d: Date | null): d is Date => !!d)
-          .map((d: Date) => d.getFullYear().toString());
-      } catch {}
-
-      const matches = mesAnoHasYear || singleDueYear === year || arrayDueYears.includes(year);
+      const refParsed = parseMesAnoReferencia(record.mes_ano_referencia || '');
+      const matches = !!refParsed && refParsed.year.toString() === selectedYear;
       if (!matches) {
-        console.log("Record filtered out by year:", record.nome_escola, { mes_ano_referencia: mesAno, singleDueYear, arrayDueYears }, "doesn't include", year);
+        console.log("Record filtered out by ref year:", record.nome_escola, {
+          mes_ano_referencia: record.mes_ano_referencia
+        }, "!=", selectedYear);
       }
       return matches;
     });
@@ -294,32 +289,10 @@ export function WaterReports() {
       filteredData = filteredData.filter(record => {
         const refParsed = parseMesAnoReferencia(record.mes_ano_referencia || '');
         const refIdx = refParsed ? refParsed.monthIndex : null;
-
-        const sd = parseBRDate(record.data_vencimento);
-        const singleDueIdx = sd ? sd.getMonth() : null;
-        let arrayDueIdxs: number[] = [];
-        try {
-          const arr = Array.isArray(record.datas_vencimento)
-            ? record.datas_vencimento
-            : (record.datas_vencimento ? JSON.parse(record.datas_vencimento as string) : []);
-          arrayDueIdxs = (arr || [])
-            .map((d: string) => parseBRDate(d))
-            .filter((d: Date | null): d is Date => !!d)
-            .map((d: Date) => d.getMonth());
-        } catch {}
-
         if (selectedIdx === null) return true;
-        const nextOfSelected = (selectedIdx + 1) % 12;
-        return (
-          refIdx === selectedIdx ||
-          singleDueIdx === selectedIdx ||
-          arrayDueIdxs.includes(selectedIdx) ||
-          // Include records whose vencimento is in the month immediately after the selected month
-          singleDueIdx === nextOfSelected ||
-          arrayDueIdxs.includes(nextOfSelected)
-        );
+        return refIdx === selectedIdx;
       });
-      console.log("After month filter:", filteredData.length);
+      console.log("After month filter (by referência only):", filteredData.length);
     }
 
     if (selectedSchool !== 'all') {
