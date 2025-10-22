@@ -477,18 +477,39 @@ export function WaterReports() {
         result = result
           .map((school: any) => {
             const filteredDetails = (school.cadastrosDetails || []).filter((detail: any) => {
-              // Filtrar estritamente pelo Mês/Ano Referência do banco (mesRefOriginal)
-              const refParsed = parseMesAnoReferencia(detail.mesRefOriginal || detail.mesRef || detail.mesAno || '');
-              const displayIdx = refParsed ? refParsed.monthIndex : null;
-              const displayYear = refParsed ? refParsed.year.toString() : null;
-              
-              const matches = selectedIdx !== null
-                ? (displayIdx === selectedIdx && displayYear === selectedYear)
-                : (displayYear === selectedYear);
+              // Usar estritamente o Mês/Ano Referência (com tolerância a formatos)
+              const raw = (detail.mesRefOriginal ?? detail.mesRef ?? detail.mesAno ?? '').toString();
+              const parsed = parseMesAnoReferencia(raw);
 
-              // Debug
-              console.log(`Escola: ${school.nome_escola}, Cad: ${detail.cadastro}, mesRefOriginal: "${detail.mesRefOriginal}", parsed={idx:${displayIdx}, year:${displayYear}}, selIdx=${selectedIdx}, selYear=${selectedYear}, matches=${matches}`);
+              const wantIdx = selectedIdx; // 0=janeiro, ...
+              const wantYear = selectedYear;
 
+              // Comparar ANO
+              const yearMatches = parsed
+                ? parsed.year.toString() === wantYear
+                : raw.includes(wantYear);
+
+              // Comparar MÊS
+              let monthMatches = true;
+              if (wantIdx !== null) {
+                if (parsed) {
+                  monthMatches = parsed.monthIndex === wantIdx;
+                } else {
+                  // Normalizado por nome (ex.: "janeiro")
+                  const rawNorm = normalize(raw);
+                  const wantName = normalize(ptMonths[wantIdx]);
+                  monthMatches = rawNorm.includes(wantName);
+                  if (!monthMatches) {
+                    // Fallback numérico (ex.: "01/2025" ou "1/2025")
+                    const mm = String(wantIdx + 1).padStart(2, '0');
+                    const regex = new RegExp(`(^|\\D)0?${wantIdx + 1}\\s*[\\/\\-]\\s*${wantYear}(\\D|$)`);
+                    const regex2 = new RegExp(`(^|\\D)${mm}\\s*[\\/\\-]\\s*${wantYear}(\\D|$)`);
+                    monthMatches = regex.test(raw) || regex2.test(raw);
+                  }
+                }
+              }
+
+              const matches = monthMatches && yearMatches;
               return matches;
             });
             const filteredTotalValue = filteredDetails.reduce((sum: number, d: any) => sum + (parseFloat(d.valor) || 0), 0);
