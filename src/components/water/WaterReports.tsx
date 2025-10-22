@@ -399,9 +399,7 @@ export function WaterReports() {
             const mesRefOriginal = record.mes_ano_referencia || '';
             const mesVenc = d ? formatMesAnoFromDate(d) : '';
 
-            // Determine the best month reference to display:
-            // If mes_ano_referencia appears to be the month of vencimento (common in some data),
-            // compute the competência as the previous month of vencimento.
+            // Determine competência (Mês Ref.) com base no vencimento: sempre mês anterior ao vencimento
             let mesRefDisplay = mesRefOriginal;
             const refParsedTry = parseMesAnoReferencia(mesRefOriginal || '');
             if (d) {
@@ -411,16 +409,7 @@ export function WaterReports() {
               const prevYear = dueMonth === 0 ? dueYear - 1 : dueYear;
               const prevDate = new Date(prevYear, prevMonth, 1);
               const prevDisplay = formatMesAnoFromDate(prevDate);
-
-              // If ref is missing or equals due month/year, use previous month as competência
-              if (
-                !refParsedTry ||
-                (refParsedTry.monthIndex === dueMonth && refParsedTry.year === dueYear) ||
-                // Special case: Ref Dez/prevYear with Vencimento em Fevereiro/dueYear -> competência = Janeiro/dueYear
-                (dueMonth === 1 && refParsedTry && refParsedTry.monthIndex === 11 && refParsedTry.year === dueYear - 1)
-              ) {
-                mesRefDisplay = prevDisplay;
-              }
+              mesRefDisplay = prevDisplay;
             }
             
             // Parse consumo value properly - handle both string and number formats
@@ -1431,7 +1420,15 @@ export function WaterReports() {
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                      {group.details.map((detail: any, detailIndex: number) => (
+                                      {(group.details || []).slice().sort((a: any, b: any) => {
+                                        const ap = parseMesAnoReferencia(a.mesRef || a.mesAno || '');
+                                        const bp = parseMesAnoReferencia(b.mesRef || b.mesAno || '');
+                                        const ay = ap ? ap.year : 0;
+                                        const by = bp ? bp.year : 0;
+                                        const am = ap ? ap.monthIndex : 0;
+                                        const bm = bp ? bp.monthIndex : 0;
+                                        return ay - by || am - bm;
+                                      }).map((detail: any, detailIndex: number) => (
                                         <TableRow 
                                           key={detailIndex}
                                           className={detailIndex % 2 === 0 ? 'bg-background' : 'bg-muted/30'}
