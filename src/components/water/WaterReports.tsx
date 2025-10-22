@@ -315,7 +315,9 @@ export function WaterReports() {
       const refYear = refParsed ? refParsed.year.toString() : null;
       const matches = refYear === year || singleDueYear === year || arrayDueYears.includes(year);
       if (!matches) {
-        console.log("Record filtered out:", record.nome_escola, { mes_ano_referencia: mesAno, singleDueYear, arrayDueYears }, "doesn't include", year);
+        console.log(`[FILTRO ANO] Record filtered out: ${record.nome_escola}, mes_ano_referencia="${mesAno}", refParsed=${JSON.stringify(refParsed)}, refYear=${refYear}, singleDueYear=${singleDueYear}, selectedYear=${year}`);
+      } else if (mesAno && mesAno.toLowerCase().includes('janeiro')) {
+        console.log(`[FILTRO ANO PASSOU] ${record.nome_escola}: mes_ano_referencia="${mesAno}", refYear=${refYear}, singleDueYear=${singleDueYear}, selectedYear=${year}`);
       }
       return matches;
     });
@@ -418,6 +420,8 @@ export function WaterReports() {
           if (!mesRefDisplay) {
             mesRefDisplay = mesRefOriginal;
           }
+          
+          console.log(`[CRIAÇÃO DETALHE] Escola: ${record.nome_escola}, Cad: ${cadastro}, mesRefOriginal: "${mesRefOriginal}", refParsed: ${JSON.stringify(refParsed)}, mesRefFromDue: "${mesRefFromDue}", mesRefDisplay: "${mesRefDisplay}"`);
 
           // Debug específico para fevereiro -> janeiro
           if (vencParsed && vencParsed.monthIndex === 1) {
@@ -469,12 +473,16 @@ export function WaterReports() {
       // Detail-level month filter to keep only details matching selected month
       if (selectedMonth !== 'todos') {
         const selectedIdx = monthIndexFromName(selectedMonth) ?? null;
+        console.log(`=== FILTRO DE MÊS: selectedMonth="${selectedMonth}", selectedIdx=${selectedIdx} ===`);
+        
         result = result
           .map((school: any) => {
             const filteredDetails = (school.cadastrosDetails || []).filter((detail: any) => {
               // Filtrar pelo mês de exibição (mesRef) que já foi ajustado na criação dos detalhes
               const displayParsed = parseMesAnoReferencia(detail.mesRef || detail.mesAno || '');
               const displayIdx = displayParsed ? displayParsed.monthIndex : null;
+              
+              console.log(`Escola: ${school.nome_escola}, Cadastro: ${detail.cadastro}, mesRef: "${detail.mesRef}", parsed monthIdx=${displayIdx}, matches=${displayIdx === selectedIdx}`);
 
               if (selectedIdx === null) return true;
               const matches = displayIdx === selectedIdx;
