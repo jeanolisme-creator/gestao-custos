@@ -399,18 +399,8 @@ export function WaterReports() {
             const mesRefOriginal = record.mes_ano_referencia || '';
             const mesVenc = d ? formatMesAnoFromDate(d) : '';
 
-            // Determine competência (Mês Ref.) com base no vencimento: sempre mês anterior ao vencimento
-            let mesRefDisplay = mesRefOriginal;
-            const refParsedTry = parseMesAnoReferencia(mesRefOriginal || '');
-            if (d) {
-              const dueMonth = d.getMonth();
-              const dueYear = d.getFullYear();
-              const prevMonth = (dueMonth + 11) % 12;
-              const prevYear = dueMonth === 0 ? dueYear - 1 : dueYear;
-              const prevDate = new Date(prevYear, prevMonth, 1);
-              const prevDisplay = formatMesAnoFromDate(prevDate);
-              mesRefDisplay = prevDisplay;
-            }
+            // Usar diretamente o campo mes_ano_referencia do banco
+            const mesRefDisplay = mesRefOriginal;
             
             // Parse consumo value properly - handle both string and number formats
             let consumoValue = 0;
