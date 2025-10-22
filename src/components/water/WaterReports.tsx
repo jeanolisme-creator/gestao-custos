@@ -382,8 +382,19 @@ export function WaterReports() {
             const mesRefOriginal = record.mes_ano_referencia || '';
             const mesVenc = d ? formatMesAnoFromDate(d) : '';
 
-            // Usar diretamente o campo mes_ano_referencia do banco
-            const mesRefDisplay = mesRefOriginal;
+            // Determinar o mês de exibição: se competência for do ano selecionado, usar ela;
+            // caso contrário, se vencimento for do ano selecionado, usar vencimento
+            const refParsed = parseMesAnoReferencia(mesRefOriginal);
+            const vencParsed = parseMesAnoReferencia(mesVenc);
+            const refYear = refParsed ? refParsed.year.toString() : null;
+            const vencYear = vencParsed ? vencParsed.year.toString() : null;
+            
+            let mesRefDisplay = mesRefOriginal;
+            if (refYear !== selectedYear && vencYear === selectedYear) {
+              // Competência não é do ano selecionado, mas vencimento é
+              // Usar o mês do vencimento para exibição
+              mesRefDisplay = mesVenc;
+            }
             
             // Parse consumo value properly - handle both string and number formats
             let consumoValue = 0;
@@ -433,24 +444,22 @@ export function WaterReports() {
 
       let result = Array.from(schoolMap.values());
       
-      // Detail-level month filter to keep only details matching selected month (by referência)
+      // Detail-level month filter to keep only details matching selected month
       if (selectedMonth !== 'todos') {
         const selectedIdx = monthIndexFromName(selectedMonth) ?? null;
         result = result
           .map((school: any) => {
             const filteredDetails = (school.cadastrosDetails || []).filter((detail: any) => {
-              // Usar a competência (mesRef) como base, com fallback para mês de vencimento
-              const refParsed = parseMesAnoReferencia(detail.mesRef || detail.mesAno || '');
-              const refIdx = refParsed ? refParsed.monthIndex : null;
-              const vencParsed = parseMesAnoReferencia(detail.mesVenc || '');
-              const dueIdx = vencParsed ? vencParsed.monthIndex : null;
+              // Filtrar pelo mês de exibição (mesRef) que já foi ajustado na criação dos detalhes
+              const displayParsed = parseMesAnoReferencia(detail.mesRef || detail.mesAno || '');
+              const displayIdx = displayParsed ? displayParsed.monthIndex : null;
 
               if (selectedIdx === null) return true;
-              const matches = (refIdx === selectedIdx) || (dueIdx === selectedIdx);
+              const matches = displayIdx === selectedIdx;
 
-              // Debug para Janeiro/Fevereiro
-              if ((selectedIdx === 0 || selectedIdx === 1) && detail.cadastro) {
-                console.log(`Detail (ref/venc) cad ${detail.cadastro}: refIdx=${refIdx}, dueIdx=${dueIdx}, sel=${selectedIdx}, mesRef=${detail.mesRef}, mesVenc=${detail.mesVenc}`);
+              // Debug para Janeiro
+              if (selectedIdx === 0 && detail.cadastro) {
+                console.log(`Detail cad ${detail.cadastro}: displayIdx=${displayIdx}, sel=${selectedIdx}, mesRef=${detail.mesRef}, mesVenc=${detail.mesVenc}`);
               }
 
               return matches;
@@ -468,15 +477,14 @@ export function WaterReports() {
           })
           .filter((school: any) => (school.cadastrosDetails || []).length > 0);
       } else {
-        // When viewing annual data, ensure only competências within selectedYear are shown
+        // When viewing annual data, ensure only records from selectedYear are shown (using display month)
         result = result
           .map((school: any) => {
             const filteredDetails = (school.cadastrosDetails || []).filter((detail: any) => {
-              const refParsed = parseMesAnoReferencia(detail.mesRef || detail.mesAno || '');
-              const vencParsed = parseMesAnoReferencia(detail.mesVenc || '');
-              const refYear = refParsed ? refParsed.year.toString() : null;
-              const dueYear = vencParsed ? vencParsed.year.toString() : null;
-              return refYear === selectedYear || dueYear === selectedYear;
+              // Filtrar pelo mês de exibição (mesRef) que já foi ajustado
+              const displayParsed = parseMesAnoReferencia(detail.mesRef || detail.mesAno || '');
+              const displayYear = displayParsed ? displayParsed.year.toString() : null;
+              return displayYear === selectedYear;
             });
             const filteredTotalValue = filteredDetails.reduce((sum: number, d: any) => sum + (parseFloat(d.valor) || 0), 0);
             const filteredTotalConsumption = filteredDetails.reduce((sum: number, d: any) => sum + (parseFloat(d.consumo) || 0), 0);
