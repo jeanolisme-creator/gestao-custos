@@ -293,18 +293,23 @@ export function WaterReports() {
     console.log("Total records in data:", data.length);
     console.log("Selected filters:", { selectedYear, selectedMonth, selectedSchool, reportType });
     
-    // Alinhar filtro com Energia: filtrar diretamente por ano e, se selecionado, por mês no campo mes_ano_referencia
-    let filteredData = data.filter(record => {
-      const mesAno = record.mes_ano_referencia || '';
-      return mesAno.includes(selectedYear);
-    });
+    // Filtro robusto por Ano/Mês usando parser para lidar com "Janeiro/25" e outras variações
+    const selectedYearNum = parseInt(selectedYear, 10);
+    const selMonthIdx = selectedMonth !== 'todos' ? monthIndexFromName(selectedMonth) : null;
 
-    if (selectedMonth !== 'todos') {
-      filteredData = filteredData.filter(record => {
-        const mesAno = record.mes_ano_referencia || '';
-        return mesAno.toLowerCase().includes(selectedMonth);
-      });
-    }
+    let filteredData = data.filter(record => {
+      const mesAnoRaw = record.mes_ano_referencia || '';
+      const parsed = parseMesAnoReferencia(mesAnoRaw);
+
+      const yearMatch = parsed ? (parsed.year === selectedYearNum) : mesAnoRaw.includes(selectedYear);
+      if (!yearMatch) return false;
+
+      if (selMonthIdx !== null) {
+        const monthMatch = parsed ? (parsed.monthIndex === selMonthIdx) : mesAnoRaw.toLowerCase().includes(selectedMonth);
+        return monthMatch;
+      }
+      return true;
+    });
 
     if (selectedSchool !== 'all') {
       filteredData = filteredData.filter(record => record.nome_escola === selectedSchool);
