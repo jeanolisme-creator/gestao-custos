@@ -293,20 +293,30 @@ export function WaterReports() {
     console.log("Total records in data:", data.length);
     console.log("Selected filters:", { selectedYear, selectedMonth, selectedSchool, reportType });
     
-    // Filtro robusto por Ano/Mês usando parser para lidar com "Janeiro/25" e outras variações
+    // Filtro robusto por Ano/Mês com parser e regex (cobre "Janeiro/2025", "Janeiro/25", "1/2025", "01/2025")
     const selectedYearNum = parseInt(selectedYear, 10);
     const selMonthIdx = selectedMonth !== 'todos' ? monthIndexFromName(selectedMonth) : null;
 
+    const monthNumber = selMonthIdx !== null ? selMonthIdx + 1 : null;
+    const monthNumberPadded = monthNumber ? String(monthNumber).padStart(2, '0') : null;
+
     let filteredData = data.filter(record => {
-      const mesAnoRaw = record.mes_ano_referencia || '';
+      const mesAnoRaw: string = (record.mes_ano_referencia || '').toString();
+      const mesAnoLower = mesAnoRaw.toLowerCase();
       const parsed = parseMesAnoReferencia(mesAnoRaw);
 
-      const yearMatch = parsed ? (parsed.year === selectedYearNum) : mesAnoRaw.includes(selectedYear);
+      // Checagem do ano
+      const yearMatch = parsed
+        ? (parsed.year === selectedYearNum)
+        : (/\/(?:\s*)?(?:25|2025)(?:\s*)?$/.test(mesAnoRaw) || mesAnoRaw.includes(selectedYear));
       if (!yearMatch) return false;
 
+      // Checagem do mês (se aplicável)
       if (selMonthIdx !== null) {
-        const monthMatch = parsed ? (parsed.monthIndex === selMonthIdx) : mesAnoRaw.toLowerCase().includes(selectedMonth);
-        return monthMatch;
+        const nameMatch = monthIndexFromName(mesAnoLower.split(/[\/\-]/)[0]) === selMonthIdx || mesAnoLower.includes(selectedMonth);
+        const numericMatch = new RegExp(`^(?:\\s*)0?${monthNumber}(?:\\s*)[\\/\\-]`, 'i').test(mesAnoRaw)
+          || new RegExp(`^(?:\\s*)${monthNumberPadded}(?:\\s*)[\\/\\-]`, 'i').test(mesAnoRaw);
+        return nameMatch || numericMatch;
       }
       return true;
     });
