@@ -305,11 +305,22 @@ export function WaterReports() {
 
         const refParsed = parseMesAnoReferencia(mesAno);
         const refYear = refParsed ? refParsed.year.toString() : null;
-        const matches = (refYear === year) || (mesAno && mesAno.includes(year));
+
+        // Fallback: derivar ano pelo vencimento - 1 mês quando mes_ano_referencia estiver vazio/inválido
+        const dueDate = parseBRDate(record.data_vencimento);
+        const dueRef = dueDate ? getPreviousMonthLabel(dueDate) : '';
+        const dueParsed = parseMesAnoReferencia(dueRef);
+        const dueYear = dueParsed ? dueParsed.year.toString() : null;
+
+        const matches =
+          (refYear === year) ||
+          (mesAno && mesAno.includes(year)) ||
+          (dueYear === year);
+
         if (!matches) {
-          console.log(`[FILTRO ANO - REFERÊNCIA] Ignorado: ${record.nome_escola}, mes_ano_referencia="${mesAno}", refParsed=${JSON.stringify(refParsed)}, refYear=${refYear}, selectedYear=${year}`);
-        } else if (mesAno && mesAno.toLowerCase().includes('janeiro')) {
-          console.log(`[FILTRO ANO PASSOU - REFERÊNCIA] ${record.nome_escola}: mes_ano_referencia="${mesAno}", refYear=${refYear}, selectedYear=${year}`);
+          console.log(`[FILTRO ANO - REFERÊNCIA] Ignorado: ${record.nome_escola}, mes_ano_referencia="${mesAno}", refParsed=${JSON.stringify(refParsed)}, refYear=${refYear}, dueRef="${dueRef}", dueYear=${dueYear}, selectedYear=${year}`);
+        } else if ((mesAno && mesAno.toLowerCase().includes('janeiro')) || (dueRef && normalize(dueRef).includes('janeiro'))) {
+          console.log(`[FILTRO ANO PASSOU - REFERÊNCIA] ${record.nome_escola}: mes_ano_referencia="${mesAno}", refYear=${refYear}, dueRef="${dueRef}", dueYear=${dueYear}, selectedYear=${year}`);
         }
         return matches;
       });
@@ -406,16 +417,14 @@ export function WaterReports() {
           const mesRefOriginal = record.mes_ano_referencia || '';
           const mesVenc = d ? formatMesAnoFromDate(d) : '';
 
-          // Determinar o mês de exibição: usar apenas o Mês/Ano Referência informado no banco
+          // Determinar o mês de exibição com fallback para vencimento-1mês quando necessário
           const refParsed = parseMesAnoReferencia(mesRefOriginal);
           const mesRefFromDue = d ? getPreviousMonthLabel(d) : '';
 
-          // Sempre exibir o mês/ano de referência do banco (sem depender do vencimento)
           let mesRefDisplay = mesRefOriginal;
-
-          // Se nada definido, manter o original
-          if (!mesRefDisplay) {
-            mesRefDisplay = mesRefOriginal;
+          // Se vazio ou inválido, usar o mês anterior ao vencimento
+          if (!mesRefDisplay || !refParsed) {
+            mesRefDisplay = mesRefFromDue || mesRefOriginal;
           }
           
           console.log(`[CRIAÇÃO DETALHE] Escola: ${record.nome_escola}, Cad: ${cadastro}, mesRefOriginal: "${mesRefOriginal}", refParsed: ${JSON.stringify(refParsed)}, mesRefFromDue: "${mesRefFromDue}", mesRefDisplay: "${mesRefDisplay}"`);
@@ -472,7 +481,7 @@ export function WaterReports() {
           .map((school: any) => {
             const filteredDetails = (school.cadastrosDetails || []).filter((detail: any) => {
               // Usar estritamente o Mês/Ano Referência (com tolerância a formatos)
-              const raw = (detail.mesRefOriginal ?? detail.mesRef ?? detail.mesAno ?? '').toString();
+              const raw = (detail.mesRef || detail.mesAno || detail.mesVenc || detail.mesRefOriginal || '').toString();
               const parsed = parseMesAnoReferencia(raw);
 
               const wantIdx = selectedIdx; // 0=janeiro, ...
@@ -524,7 +533,7 @@ export function WaterReports() {
           .map((school: any) => {
             const filteredDetails = (school.cadastrosDetails || []).filter((detail: any) => {
               // Filtrar pelo mês de exibição (mesRef) que já foi ajustado
-              const displayParsed = parseMesAnoReferencia(detail.mesRef || detail.mesAno || '');
+              const displayParsed = parseMesAnoReferencia(detail.mesRef || detail.mesAno || detail.mesVenc || '');
               const displayYear = displayParsed ? displayParsed.year.toString() : null;
               return displayYear === selectedYear;
             });
