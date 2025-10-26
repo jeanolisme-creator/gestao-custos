@@ -63,7 +63,7 @@ const App = () => {
                 }>
                   <Route index element={<Dashboard data={schoolData} />} />
                   <Route path="charts" element={<Charts data={schoolData} />} />
-                  <Route path="reports" element={<Reports data={schoolData} />} />
+                  <Route path="reports" element={<Reports />} />
                   <Route path="consolidated-report" element={<ConsolidatedReport />} />
                   <Route path="consolidated-costs" element={<ConsolidatedCosts data={schoolData} />} />
                   <Route path="hr-dashboard" element={<HRDashboard />} />

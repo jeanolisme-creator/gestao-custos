@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Download, FileText, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,23 +19,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { SchoolData, schoolNames, aggregateBySchool } from "@/utils/mockData";
 import { useToast } from "@/hooks/use-toast";
-
-// Using Supabase records; no external props
+import { supabase } from "@/integrations/supabase/client";
 
 const reportTypes = [
   { value: 'by-school', label: 'Por Nome da Escola' },
   { value: 'by-id', label: 'Por ID Cadastro' },
   { value: 'comparative', label: 'Comparativo entre Escolas' },
-  { value: 'temporal', label: 'Evolução Temporal' },
   { value: 'consolidated', label: 'Relatório Geral' },
-  { value: 'emef', label: 'EMEF' },
-  { value: 'emei', label: 'EMEI' },
-  { value: 'emeif', label: 'EMEIF' },
-  { value: 'par', label: 'PAR' },
-  { value: 'comp', label: 'COMP' },
-  { value: 'sede', label: 'SEDE' },
   { value: 'value-range', label: 'Faixa de Valores' },
 ];
 
@@ -46,7 +37,7 @@ const months = [
 
 const years = ['2025', '2026', '2027'];
 
-export default function Reports({ data }: ReportsProps) {
+export default function Reports() {
   const [selectedYear, setSelectedYear] = useState<string>("2025");
   const [selectedMonth, setSelectedMonth] = useState<string>("todos");
   const [selectedSchool, setSelectedSchool] = useState<string>("all");
@@ -55,7 +46,43 @@ export default function Reports({ data }: ReportsProps) {
   const [selectedSchools, setSelectedSchools] = useState<string[]>([]);
   const [minValue, setMinValue] = useState<string>("");
   const [maxValue, setMaxValue] = useState<string>("");
+  const [data, setData] = useState<any[]>([]);
+  const [schools, setSchools] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const { data: records, error } = await supabase
+        .from("school_records")
+        .select("*")
+        .order("nome_escola");
+
+      if (error) throw error;
+
+      setData(records || []);
+      
+      // Extrair escolas únicas
+      const uniqueSchools = Array.from(
+        new Set(records?.map(r => r.nome_escola).filter(Boolean) || [])
+      ).sort();
+      setSchools(uniqueSchools as string[]);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast({
+        title: "Erro ao carregar dados",
+        description: "Não foi possível carregar os registros",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -65,34 +92,111 @@ export default function Reports({ data }: ReportsProps) {
     }).format(value);
   };
 
-  const getReportData = () => {
-    let filteredData = data.filter(record => record.ano.toString() === selectedYear);
+  // Parser para mes_ano_referencia
+  const parseMesAnoReferencia = (value: any): { monthIndex: number, year: number } | null => {
+    if (!value) return null;
+    const s = String(value).trim().toLowerCase();
+    if (!s) return null;
     
-    if (selectedMonth !== 'todos') {
-      filteredData = filteredData.filter(record => record.mes === selectedMonth);
+    const parts = s.split(/[\/\-]/).map(p => p.trim());
+    if (parts.length >= 2) {
+      const monthNames = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+                          'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+      
+      // Parte da esquerda é o mês
+      let monthIndex: number | null = null;
+      const num = parseInt(parts[0], 10);
+      if (!isNaN(num)) {
+        monthIndex = Math.max(0, Math.min(11, num - 1));
+      } else {
+        const idx = monthNames.findIndex(m => m === parts[0]);
+        monthIndex = idx >= 0 ? idx : null;
+      }
+      
+      // Parte da direita é o ano
+      const yearStr = parts[1];
+      let year = parseInt(yearStr, 10);
+      if (yearStr.length === 2) {
+        year = 2000 + year;
+      }
+      
+      if (monthIndex !== null && !isNaN(year)) {
+        return { monthIndex, year };
+      }
+    }
+    return null;
+  };
+
+  const getReportData = () => {
+    const selectedYearNum = parseInt(selectedYear, 10);
+    const selectedMonthNames = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+                                'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+    const selMonthIdx = selectedMonth !== 'todos' 
+      ? selectedMonthNames.indexOf(selectedMonth.toLowerCase()) 
+      : null;
+
+    // Filtrar por mes_ano_referencia exclusivamente
+    let filteredData = data.filter(record => {
+      const mesAnoRaw = record.mes_ano_referencia || '';
+      const parsed = parseMesAnoReferencia(mesAnoRaw);
+      
+      if (!parsed) return false;
+      
+      // Checagem do ano
+      if (parsed.year !== selectedYearNum) return false;
+      
+      // Checagem do mês (se aplicável)
+      if (selMonthIdx !== null && parsed.monthIndex !== selMonthIdx) {
+        return false;
+      }
+      
+      return true;
+    });
+
+    if (selectedSchool !== 'all') {
+      filteredData = filteredData.filter(record => record.nome_escola === selectedSchool);
     }
 
-    // Apply school type filters
-    if (['emef', 'emei', 'emeif', 'par', 'comp', 'sede'].includes(reportType)) {
-      filteredData = filteredData.filter(record => 
-        record.unidade.toLowerCase().includes(reportType.toUpperCase())
+    // Aplicar filtro de busca
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      filteredData = filteredData.filter(record =>
+        record.nome_escola?.toLowerCase().includes(searchLower) ||
+        record.cadastro?.toString().toLowerCase().includes(searchLower)
       );
     }
 
+    // Agregar por escola para relatórios consolidados
     if (reportType === 'by-school' || reportType === 'consolidated' || 
-        reportType === 'value-range' || reportType === 'comparative' ||
-        ['emef', 'emei', 'emeif', 'par', 'comp', 'sede'].includes(reportType)) {
-      const aggregated = aggregateBySchool(filteredData);
-      let result = aggregated
-        .filter(school => 
-          selectedSchool === 'all' || school.schoolName === selectedSchool
-        )
-        .filter(school =>
-          searchTerm === '' || school.schoolName.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        reportType === 'value-range' || reportType === 'comparative') {
+      
+      const schoolMap = new Map();
+      
+      filteredData.forEach(record => {
+        const schoolName = record.nome_escola;
+        if (!schoolMap.has(schoolName)) {
+          schoolMap.set(schoolName, {
+            schoolName,
+            totalValue: 0,
+            totalConsumption: 0,
+            totalService: 0,
+            cadastrosCount: 0,
+            records: []
+          });
+        }
+        
+        const school = schoolMap.get(schoolName);
+        school.totalValue += parseFloat(record.valor_gasto || 0);
+        school.totalConsumption += parseFloat(record.consumo_m3 || 0);
+        school.totalService += parseFloat(record.valor_servicos || 0);
+        school.cadastrosCount++;
+        school.records.push(record);
+      });
 
-      // Apply value range filter
-      if (reportType === 'value-range' || minValue || maxValue) {
+      let result = Array.from(schoolMap.values());
+
+      // Aplicar filtro de faixa de valores
+      if (reportType === 'value-range' && (minValue || maxValue)) {
         result = result.filter(school => {
           const totalValue = school.totalValue;
           const min = minValue ? parseFloat(minValue) : 0;
@@ -101,7 +205,7 @@ export default function Reports({ data }: ReportsProps) {
         });
       }
 
-      // Apply comparative filter
+      // Aplicar filtro comparativo
       if (reportType === 'comparative' && selectedSchools.length > 0) {
         result = result.filter(school => selectedSchools.includes(school.schoolName));
       }
@@ -109,108 +213,126 @@ export default function Reports({ data }: ReportsProps) {
       return result;
     }
 
-    return filteredData.filter(record =>
-      searchTerm === '' || 
-      record.unidade.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      record.cadastro.includes(searchTerm)
-    );
+    return filteredData;
   };
 
   const reportData = getReportData();
 
   const exportToCSV = () => {
-    // Implementation for CSV export
-    console.log('Exporting to CSV...');
+    toast({
+      title: "Exportação CSV",
+      description: "Funcionalidade em desenvolvimento",
+    });
   };
 
   const exportToPDF = () => {
-    // Implementation for PDF export
-    console.log('Exporting to PDF...');
+    toast({
+      title: "Exportação PDF",
+      description: "Funcionalidade em desenvolvimento",
+    });
   };
 
-  const renderConsolidatedTable = () => (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Escola</TableHead>
-          <TableHead>Cadastros</TableHead>
-          <TableHead>Consumo Total (m³)</TableHead>
-          <TableHead>Valor Água (R$)</TableHead>
-          <TableHead>Valor Serviços (R$)</TableHead>
-          <TableHead>Total (R$)</TableHead>
-          <TableHead>Status</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {(reportData as any[]).map((school, index) => (
-          <TableRow key={index}>
-            <TableCell className="font-medium">
-              {school.schoolName?.replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '') || 'N/A'}
-            </TableCell>
-            <TableCell>
-              <Badge variant="outline">
-                {school.cadastros?.length || 0} cadastros
-              </Badge>
-            </TableCell>
-            <TableCell>{school.totalConsumption?.toFixed(1) || '0.0'}m³</TableCell>
-            <TableCell>{formatCurrency((school.totalValue || 0) - (school.totalService || 0))}</TableCell>
-            <TableCell>{formatCurrency(school.totalService || 0)}</TableCell>
-            <TableCell className="font-semibold">
-              {formatCurrency(school.totalValue || 0)}
-            </TableCell>
-            <TableCell>
-              <Badge 
-                variant={school.upcomingDues?.length > 0 ? "destructive" : "secondary"}
-              >
-                {school.upcomingDues?.length > 0 ? "Vencimento próximo" : "Em dia"}
-              </Badge>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
+  const renderConsolidatedTable = () => {
+    const totals = (reportData as any[]).reduce((acc, school) => ({
+      totalConsumption: acc.totalConsumption + (school.totalConsumption || 0),
+      totalValue: acc.totalValue + (school.totalValue || 0)
+    }), { totalConsumption: 0, totalValue: 0 });
 
-  const renderDetailedTable = () => (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Cadastro</TableHead>
-          <TableHead>Escola</TableHead>
-          <TableHead>Endereço</TableHead>
-          <TableHead>Mês/Ano</TableHead>
-          <TableHead>Consumo (m³)</TableHead>
-          <TableHead>Valor (R$)</TableHead>
-          <TableHead>Vencimento</TableHead>
-          <TableHead>Ocorrências</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {(reportData as any[]).slice(0, 50).map((record, index) => (
-          <TableRow key={index}>
-            <TableCell className="font-mono text-sm">{record.cadastro}</TableCell>
-            <TableCell className="font-medium">
-              {record.unidade?.replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '') || 'N/A'}
-            </TableCell>
-            <TableCell className="text-sm text-muted-foreground">
-              {record.endereco || 'N/A'}
-            </TableCell>
-            <TableCell>{record.referencia}</TableCell>
-            <TableCell>{record.consumo?.toFixed(1) || '0.0'}m³</TableCell>
-            <TableCell>{formatCurrency((record.valor || 0) + (record.valorServ || 0))}</TableCell>
-            <TableCell>{record.vencto}</TableCell>
-            <TableCell>
-              {record.verificarOcorrencia && (
-                <Badge variant="destructive" className="text-xs">
-                  {record.verificarOcorrencia}
-                </Badge>
-              )}
-            </TableCell>
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Escola</TableHead>
+            <TableHead>Total Cadastros</TableHead>
+            <TableHead>Consumo Total (m³)</TableHead>
+            <TableHead>Valor Total (R$)</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
+        </TableHeader>
+        <TableBody>
+          {(reportData as any[]).map((school, index) => (
+            <TableRow key={index}>
+              <TableCell className="font-medium">{school.schoolName}</TableCell>
+              <TableCell>
+                <Badge variant="outline">
+                  {school.cadastrosCount} cadastros
+                </Badge>
+              </TableCell>
+              <TableCell>{school.totalConsumption?.toFixed(1) || '0.0'}m³</TableCell>
+              <TableCell className="font-semibold">
+                {formatCurrency(school.totalValue || 0)}
+              </TableCell>
+            </TableRow>
+          ))}
+          {reportData.length > 0 && (
+            <TableRow className="bg-primary/5 border-t-2 border-primary">
+              <TableCell className="font-bold text-lg">TOTAL GERAL</TableCell>
+              <TableCell></TableCell>
+              <TableCell className="font-bold text-lg">{totals.totalConsumption.toFixed(1)}m³</TableCell>
+              <TableCell className="font-bold text-lg text-primary">
+                {formatCurrency(totals.totalValue)}
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    );
+  };
+
+  const renderDetailedTable = () => {
+    const totals = (reportData as any[]).reduce((acc, record) => ({
+      totalConsumption: acc.totalConsumption + parseFloat(record.consumo_m3 || 0),
+      totalValue: acc.totalValue + parseFloat(record.valor_gasto || 0)
+    }), { totalConsumption: 0, totalValue: 0 });
+
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Cadastro</TableHead>
+            <TableHead>Escola</TableHead>
+            <TableHead>Endereço</TableHead>
+            <TableHead>Mês/Ano</TableHead>
+            <TableHead>Consumo (m³)</TableHead>
+            <TableHead>Valor (R$)</TableHead>
+            <TableHead>Vencimento</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {(reportData as any[]).slice(0, 100).map((record, index) => (
+            <TableRow key={index}>
+              <TableCell className="font-mono text-sm">{record.cadastro}</TableCell>
+              <TableCell className="font-medium">{record.nome_escola}</TableCell>
+              <TableCell className="text-sm text-muted-foreground">
+                {record.endereco_completo || 'N/A'}
+              </TableCell>
+              <TableCell>{record.mes_ano_referencia}</TableCell>
+              <TableCell>{parseFloat(record.consumo_m3 || 0).toFixed(1)}m³</TableCell>
+              <TableCell>{formatCurrency(parseFloat(record.valor_gasto || 0))}</TableCell>
+              <TableCell>{record.data_vencimento || 'N/A'}</TableCell>
+            </TableRow>
+          ))}
+          {reportData.length > 0 && (
+            <TableRow className="bg-primary/5 border-t-2 border-primary">
+              <TableCell colSpan={4} className="font-bold text-lg">TOTAL GERAL</TableCell>
+              <TableCell className="font-bold text-lg">{totals.totalConsumption.toFixed(1)}m³</TableCell>
+              <TableCell className="font-bold text-lg text-primary">
+                {formatCurrency(totals.totalValue)}
+              </TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Carregando dados...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -221,7 +343,7 @@ export default function Reports({ data }: ReportsProps) {
             Módulo de Relatórios
           </h1>
           <p className="text-muted-foreground">
-            Geração e exportação de relatórios detalhados
+            Geração e exportação de relatórios baseados em mes_ano_referencia
           </p>
         </div>
 
@@ -268,7 +390,7 @@ export default function Reports({ data }: ReportsProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas</SelectItem>
-                  {schoolNames.map((school) => (
+                  {schools.map((school) => (
                     <SelectItem key={school} value={school}>
                       {school}
                     </SelectItem>
@@ -313,7 +435,7 @@ export default function Reports({ data }: ReportsProps) {
             </div>
           </div>
 
-          {/* Conditional Additional Filters */}
+          {/* Value Range Filter */}
           {reportType === 'value-range' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 pt-4 border-t">
               <div className="space-y-2">
@@ -337,22 +459,21 @@ export default function Reports({ data }: ReportsProps) {
             </div>
           )}
 
+          {/* Comparative Filter */}
           {reportType === 'comparative' && (
             <div className="mt-4 pt-4 border-t">
               <label className="text-sm font-medium text-foreground mb-2 block">
-                Selecionar Escolas para Comparativo (até 15)
+                Selecionar Escolas para Comparativo
               </label>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
-                {schoolNames.slice(0, 15).map((school) => (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 max-h-60 overflow-y-auto p-2 border rounded">
+                {schools.map((school) => (
                   <label key={school} className="flex items-center space-x-2 text-sm">
                     <input
                       type="checkbox"
                       checked={selectedSchools.includes(school)}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          if (selectedSchools.length < 15) {
-                            setSelectedSchools([...selectedSchools, school]);
-                          }
+                          setSelectedSchools([...selectedSchools, school]);
                         } else {
                           setSelectedSchools(selectedSchools.filter(s => s !== school));
                         }
@@ -360,13 +481,13 @@ export default function Reports({ data }: ReportsProps) {
                       className="rounded"
                     />
                     <span className="truncate" title={school}>
-                      {school.replace(/^(EMEF|EMEI|EMEIF|COMP|PAR)\s+/, '').slice(0, 15)}
+                      {school}
                     </span>
                   </label>
                 ))}
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                {selectedSchools.length}/15 escolas selecionadas
+                {selectedSchools.length} escola(s) selecionada(s)
               </p>
             </div>
           )}
@@ -410,7 +531,8 @@ export default function Reports({ data }: ReportsProps) {
           </div>
           
           <div className="overflow-x-auto">
-            {reportType === 'consolidated' || reportType === 'by-school' 
+            {reportType === 'consolidated' || reportType === 'by-school' || 
+             reportType === 'value-range' || reportType === 'comparative'
               ? renderConsolidatedTable()
               : renderDetailedTable()
             }
@@ -419,71 +541,13 @@ export default function Reports({ data }: ReportsProps) {
           {reportData.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">
               <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Nenhum dado encontrado</p>
-              <p className="text-sm">Ajuste os filtros para ver os resultados</p>
+              <p className="font-medium">Nenhum dado encontrado</p>
+              <p className="text-sm mt-2">
+                Ajuste os filtros (ano, mês, escola) ou verifique se existem registros com mes_ano_referencia = "{selectedMonth}/{selectedYear}"
+              </p>
             </div>
           )}
         </Card>
-
-        {/* Additional Report Options */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="p-6 bg-gradient-card border-border shadow-card">
-            <h3 className="font-semibold text-foreground mb-2">Relatório de Anomalias</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Identifica consumos fora do padrão
-            </p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => {
-                toast({
-                  title: "Relatório de Anomalias",
-                  description: "Detectando variações superiores a 30% no consumo entre meses consecutivos.",
-                });
-              }}
-            >
-              Gerar Relatório
-            </Button>
-          </Card>
-
-          <Card className="p-6 bg-gradient-card border-border shadow-card">
-            <h3 className="font-semibold text-foreground mb-2">Relatório de Eficiência</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Ranking de eficiência no uso da água
-            </p>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                toast({
-                  title: "Relatório de Eficiência",
-                  description: "Ranking baseado na relação consumo/custo das escolas no período selecionado.",
-                });
-              }}
-            >
-              Gerar Relatório
-            </Button>
-          </Card>
-
-          <Card className="p-6 bg-gradient-card border-border shadow-card">
-            <h3 className="font-semibold text-foreground mb-2">Projeção de Gastos</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Estimativa para próximos períodos
-            </p>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => {
-                toast({
-                  title: "Projeção de Gastos",
-                  description: "Estimativa baseada na média de crescimento dos últimos 6 meses para o próximo trimestre.",
-                });
-              }}
-            >
-              Gerar Relatório
-            </Button>
-          </Card>
-        </div>
       </div>
     </div>
   );
