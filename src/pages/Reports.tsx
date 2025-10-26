@@ -22,9 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { SchoolData, schoolNames, aggregateBySchool } from "@/utils/mockData";
 import { useToast } from "@/hooks/use-toast";
 
-interface ReportsProps {
-  data: SchoolData[];
-}
+// Using Supabase records; no external props
 
 const reportTypes = [
   { value: 'by-school', label: 'Por Nome da Escola' },
