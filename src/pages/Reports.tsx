@@ -49,6 +49,7 @@ export default function Reports() {
   const [data, setData] = useState<any[]>([]);
   const [schools, setSchools] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
   const { toast } = useToast();
 
   useEffect(() => {
@@ -127,6 +128,18 @@ export default function Reports() {
     return null;
   };
 
+  // Garante array a partir de valor simples, array ou JSON string
+  const toArray = (raw: any): any[] => {
+    if (raw === null || raw === undefined || raw === '') return [];
+    if (Array.isArray(raw)) return raw;
+    const s = typeof raw === 'string' ? raw.trim() : String(raw);
+    if (!s) return [];
+    if (s.startsWith('[')) {
+      try { return JSON.parse(s); } catch { return [raw]; }
+    }
+    return [raw];
+  };
+
   const getReportData = () => {
     const selectedYearNum = parseInt(selectedYear, 10);
     const selectedMonthNames = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
@@ -181,6 +194,7 @@ export default function Reports() {
             totalConsumption: 0,
             totalService: 0,
             cadastrosCount: 0,
+            cadastrosDetails: [],
             records: []
           });
         }
@@ -189,11 +203,49 @@ export default function Reports() {
         school.totalValue += parseFloat(record.valor_gasto || 0);
         school.totalConsumption += parseFloat(record.consumo_m3 || 0);
         school.totalService += parseFloat(record.valor_servicos || 0);
-        school.cadastrosCount++;
         school.records.push(record);
+
+        const cadastrosArray = toArray(record.cadastro);
+        const valoresArray = toArray(record.valores_cadastros);
+        const consumosArray = toArray(record.consumos_m3);
+        const vencsArray = toArray(record.datas_vencimento);
+
+        const arr = cadastrosArray.length > 0 ? cadastrosArray : (record.cadastro ? [String(record.cadastro)] : ['—']);
+
+        arr.forEach((cad: any, idx: number) => {
+          const cadastroKey = (cad ?? '').toString().trim() || '—';
+          let valorValue = 0;
+          const valorRaw = (idx in valoresArray) ? valoresArray[idx] : record.valor_gasto;
+          if (valorRaw !== null && valorRaw !== undefined && valorRaw !== '') {
+            if (typeof valorRaw === 'string') {
+              const cleaned = valorRaw.replace(/[R$\s.]/g, '').replace(',', '.');
+              valorValue = parseFloat(cleaned) || 0;
+            } else {
+              valorValue = Number(valorRaw) || 0;
+            }
+          }
+          let consumoValue = 0;
+          const consumoRaw = (idx in consumosArray) ? consumosArray[idx] : record.consumo_m3;
+          if (consumoRaw !== null && consumoRaw !== undefined && consumoRaw !== '') {
+            if (typeof consumoRaw === 'string') {
+              const cleanedC = consumoRaw.replace(/[^\d.,\-]/g, '').replace(',', '.');
+              consumoValue = parseFloat(cleanedC) || 0;
+            } else {
+              consumoValue = Number(consumoRaw) || 0;
+            }
+          }
+          const venc = (idx in vencsArray) ? vencsArray[idx] : record.data_vencimento;
+          school.cadastrosDetails.push({
+            cadastro: cadastroKey,
+            mes: record.mes_ano_referencia,
+            consumo: consumoValue,
+            valor: valorValue,
+            vencimento: venc
+          });
+        });
       });
 
-      let result = Array.from(schoolMap.values());
+      let result = Array.from(schoolMap.values()).map((s: any) => ({ ...s, cadastrosCount: (s.cadastrosDetails?.length ?? s.cadastrosCount) }));
 
       // Aplicar filtro de faixa de valores
       if (reportType === 'value-range' && (minValue || maxValue)) {
@@ -232,6 +284,12 @@ export default function Reports() {
     });
   };
 
+  const toggleRow = (index: number) => {
+    const next = new Set(expandedRows);
+    if (next.has(index)) next.delete(index); else next.add(index);
+    setExpandedRows(next);
+  };
+
   const renderConsolidatedTable = () => {
     const totals = (reportData as any[]).reduce((acc, school) => ({
       totalConsumption: acc.totalConsumption + (school.totalConsumption || 0),
@@ -242,6 +300,7 @@ export default function Reports() {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead></TableHead>
             <TableHead>Escola</TableHead>
             <TableHead>Total Cadastros</TableHead>
             <TableHead>Consumo Total (m³)</TableHead>
@@ -250,21 +309,62 @@ export default function Reports() {
         </TableHeader>
         <TableBody>
           {(reportData as any[]).map((school, index) => (
-            <TableRow key={index}>
-              <TableCell className="font-medium">{school.schoolName}</TableCell>
-              <TableCell>
-                <Badge variant="outline">
-                  {school.cadastrosCount} cadastros
-                </Badge>
-              </TableCell>
-              <TableCell>{school.totalConsumption?.toFixed(1) || '0.0'}m³</TableCell>
-              <TableCell className="font-semibold">
-                {formatCurrency(school.totalValue || 0)}
-              </TableCell>
-            </TableRow>
+            <>
+              <TableRow key={index} className="hover:bg-muted/50">
+                <TableCell>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-6 w-6 p-0"
+                    onClick={() => toggleRow(index)}
+                  >
+                    {expandedRows.has(index) ? '▼' : '▶'}
+                  </Button>
+                </TableCell>
+                <TableCell className="font-medium">{school.schoolName}</TableCell>
+                <TableCell>
+                  <Badge variant="outline">
+                    {(school.cadastrosDetails?.length ?? school.cadastrosCount) } cadastros
+                  </Badge>
+                </TableCell>
+                <TableCell>{school.totalConsumption?.toFixed(1) || '0.0'}m³</TableCell>
+                <TableCell className="font-semibold">
+                  {formatCurrency(school.totalValue || 0)}
+                </TableCell>
+              </TableRow>
+              {expandedRows.has(index) && (
+                <TableRow key={`${index}-details`}>
+                  <TableCell colSpan={5} className="bg-muted/30 p-4">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Cadastro</TableHead>
+                          <TableHead>Mês/Ano</TableHead>
+                          <TableHead className="text-right">Consumo (m³)</TableHead>
+                          <TableHead className="text-right">Valor (R$)</TableHead>
+                          <TableHead>Vencimento</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(school.cadastrosDetails || []).map((d: any, i: number) => (
+                          <TableRow key={i}>
+                            <TableCell className="font-mono text-sm">{d.cadastro}</TableCell>
+                            <TableCell>{d.mes}</TableCell>
+                            <TableCell className="text-right">{(parseFloat(d.consumo || 0)).toFixed(1)}</TableCell>
+                            <TableCell className="text-right">{formatCurrency(parseFloat(d.valor || 0))}</TableCell>
+                            <TableCell>{d.vencimento || 'N/A'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableCell>
+                </TableRow>
+              )}
+            </>
           ))}
           {reportData.length > 0 && (
             <TableRow className="bg-primary/5 border-t-2 border-primary">
+              <TableCell></TableCell>
               <TableCell className="font-bold text-lg">TOTAL GERAL</TableCell>
               <TableCell></TableCell>
               <TableCell className="font-bold text-lg">{totals.totalConsumption.toFixed(1)}m³</TableCell>
