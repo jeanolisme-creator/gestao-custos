@@ -65,7 +65,7 @@ export default function Reports() {
       const { data: chunk, error } = await supabase
         .from("school_records")
         .select("*")
-        .order("nome_escola", { ascending: true })
+        .order("id", { ascending: true })
         .range(from, to);
       if (error) throw error;
       const batch = chunk || [];
@@ -81,6 +81,7 @@ export default function Reports() {
     setLoading(true);
     try {
       const records = await fetchAllSchoolRecords(1000);
+      console.info("Reports: total registros carregados:", records?.length || 0);
       setData(records || []);
       
       // Extrair escolas únicas
