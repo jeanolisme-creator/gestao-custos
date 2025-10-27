@@ -399,7 +399,7 @@ export default function Reports() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {(reportData as any[]).slice(0, 100).map((record, index) => (
+          {(reportData as any[]).map((record, index) => (
             <TableRow key={index}>
               <TableCell className="font-mono text-sm">{record.cadastro}</TableCell>
               <TableCell className="font-medium">{record.nome_escola}</TableCell>
