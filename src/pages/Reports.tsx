@@ -56,17 +56,31 @@ export default function Reports() {
     fetchData();
   }, []);
 
+  // Busca todos os registros em páginas de 1000 para evitar o limite do PostgREST
+  const fetchAllSchoolRecords = async (pageSize = 1000) => {
+    let from = 0;
+    let to = pageSize - 1;
+    let all: any[] = [];
+    while (true) {
+      const { data: chunk, error } = await supabase
+        .from("school_records")
+        .select("*")
+        .order("nome_escola", { ascending: true })
+        .range(from, to);
+      if (error) throw error;
+      const batch = chunk || [];
+      all = all.concat(batch);
+      if (batch.length < pageSize) break; // última página
+      from += pageSize;
+      to += pageSize;
+    }
+    return all;
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
-      const { data: records, error } = await supabase
-        .from("school_records")
-        .select("*")
-        .limit(10000)
-        .order("nome_escola");
-
-      if (error) throw error;
-
+      const records = await fetchAllSchoolRecords(1000);
       setData(records || []);
       
       // Extrair escolas únicas
