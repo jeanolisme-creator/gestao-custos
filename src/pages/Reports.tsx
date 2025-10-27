@@ -62,6 +62,7 @@ export default function Reports() {
       const { data: records, error } = await supabase
         .from("school_records")
         .select("*")
+        .limit(10000)
         .order("nome_escola");
 
       if (error) throw error;
