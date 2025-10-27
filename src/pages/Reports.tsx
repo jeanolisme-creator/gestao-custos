@@ -195,6 +195,62 @@ export default function Reports() {
       );
     }
 
+    // Quando for relatório por ID de cadastro, achatar os cadastros em linhas
+    if (reportType === 'by-id') {
+      const flattened: any[] = [];
+      filteredData.forEach((record) => {
+        const cadastrosArray = toArray(record.cadastro);
+        const valoresArray = toArray(record.valores_cadastros);
+        const consumosArray = toArray(record.consumos_m3);
+        const vencsArray = toArray(record.datas_vencimento);
+
+        // Se não houver array, ainda assim criar uma linha única
+        const arr = cadastrosArray.length > 0 ? cadastrosArray : (record.cadastro ? [String(record.cadastro)] : ['—']);
+
+        arr.forEach((cad: any, idx: number) => {
+          const cadastroStr = (cad ?? '').toString().trim() || '—';
+
+          // Valor
+          let valorValue: number = 0;
+          const valorRaw = (idx in valoresArray) ? valoresArray[idx] : record.valor_gasto;
+          if (valorRaw !== null && valorRaw !== undefined && valorRaw !== '') {
+            if (typeof valorRaw === 'string') {
+              const cleaned = valorRaw.replace(/[R$\s.]/g, '').replace(',', '.');
+              valorValue = parseFloat(cleaned) || 0;
+            } else {
+              valorValue = Number(valorRaw) || 0;
+            }
+          }
+
+          // Consumo
+          let consumoValue: number = 0;
+          const consumoRaw = (idx in consumosArray) ? consumosArray[idx] : record.consumo_m3;
+          if (consumoRaw !== null && consumoRaw !== undefined && consumoRaw !== '') {
+            if (typeof consumoRaw === 'string') {
+              const cleanedC = consumoRaw.replace(/[^\d.,\-]/g, '').replace(',', '.');
+              consumoValue = parseFloat(cleanedC) || 0;
+            } else {
+              consumoValue = Number(consumoRaw) || 0;
+            }
+          }
+
+          const venc = (idx in vencsArray) ? vencsArray[idx] : record.data_vencimento;
+
+          flattened.push({
+            cadastro: cadastroStr,
+            nome_escola: record.nome_escola,
+            endereco_completo: record.endereco_completo,
+            mes_ano_referencia: record.mes_ano_referencia,
+            consumo_m3: consumoValue,
+            valor_gasto: valorValue,
+            data_vencimento: venc,
+          });
+        });
+      });
+      console.info('Reports: flattened by-id length:', flattened.length, 'from records:', filteredData.length);
+      return flattened;
+    }
+
     // Agregar por escola para relatórios consolidados
     if (reportType === 'by-school' || reportType === 'consolidated' || 
         reportType === 'value-range' || reportType === 'comparative') {
