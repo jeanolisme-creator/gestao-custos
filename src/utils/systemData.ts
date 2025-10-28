@@ -161,14 +161,29 @@ export const getSystemMonthlyTotals = (data: UnifiedRecord[]) => {
       record.mes_ano_referencia.toLowerCase().includes(month.toLowerCase())
     );
     
+    const totalValue = monthData.reduce((sum, record) => sum + record.valor_gasto, 0);
+    const totalConsumption = monthData.reduce((sum, record) => {
+      if (record.system_type === 'water') return sum + (record.consumo_m3 || 0);
+      if (record.system_type === 'energy') return sum + (record.consumo_kwh || 0);
+      return sum;
+    }, 0);
+    
+    // Debug log para janeiro
+    if (month === 'janeiro') {
+      console.log(`[MonthlyTotals] Janeiro - Registros encontrados: ${monthData.length}`);
+      console.log(`[MonthlyTotals] Janeiro - Total Valor: R$ ${totalValue.toFixed(2)}`);
+      console.log(`[MonthlyTotals] Janeiro - Total Consumo: ${totalConsumption.toFixed(2)} m³`);
+      console.log(`[MonthlyTotals] Janeiro - Primeiros 3 registros:`, monthData.slice(0, 3).map(r => ({
+        mes: r.mes_ano_referencia,
+        valor: r.valor_gasto,
+        consumo: r.consumo_m3
+      })));
+    }
+    
     return {
       month,
-      totalValue: monthData.reduce((sum, record) => sum + record.valor_gasto, 0),
-      totalConsumption: monthData.reduce((sum, record) => {
-        if (record.system_type === 'water') return sum + (record.consumo_m3 || 0);
-        if (record.system_type === 'energy') return sum + (record.consumo_kwh || 0);
-        return sum;
-      }, 0),
+      totalValue,
+      totalConsumption,
       totalService: monthData.reduce((sum, record) => sum + record.valor_servicos, 0),
       schoolCount: new Set(monthData.map(r => r.nome_escola)).size,
     };
