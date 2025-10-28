@@ -115,13 +115,29 @@ export function WaterReports() {
       if (user?.email) setUserEmail(user.email);
       if (!user) return;
 
-      const { data: records, error } = await supabase
-        .from("school_records")
-        .select("*");
+      // Buscar todos os registros com paginação
+      const fetchAllRecords = async (pageSize = 1000) => {
+        let from = 0;
+        let to = pageSize - 1;
+        let all: any[] = [];
+        while (true) {
+          const { data: chunk, error } = await supabase
+            .from("school_records")
+            .select("*")
+            .order("id", { ascending: true })
+            .range(from, to);
+          if (error) throw error;
+          const batch = chunk || [];
+          all = all.concat(batch);
+          if (batch.length < pageSize) break; // última página
+          from += pageSize;
+          to += pageSize;
+        }
+        return all;
+      };
 
-      if (error) throw error;
-
-      console.log("Registros carregados:", records?.length || 0);
+      const records = await fetchAllRecords(1000);
+      console.log("Registros carregados (paginados):", records?.length || 0);
       setData(records || []);
       
       // Extract unique school names from records
@@ -1471,7 +1487,7 @@ export function WaterReports() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {(reportData as any[]).slice(0, 50).map((record, index) => (
+          {(reportData as any[]).map((record, index) => (
             <TableRow key={index}>
               <TableCell className="font-mono text-sm">{record.cadastro}</TableCell>
               <TableCell className="font-medium">{record.nome_escola}</TableCell>
