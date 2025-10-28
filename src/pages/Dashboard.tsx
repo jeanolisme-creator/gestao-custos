@@ -55,6 +55,29 @@ export default function Dashboard({ data }: DashboardProps) {
   
   // Fetch real data from Supabase
   useEffect(() => {
+    const fetchAllFromTable = async (
+      table: 'school_records' | 'energy_records' | 'fixed_line_records' | 'mobile_records',
+      pageSize = 1000
+    ) => {
+      let from = 0;
+      let to = pageSize - 1;
+      let all: any[] = [];
+      while (true) {
+        const { data, error } = await supabase
+          .from(table)
+          .select('*')
+          .order('id', { ascending: true })
+          .range(from, to);
+        if (error) throw error;
+        const batch = data || [];
+        all = all.concat(batch);
+        if (batch.length < pageSize) break; // última página
+        from += pageSize;
+        to += pageSize;
+      }
+      return all;
+    };
+
     const fetchRealData = async () => {
       if (!user) return;
       
@@ -65,11 +88,8 @@ export default function Dashboard({ data }: DashboardProps) {
       
       if (!tableName) return;
       
-      const { data: records, error } = await supabase
-        .from(tableName)
-        .select('*');
-      
-      if (!error && records) {
+      try {
+        const records = await fetchAllFromTable(tableName, 1000);
         console.log(`Dados reais carregados do ${tableName}:`, records.length);
         
         // Transform data to UnifiedRecord format
@@ -78,13 +98,15 @@ export default function Dashboard({ data }: DashboardProps) {
           system_type: currentSystem,
           valor_gasto: Number(record.valor_gasto || 0),
           valor_servicos: Number(record.valor_servicos || 0),
-          consumo_m3: record.consumo_m3 ? Number(record.consumo_m3) : undefined,
-          consumo_kwh: record.consumo_kwh ? Number(record.consumo_kwh) : undefined,
-          demanda_kwh: record.demanda_kwh ? Number(record.demanda_kwh) : undefined,
+          consumo_m3: record.consumo_m3 !== undefined && record.consumo_m3 !== null ? Number(record.consumo_m3) : undefined,
+          consumo_kwh: record.consumo_kwh !== undefined && record.consumo_kwh !== null ? Number(record.consumo_kwh) : undefined,
+          demanda_kwh: record.demanda_kwh !== undefined && record.demanda_kwh !== null ? Number(record.demanda_kwh) : undefined,
         }));
         
         console.log(`Dados transformados:`, transformedRecords.slice(0, 2));
         setRealData(transformedRecords);
+      } catch (e) {
+        console.error('Erro ao carregar dados paginados:', e);
       }
     };
     
