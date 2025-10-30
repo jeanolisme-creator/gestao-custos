@@ -640,23 +640,21 @@ export function MacroregionComparisonReport({ data, selectedMacroregions }: Macr
                   <div className="space-y-2">
                     <h4 className="font-semibold text-sm">Escolas da {item.macroregion}:</h4>
                     <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Escola</TableHead>
-                          <TableHead className="text-center">Nº Cadastros</TableHead>
-                          <TableHead className="text-right">Consumo Total</TableHead>
-                          <TableHead className="text-right">Valor Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {item.schools.map((school, idx) => (
-                          <TableRow key={idx}>
-                            <TableCell>{school.name}</TableCell>
-                            <TableCell className="text-center">{school.recordCount}</TableCell>
-                            <TableCell className="text-right">{school.consumption.toFixed(1)} m³</TableCell>
-                            <TableCell className="text-right">{formatCurrency(school.value)}</TableCell>
-                          </TableRow>
-                        ))}
+                       <TableHeader>
+                         <TableRow>
+                           <TableHead>Escola</TableHead>
+                           <TableHead className="text-right">Consumo Total</TableHead>
+                           <TableHead className="text-right">Valor Total</TableHead>
+                         </TableRow>
+                       </TableHeader>
+                       <TableBody>
+                         {item.schools.map((school, idx) => (
+                           <TableRow key={idx}>
+                             <TableCell>{school.name}</TableCell>
+                             <TableCell className="text-right">{school.consumption.toFixed(1)} m³</TableCell>
+                             <TableCell className="text-right">{formatCurrency(school.value)}</TableCell>
+                           </TableRow>
+                         ))}
                       </TableBody>
                     </Table>
                   </div>
@@ -685,10 +683,11 @@ export function MacroregionComparisonReport({ data, selectedMacroregions }: Macr
 
 interface SchoolTypeComparisonReportProps {
   data: any[];
+  schoolsData: any[];
   selectedSchoolTypes: string[];
 }
 
-export function SchoolTypeComparisonReport({ data, selectedSchoolTypes }: SchoolTypeComparisonReportProps) {
+export function SchoolTypeComparisonReport({ data, schoolsData, selectedSchoolTypes }: SchoolTypeComparisonReportProps) {
   const [expandedRows, setExpandedRows] = React.useState<Set<number>>(new Set());
 
   if (selectedSchoolTypes.length === 0) {
@@ -710,7 +709,12 @@ export function SchoolTypeComparisonReport({ data, selectedSchoolTypes }: School
   };
 
   const comparisonData = selectedSchoolTypes.map(type => {
-    const records = data.filter(r => r.tipo_escola === type);
+    // Obter escolas deste tipo da tabela schools
+    const schoolsOfType = schoolsData.filter(s => s.tipo_escola === type);
+    const schoolNamesOfType = new Set(schoolsOfType.map(s => s.nome_escola));
+    
+    // Filtrar registros apenas das escolas deste tipo
+    const records = data.filter(r => schoolNamesOfType.has(r.nome_escola));
     const schoolsMap = new Map<string, { consumption: number; value: number; recordCount: number }>();
     
     records.forEach(r => {
@@ -790,23 +794,21 @@ export function SchoolTypeComparisonReport({ data, selectedSchoolTypes }: School
                   <div className="space-y-2">
                     <h4 className="font-semibold text-sm">Escolas do tipo {item.type}:</h4>
                     <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Escola</TableHead>
-                          <TableHead className="text-center">Nº Cadastros</TableHead>
-                          <TableHead className="text-right">Consumo Total</TableHead>
-                          <TableHead className="text-right">Valor Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {item.schools.map((school, idx) => (
-                          <TableRow key={idx}>
-                            <TableCell>{school.name}</TableCell>
-                            <TableCell className="text-center">{school.recordCount}</TableCell>
-                            <TableCell className="text-right">{school.consumption.toFixed(1)} m³</TableCell>
-                            <TableCell className="text-right">{formatCurrency(school.value)}</TableCell>
-                          </TableRow>
-                        ))}
+                       <TableHeader>
+                         <TableRow>
+                           <TableHead>Escola</TableHead>
+                           <TableHead className="text-right">Consumo Total</TableHead>
+                           <TableHead className="text-right">Valor Total</TableHead>
+                         </TableRow>
+                       </TableHeader>
+                       <TableBody>
+                         {item.schools.map((school, idx) => (
+                           <TableRow key={idx}>
+                             <TableCell>{school.name}</TableCell>
+                             <TableCell className="text-right">{school.consumption.toFixed(1)} m³</TableCell>
+                             <TableCell className="text-right">{formatCurrency(school.value)}</TableCell>
+                           </TableRow>
+                         ))}
                       </TableBody>
                     </Table>
                   </div>

@@ -54,8 +54,6 @@ const reportTypes = [
   { value: 'by-school', label: 'Por Nome da Escola' },
   { value: 'by-id', label: 'Por ID Cadastro' },
   { value: 'comparative', label: 'Comparativo entre Escolas' },
-  { value: 'temporal', label: 'Evolução Temporal' },
-  { value: 'consolidated', label: 'Relatório Geral' },
   { value: 'value-range', label: 'Faixa de Valores' },
   { value: 'selected-fields', label: 'Por Campos Selecionados' },
   { value: 'monthly-comparison', label: 'Comparativo por Meses' },
@@ -75,7 +73,7 @@ export function WaterReports() {
   const [selectedYear, setSelectedYear] = useState<string>("2025");
   const [selectedMonth, setSelectedMonth] = useState<string>("todos");
   const [selectedSchool, setSelectedSchool] = useState<string>("all");
-  const [reportType, setReportType] = useState<string>("consolidated");
+  const [reportType, setReportType] = useState<string>("by-school");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [selectedSchools, setSelectedSchools] = useState<string[]>([]);
   const [minValue, setMinValue] = useState<string>("");
@@ -374,7 +372,7 @@ export function WaterReports() {
     console.log("Filtered data before aggregation:", filteredData.length);
 
     // Aggregate by school for consolidated report
-    if (reportType === 'consolidated' || reportType === 'by-school' || 
+    if (reportType === 'by-school' || 
         reportType === 'value-range' || reportType === 'comparative') {
       const schoolMap = new Map();
       
@@ -1644,8 +1642,24 @@ export function WaterReports() {
           </div>
 
           <div className="flex items-end space-x-2">
-            <Button variant="outline" size="icon">
-              <Filter className="h-4 w-4" />
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setSelectedYear("2025");
+                setSelectedMonth("todos");
+                setSelectedSchool("all");
+                setSearchTerm("");
+                setMinValue("");
+                setMaxValue("");
+                setSelectedSchools([]);
+                setSelectedFields(['cadastro', 'consumo_m3', 'valor_gasto']);
+                setSelectedMonths([]);
+                setSelectedMacroregions([]);
+                setSelectedSchoolTypes([]);
+              }}
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              Limpar Filtros
             </Button>
           </div>
         </div>
@@ -1779,7 +1793,7 @@ export function WaterReports() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-muted-foreground">
-              {reportType === 'consolidated' || reportType === 'by-school' 
+              {reportType === 'by-school' 
                 ? `${reportData.length} escolas encontradas`
                 : `${reportData.length} registros encontrados`
               }
@@ -1816,16 +1830,17 @@ export function WaterReports() {
             />
           ) : reportType === 'macroregion-comparison' ? (
             <MacroregionComparisonReport 
-              data={data} 
+              data={reportData} 
               selectedMacroregions={selectedMacroregions} 
             />
           ) : reportType === 'school-type-comparison' ? (
             <SchoolTypeComparisonReport 
-              data={data} 
+              data={reportData} 
+              schoolsData={schoolsData}
               selectedSchoolTypes={selectedSchoolTypes} 
             />
-          ) : (reportType === 'consolidated' || reportType === 'by-school' || 
-            reportType === 'value-range' || reportType === 'comparative') 
+          ) : (reportType === 'by-school' || 
+            reportType === 'value-range' || reportType === 'comparative')
             ? renderConsolidatedTable() 
             : renderDetailedTable()}
         </div>
