@@ -1810,7 +1810,7 @@ export function WaterReports() {
             />
           ) : reportType === 'student-comparison' ? (
             <StudentComparisonReport 
-              data={data} 
+              data={reportData} 
               schoolsData={schoolsData} 
               selectedSchools={selectedSchools} 
             />

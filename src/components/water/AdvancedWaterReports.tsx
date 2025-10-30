@@ -465,6 +465,10 @@ export function StudentComparisonReport({ data, schoolsData, selectedSchools }: 
     };
   });
 
+  // A primeira escola é a base de comparação (100%)
+  const baseSchool = comparisonData[0];
+  const baseValue = baseSchool?.totalValue || 0;
+
   return (
     <Table>
       <TableHeader>
@@ -479,25 +483,51 @@ export function StudentComparisonReport({ data, schoolsData, selectedSchools }: 
           <TableHead className="text-right">Valor Total</TableHead>
           <TableHead className="text-right">m³/Aluno</TableHead>
           <TableHead className="text-right">R$/Aluno</TableHead>
+          <TableHead className="text-right">% Diferença</TableHead>
+          <TableHead className="text-right">R$ Diferença</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {comparisonData.map((school, index) => (
-          <TableRow key={index}>
-            <TableCell className="font-medium">{school.schoolName}</TableCell>
-            <TableCell className="text-center">{school.creche}</TableCell>
-            <TableCell className="text-center">{school.infantil}</TableCell>
-            <TableCell className="text-center">{school.fundamentalI}</TableCell>
-            <TableCell className="text-center">{school.fundamentalII}</TableCell>
-            <TableCell className="text-center font-semibold">{school.totalStudents}</TableCell>
-            <TableCell className="text-right">{school.totalConsumption.toFixed(1)} m³</TableCell>
-            <TableCell className="text-right font-semibold">{formatCurrency(school.totalValue)}</TableCell>
-            <TableCell className="text-right">{school.consumptionPerStudent.toFixed(2)}</TableCell>
-            <TableCell className="text-right text-primary font-semibold">
-              {formatCurrency(school.valuePerStudent)}
-            </TableCell>
-          </TableRow>
-        ))}
+        {comparisonData.map((school, index) => {
+          const valueDifference = school.totalValue - baseValue;
+          const percentDifference = baseValue > 0 ? ((school.totalValue - baseValue) / baseValue) * 100 : 0;
+          const isBase = index === 0;
+          
+          return (
+            <TableRow key={index}>
+              <TableCell className="font-medium">{school.schoolName}</TableCell>
+              <TableCell className="text-center">{school.creche}</TableCell>
+              <TableCell className="text-center">{school.infantil}</TableCell>
+              <TableCell className="text-center">{school.fundamentalI}</TableCell>
+              <TableCell className="text-center">{school.fundamentalII}</TableCell>
+              <TableCell className="text-center font-semibold">{school.totalStudents}</TableCell>
+              <TableCell className="text-right">{school.totalConsumption.toFixed(1)} m³</TableCell>
+              <TableCell className="text-right font-semibold">{formatCurrency(school.totalValue)}</TableCell>
+              <TableCell className="text-right">{school.consumptionPerStudent.toFixed(2)}</TableCell>
+              <TableCell className="text-right text-primary font-semibold">
+                {formatCurrency(school.valuePerStudent)}
+              </TableCell>
+              <TableCell className="text-right font-semibold">
+                {isBase ? (
+                  <span className="text-muted-foreground">100% (Base)</span>
+                ) : (
+                  <span className={percentDifference >= 0 ? "text-red-600" : "text-green-600"}>
+                    {percentDifference >= 0 ? "+" : ""}{percentDifference.toFixed(2)}%
+                  </span>
+                )}
+              </TableCell>
+              <TableCell className="text-right font-semibold">
+                {isBase ? (
+                  <span className="text-muted-foreground">—</span>
+                ) : (
+                  <span className={valueDifference >= 0 ? "text-red-600" : "text-green-600"}>
+                    {valueDifference >= 0 ? "+" : ""}{formatCurrency(Math.abs(valueDifference))}
+                  </span>
+                )}
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );
