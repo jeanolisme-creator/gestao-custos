@@ -120,7 +120,6 @@ export default function Dashboard({ data }: DashboardProps) {
   const currentMonthData = aggregateSystemData(systemData, currentMonth);
   const yearlyData = aggregateSystemData(systemData);
   const alerts = getSystemAlerts(systemData);
-  const schoolTypeDistribution = getSchoolTypeDistribution(data, currentMonth);
 
   // Calculate metrics
   const currentMonthTotal = currentMonthData.reduce((sum, school) => sum + school.totalValue, 0);
@@ -296,10 +295,10 @@ export default function Dashboard({ data }: DashboardProps) {
         {/* Alerts */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <AlertCard data={data} />
+            <AlertCard data={systemData} />
           </div>
           <div className="lg:col-span-1">
-            <UpcomingDues data={data} />
+            <UpcomingDues data={systemData} />
           </div>
         </div>
 
