@@ -25,8 +25,11 @@ const CurrencyInput = React.forwardRef<HTMLInputElement, CurrencyInputProps>(
     };
 
     const parseCurrency = (val: string): number => {
-      // Remove o símbolo da moeda e espaços
-      const numbers = val.replace(/[R$\s.]/g, "").replace(",", ".");
+      // Remove o símbolo da moeda, espaços e converte formato BR para US
+      const numbers = val
+        .replace(/[R$\s]/g, "") // Remove R$ e espaços
+        .replace(/\./g, "")      // Remove pontos (separadores de milhar)
+        .replace(",", ".");      // Substitui vírgula por ponto (decimal)
       return parseFloat(numbers) || 0;
     };
 

@@ -27,6 +27,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { WaterEditForm } from "./WaterEditForm";
 import { DataReview } from "./DataReview";
+import { BrazilianSeasonalAnalysis } from "@/components/charts/BrazilianSeasonalAnalysis";
 import {
   FieldSelector,
   SchoolMultiSelector,
@@ -60,6 +61,7 @@ const reportTypes = [
   { value: 'student-comparison', label: 'Comparativo por Total de Alunos' },
   { value: 'macroregion-comparison', label: 'Comparativo por Macrorregião' },
   { value: 'school-type-comparison', label: 'Comparativo por Tipo de Escola' },
+  { value: 'seasonal', label: 'Estações do Ano' },
 ];
 
 const months = [
@@ -1814,7 +1816,9 @@ export function WaterReports() {
         </div>
         
         <div className="overflow-x-auto">
-          {reportType === 'selected-fields' ? (
+          {reportType === 'seasonal' ? (
+            <BrazilianSeasonalAnalysis data={data} systemType="water" />
+          ) : reportType === 'selected-fields' ? (
             <SelectedFieldsReport data={reportData} selectedFields={selectedFields} />
           ) : reportType === 'monthly-comparison' ? (
             <MonthlyComparisonReport 

@@ -40,6 +40,7 @@ import {
   MacroregionComparisonReport,
   SchoolTypeComparisonReport,
 } from "./AdvancedEnergyReports";
+import { BrazilianSeasonalAnalysis } from "@/components/charts/BrazilianSeasonalAnalysis";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,6 +64,7 @@ const reportTypes = [
   { value: 'student-comparison', label: 'Comparativo por Total de Alunos' },
   { value: 'macroregion-comparison', label: 'Comparativo por Macrorregião' },
   { value: 'school-type-comparison', label: 'Comparativo por Tipo de Escola' },
+  { value: 'seasonal', label: 'Estações do Ano' },
 ];
 
 const months = [
@@ -1265,7 +1267,9 @@ export function EnergyReports() {
         </div>
         
         <div className="overflow-x-auto">
-          {reportType === 'selected-fields' ? (
+          {reportType === 'seasonal' ? (
+            <BrazilianSeasonalAnalysis data={data} systemType="energy" />
+          ) : reportType === 'selected-fields' ? (
             <SelectedFieldsReport data={reportData} selectedFields={selectedFields} />
           ) : reportType === 'monthly-comparison' ? (
             <MonthlyComparisonReport data={data} selectedSchools={selectedSchools} selectedMonths={selectedMonths} />
